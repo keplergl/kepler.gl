@@ -1922,7 +1922,6 @@ export default function MapContainerFactory(
               mapState={mapState}
               cameraBookmarks={visState.cameraBookmarks}
               cameraTour={visState.cameraTour}
-              interactionConfig={interactionConfig}
               effects={this.props.animationSourceEffects ?? visState.effects}
               annotations={visState.annotations}
               onEditCamera={this._editCameraTour}

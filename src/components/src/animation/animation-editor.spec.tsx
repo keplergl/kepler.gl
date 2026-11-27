@@ -9,11 +9,8 @@ import {ThemeProvider} from 'styled-components';
 import {theme} from '@kepler.gl/styles';
 import {createEffect} from '@kepler.gl/effects';
 import {SURFACE_FOG_TYPE} from '@kepler.gl/constants';
-import {INITIAL_MAP_STATE} from '@kepler.gl/reducers';
-import {INITIAL_VIS_STATE} from '../../../reducers/src/vis-state-updaters';
 import type {Layer} from '@kepler.gl/layers';
 import ContourLayer from '../../../layers/src/contour-layer/contour-layer';
-import GeoJsonLayer from '../../../layers/src/geojson-layer/geojson-layer';
 import {DEFAULT_LAYER_ANIMATABLE_PROPS, rgbToHex} from '@kepler.gl/utils';
 import type {
   Annotation,
@@ -27,10 +24,6 @@ import AnimationEditorFactory, {
   AnimationEditorProps
 } from './animation-editor';
 import RangeSliderFactory from '../common/range-slider';
-import {MapViewStateContextProvider} from '../map-view-state-context';
-import EffectAnimationPreviewProvider, {
-  EffectAnimationPreviewContext
-} from '../effects/effect-animation-preview';
 
 const Editor = AnimationEditorFactory(
   RangeSliderFactory(
@@ -77,7 +70,6 @@ function Wrapper({children}: {children: React.ReactNode}) {
 function setup(overrides: Partial<AnimationEditorProps> = {}) {
   const playback: AnimationEditorPlayback = {
     elapsed: 5000,
-    animationTimeMs: 5000,
     duration: 20000,
     running: false,
     run: jest.fn(),
@@ -1228,186 +1220,6 @@ test('adds multiple opacity blocks on one layer row and removes only the selecte
   expect(source.config.propertyTransitions?.opacity).toEqual([]);
   expect(source.config.isVisible).toBe(true);
   expect(screen.queryByRole('group', {name: 'Layer opacity: Points'})).toBeNull();
-});
-
-test('shows authored, track and effective opacity at the playhead without editing the layer', () => {
-  const source = layer(opacityTransitions());
-  source.config.visConfig = {opacity: 0.5};
-  const {props, rerender} = setup({layers: [source]});
-  const at = (elapsed: number) => ({
-    ...props,
-    playback: {...props.playback, elapsed, animationTimeMs: elapsed}
-  });
-  rerender(<Editor {...at(4000)} />);
-  fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
-  const summary = screen.getByLabelText('Layer opacity at playhead');
-  expect(summary).toHaveTextContent('Base opacity: 50%');
-  expect(summary).toHaveTextContent('Track opacity at playhead: 50%');
-  expect(summary).toHaveTextContent('Effective base opacity: 25%');
-
-  // The readout follows the complete track, not the boundaries of the selected block.
-  rerender(<Editor {...at(11000)} />);
-  expect(summary).toHaveTextContent('Track opacity at playhead: 50%');
-  source.config.visConfig.opacity = 0;
-  rerender(<Editor {...at(5000)} />);
-  expect(summary).toHaveTextContent('Track opacity at playhead: 100%');
-  expect(summary).toHaveTextContent('Effective base opacity: 0%');
-  expect(summary).toHaveTextContent('Raise Opacity in the layer settings');
-
-  rerender(<Editor {...at(3000)} />);
-  expect(summary).toHaveTextContent('Track opacity at playhead: 0%');
-  expect(summary).not.toHaveTextContent('Raise Opacity in the layer settings');
-  expect(props.onLayerConfigChange).not.toHaveBeenCalled();
-});
-
-test.each([undefined, null, NaN, Infinity, -Infinity])(
-  'does not report an applied track for omitted or invalid animation time %s',
-  animationTimeMs => {
-    const source = layer([opacityTransitions()[0]]);
-    source.config.visConfig = {opacity: 0.5};
-    const {props, rerender} = setup({layers: [source]});
-    const playback = {...props.playback, elapsed: 3000, animationTimeMs};
-    if (animationTimeMs === undefined) delete playback.animationTimeMs;
-    rerender(<Editor {...props} playback={playback} />);
-    fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
-    const summary = screen.getByLabelText('Layer opacity at playhead');
-    expect(summary).toHaveTextContent('Preview is off. The track is not applied to the map.');
-    expect(summary).toHaveTextContent('Base opacity: 50%');
-    expect(summary).toHaveTextContent('Track opacity at playhead: 0%');
-    expect(summary).toHaveTextContent('Effective base opacity if previewed: 0%');
-  }
-);
-
-test('shows opacity diagnostics only in block settings and reflects seeking and Stop', () => {
-  const source = layer([opacityTransitions()[0]]);
-  source.config.visConfig = {opacity: 0.5};
-  const effects: AnimationEditorProps['effects'] = [];
-  const layers = [source];
-  const WithPlayback = () => {
-    const playback = React.useContext(EffectAnimationPreviewContext);
-    return playback ? (
-      <Editor
-        effects={effects}
-        layers={layers}
-        playback={playback}
-        updateEffectConfig={jest.fn()}
-        onLayerConfigChange={jest.fn()}
-      />
-    ) : null;
-  };
-  render(
-    <EffectAnimationPreviewProvider enabled effects={effects} layers={layers}>
-      <WithPlayback />
-    </EffectAnimationPreviewProvider>,
-    {wrapper: Wrapper}
-  );
-  const block = screen.getByRole('button', {name: 'Opacity 1 · Points'});
-  fireEvent.click(block);
-  expect(screen.queryByLabelText('Layer opacity at playhead')).toBeNull();
-  fireEvent.doubleClick(block);
-  const dialog = screen.getByRole('dialog', {name: 'Block settings'});
-  expect(within(dialog).getByLabelText('Layer opacity at playhead')).toHaveTextContent(
-    'Effective base opacity if previewed: 0%'
-  );
-  expect(dialog).toHaveTextContent('Preview is off. The track is not applied to the map.');
-
-  fireEvent.click(within(dialog).getByRole('button', {name: 'Close block settings'}));
-  expect(screen.queryByLabelText('Layer opacity at playhead')).toBeNull();
-  const ruler = screen.getByRole('slider', {name: 'Animation playhead'});
-  expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
-  fireEvent.keyDown(ruler, {key: 'End'});
-  expect(screen.queryByLabelText('Layer opacity at playhead')).toBeNull();
-  fireEvent.doubleClick(block);
-  const summary = screen.getByLabelText('Layer opacity at playhead');
-  expect(summary).toHaveTextContent('Track opacity at playhead: 100%');
-  expect(summary).toHaveTextContent('Effective base opacity: 50%');
-  expect(summary).not.toHaveTextContent('Preview is off');
-
-  fireEvent.click(screen.getByRole('button', {name: 'Close block settings'}));
-  fireEvent.keyDown(ruler, {key: 'Home'});
-  fireEvent.doubleClick(block);
-  const startSummary = screen.getByLabelText('Layer opacity at playhead');
-  expect(startSummary).toHaveTextContent('Effective base opacity: 0%');
-  expect(startSummary).not.toHaveTextContent('Preview is off');
-  fireEvent.click(screen.getByRole('button', {name: 'Close block settings'}));
-  fireEvent.click(screen.getByRole('button', {name: 'Stop'}));
-  fireEvent.doubleClick(block);
-  expect(screen.getByLabelText('Layer opacity at playhead')).toHaveTextContent(
-    'Effective base opacity if previewed: 0%'
-  );
-});
-
-test('zero-base readout and hint only describe base opacity, not independently styled strokes', () => {
-  const source = new GeoJsonLayer({label: 'Polygons'});
-  source.config.visConfig = {
-    ...source.config.visConfig,
-    opacity: 0,
-    strokeOpacity: 0.8,
-    stroked: true
-  };
-  source.config.propertyTransitions = {opacity: opacityTransitions()};
-  setup({layers: [source]});
-  fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Polygons'}));
-  const summary = screen.getByLabelText('Layer opacity at playhead');
-  expect(summary).toHaveTextContent('Base opacity: 0%');
-  expect(summary).toHaveTextContent('Effective base opacity: 0%');
-  expect(summary).toHaveTextContent(
-    'Raise Opacity in the layer settings to animate the layer’s base opacity.'
-  );
-});
-
-test('shows zoom fade for each independent split pane without blaming a positive base opacity', () => {
-  const source = layer(opacityTransitions());
-  source.config.visConfig = {opacity: 0.5};
-  const mapState = {
-    ...INITIAL_MAP_STATE,
-    isSplit: true,
-    isViewportSynced: false,
-    zoom: 8,
-    splitMapViewports: [
-      {...camera, zoom: 6},
-      {...camera, zoom: 8}
-    ]
-  };
-  const interactionConfig = {
-    ...INITIAL_VIS_STATE.interactionConfig,
-    zoomOpacity: {
-      ...INITIAL_VIS_STATE.interactionConfig.zoomOpacity,
-      enabled: true,
-      config: {
-        controllers: [
-          {id: 'fade', layerIds: [source.id], stops: {appear: 4, full: 8, fade: 12, gone: 16}}
-        ]
-      }
-    }
-  };
-  const {props, rerender} = setup({layers: [source], mapState, interactionConfig});
-  const playback = {...props.playback, elapsed: 4000, animationTimeMs: 4000};
-  const renderWithMap = (nextMapState: typeof mapState) =>
-    rerender(
-      <MapViewStateContextProvider mapState={nextMapState}>
-        <Editor {...props} playback={playback} mapState={nextMapState} />
-      </MapViewStateContextProvider>
-    );
-  renderWithMap(mapState);
-  fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
-  const summary = screen.getByLabelText('Layer opacity at playhead');
-  expect(summary).toHaveTextContent('Left map: Effective base opacity: 12.5% (zoom fade: 50%)');
-  expect(summary).toHaveTextContent('Right map: Effective base opacity: 25%');
-
-  renderWithMap({
-    ...mapState,
-    splitMapViewports: [
-      {...camera, zoom: 4},
-      {...camera, zoom: 8}
-    ]
-  });
-  expect(summary).toHaveTextContent('Left map: Effective base opacity: 0% (zoom fade: 0%)');
-  expect(summary).not.toHaveTextContent('Raise Opacity in the layer settings');
-
-  renderWithMap({...mapState, isViewportSynced: true});
-  expect(summary).toHaveTextContent('Effective base opacity: 25%');
-  expect(summary).not.toHaveTextContent('Left map:');
 });
 
 test('double-click edits one opacity transition with percentages, times and easing', () => {
