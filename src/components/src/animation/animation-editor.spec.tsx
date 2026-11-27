@@ -77,6 +77,7 @@ function Wrapper({children}: {children: React.ReactNode}) {
 function setup(overrides: Partial<AnimationEditorProps> = {}) {
   const playback: AnimationEditorPlayback = {
     elapsed: 5000,
+    animationTimeMs: 5000,
     duration: 20000,
     running: false,
     run: jest.fn(),
@@ -1235,14 +1236,14 @@ test('shows authored, track and effective opacity at the playhead without editin
   const {props, rerender} = setup({layers: [source]});
   const at = (elapsed: number) => ({
     ...props,
-    playback: {...props.playback, elapsed}
+    playback: {...props.playback, elapsed, animationTimeMs: elapsed}
   });
   rerender(<Editor {...at(4000)} />);
   fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
   const summary = screen.getByLabelText('Layer opacity at playhead');
   expect(summary).toHaveTextContent('Base opacity: 50%');
   expect(summary).toHaveTextContent('Track opacity at playhead: 50%');
-  expect(summary).toHaveTextContent('Effective opacity: 25%');
+  expect(summary).toHaveTextContent('Effective base opacity: 25%');
 
   // The readout follows the complete track, not the boundaries of the selected block.
   rerender(<Editor {...at(11000)} />);
@@ -1250,7 +1251,7 @@ test('shows authored, track and effective opacity at the playhead without editin
   source.config.visConfig.opacity = 0;
   rerender(<Editor {...at(5000)} />);
   expect(summary).toHaveTextContent('Track opacity at playhead: 100%');
-  expect(summary).toHaveTextContent('Effective opacity: 0%');
+  expect(summary).toHaveTextContent('Effective base opacity: 0%');
   expect(summary).toHaveTextContent('Raise Opacity in the layer settings');
 
   rerender(<Editor {...at(3000)} />);
@@ -1258,6 +1259,24 @@ test('shows authored, track and effective opacity at the playhead without editin
   expect(summary).not.toHaveTextContent('Raise Opacity in the layer settings');
   expect(props.onLayerConfigChange).not.toHaveBeenCalled();
 });
+
+test.each([undefined, null, NaN, Infinity, -Infinity])(
+  'does not report an applied track for omitted or invalid animation time %s',
+  animationTimeMs => {
+    const source = layer([opacityTransitions()[0]]);
+    source.config.visConfig = {opacity: 0.5};
+    const {props, rerender} = setup({layers: [source]});
+    const playback = {...props.playback, elapsed: 3000, animationTimeMs};
+    if (animationTimeMs === undefined) delete playback.animationTimeMs;
+    rerender(<Editor {...props} playback={playback} />);
+    fireEvent.click(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
+    const summary = screen.getByLabelText('Layer opacity at playhead');
+    expect(summary).toHaveTextContent('Preview is off. The track is not applied to the map.');
+    expect(summary).toHaveTextContent('Base opacity: 50%');
+    expect(summary).toHaveTextContent('Track opacity at playhead: 0%');
+    expect(summary).toHaveTextContent('Effective base opacity if previewed: 0%');
+  }
+);
 
 test('distinguishes idle opacity from a scrubbed frame and keeps the readout visible while seeking', () => {
   const source = layer([opacityTransitions()[0]]);
@@ -1285,7 +1304,7 @@ test('distinguishes idle opacity from a scrubbed frame and keeps the readout vis
   fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
   const dialog = screen.getByRole('dialog', {name: 'Block settings'});
   expect(within(dialog).getByLabelText('Layer opacity at playhead')).toHaveTextContent(
-    'Effective opacity if previewed: 0%'
+    'Effective base opacity if previewed: 0%'
   );
   expect(dialog).toHaveTextContent('Preview is off. The track is not applied to the map.');
 
@@ -1295,16 +1314,17 @@ test('distinguishes idle opacity from a scrubbed frame and keeps the readout vis
   expect(screen.queryByRole('dialog', {name: 'Block settings'})).toBeNull();
   fireEvent.keyDown(ruler, {key: 'End'});
   expect(summary).toHaveTextContent('Track opacity at playhead: 100%');
-  expect(summary).toHaveTextContent('Effective opacity: 50%');
+  expect(summary).toHaveTextContent('Effective base opacity: 50%');
   expect(summary).not.toHaveTextContent('Preview is off');
 
   fireEvent.keyDown(ruler, {key: 'Home'});
-  expect(summary).toHaveTextContent('Effective opacity: 0%');
+  expect(summary).toHaveTextContent('Effective base opacity: 0%');
+  expect(summary).not.toHaveTextContent('Preview is off');
   fireEvent.click(screen.getByRole('button', {name: 'Stop'}));
-  expect(summary).toHaveTextContent('Effective opacity if previewed: 0%');
+  expect(summary).toHaveTextContent('Effective base opacity if previewed: 0%');
 });
 
-test('zero-base hint only describes base opacity, not independently styled strokes', () => {
+test('zero-base readout and hint only describe base opacity, not independently styled strokes', () => {
   const source = new GeoJsonLayer({label: 'Polygons'});
   source.config.visConfig = {
     ...source.config.visConfig,
@@ -1317,6 +1337,7 @@ test('zero-base hint only describes base opacity, not independently styled strok
   fireEvent.click(screen.getByRole('button', {name: 'Opacity 1 · Polygons'}));
   const summary = screen.getByLabelText('Layer opacity at playhead');
   expect(summary).toHaveTextContent('Base opacity: 0%');
+  expect(summary).toHaveTextContent('Effective base opacity: 0%');
   expect(summary).toHaveTextContent(
     'Raise Opacity in the layer settings to animate the layer’s base opacity.'
   );
@@ -1348,7 +1369,7 @@ test('shows zoom fade for each independent split pane without blaming a positive
     }
   };
   const {props, rerender} = setup({layers: [source], mapState, interactionConfig});
-  const playback = {...props.playback, elapsed: 4000};
+  const playback = {...props.playback, elapsed: 4000, animationTimeMs: 4000};
   const renderWithMap = (nextMapState: typeof mapState) =>
     rerender(
       <MapViewStateContextProvider mapState={nextMapState}>
@@ -1358,8 +1379,8 @@ test('shows zoom fade for each independent split pane without blaming a positive
   renderWithMap(mapState);
   fireEvent.doubleClick(screen.getByRole('button', {name: 'Opacity 1 · Points'}));
   const summary = screen.getByLabelText('Layer opacity at playhead');
-  expect(summary).toHaveTextContent('Left map: Effective opacity: 12.5% (zoom fade: 50%)');
-  expect(summary).toHaveTextContent('Right map: Effective opacity: 25%');
+  expect(summary).toHaveTextContent('Left map: Effective base opacity: 12.5% (zoom fade: 50%)');
+  expect(summary).toHaveTextContent('Right map: Effective base opacity: 25%');
 
   renderWithMap({
     ...mapState,
@@ -1368,11 +1389,11 @@ test('shows zoom fade for each independent split pane without blaming a positive
       {...camera, zoom: 8}
     ]
   });
-  expect(summary).toHaveTextContent('Left map: Effective opacity: 0% (zoom fade: 0%)');
+  expect(summary).toHaveTextContent('Left map: Effective base opacity: 0% (zoom fade: 0%)');
   expect(summary).not.toHaveTextContent('Raise Opacity in the layer settings');
 
   renderWithMap({...mapState, isViewportSynced: true});
-  expect(summary).toHaveTextContent('Effective opacity: 25%');
+  expect(summary).toHaveTextContent('Effective base opacity: 25%');
   expect(summary).not.toHaveTextContent('Left map:');
 });
 

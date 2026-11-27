@@ -505,7 +505,7 @@ function LayerOpacityReadout({
       {(fadesDiffer ? zoomFades : zoomFades.slice(0, 1)).map((fade, index) => (
         <div key={index}>
           {fadesDiffer ? (index === 0 ? 'Left map: ' : 'Right map: ') : ''}
-          {previewActive ? 'Effective opacity: ' : 'Effective opacity if previewed: '}
+          {previewActive ? 'Effective base opacity: ' : 'Effective base opacity if previewed: '}
           {opacityPercent.format(base * (track * fade))}
           {fade !== 1 && ` (zoom fade: ${opacityPercent.format(fade)})`}
         </div>
@@ -972,7 +972,10 @@ export default function AnimationEditorFactory(RangeSlider: ReturnType<typeof Ra
         <LayerOpacityReadout
           layer={opacityLayer}
           elapsed={playback.elapsed}
-          previewActive={playback.animationTimeMs !== null}
+          previewActive={
+            typeof playback.animationTimeMs === 'number' &&
+            Number.isFinite(playback.animationTimeMs)
+          }
           compact={compact}
           mapState={mapState}
           interactionConfig={interactionConfig}
