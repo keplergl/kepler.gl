@@ -106,6 +106,8 @@ describe('3D tile camera updates', () => {
 
     next.initializeState();
     next.context = {};
+    // Initialize deck.gl’s color format before simulating an existing tile cache.
+    next.updateState({props: next.props, oldProps: previous.props, changeFlags: flags});
     const cached = {layer: {}, needsUpdate: false};
     next.state.layerMap = {tile: cached};
     next.updateState({props: next.props, oldProps: previous.props, changeFlags: flags});
