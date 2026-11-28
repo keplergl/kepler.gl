@@ -533,6 +533,66 @@ describe('AnnotationManager selectors', () => {
     ]);
   });
 
+  const backgroundKinds = [
+    AnnotationKind.TEXT,
+    AnnotationKind.POINT,
+    AnnotationKind.ARROW,
+    AnnotationKind.CIRCLE,
+    AnnotationKind.RULER
+  ];
+  test.each(backgroundKinds)('enables a background from the collapsed header for %s', kind => {
+    const store = renderCaption({kind});
+    const group = screen.getByRole('button', {name: 'Background'});
+    const toggle = within(group).getByRole('checkbox', {name: 'Background'});
+    expect(toggle).not.toBeChecked();
+    expect(group).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByLabelText('Background opacity')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('button', {name: 'Elevation'})).toHaveLength(
+      kind === AnnotationKind.POINT ? 1 : 0
+    );
+    fireEvent.click(toggle);
+    expect(group).toHaveAttribute('aria-expanded', 'false');
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {
+        labelBackground: {color: '#000000', opacity: 0.7, padding: 8}
+      })
+    ]);
+  });
+  test.each(backgroundKinds)('groups and edits existing background settings for %s', kind => {
+    const labelBackground = {color: '#123456', opacity: 0.7, padding: 8};
+    const store = renderCaption({kind, labelBackground});
+    const group = screen.getByRole('button', {name: 'Background'});
+    const toggle = within(group).getByRole('checkbox', {name: 'Background'});
+    expect(toggle).toBeChecked();
+    expect(group).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByLabelText('Background opacity')).not.toBeInTheDocument();
+    fireEvent.click(group);
+    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
+    expect(screen.getByText('Background color')).toBeInTheDocument();
+    expect(screen.getByLabelText('Background opacity')).toHaveValue(0.7);
+    expect(screen.getByLabelText('Padding (px)')).toHaveValue(8);
+    fireEvent.change(screen.getByLabelText('Background opacity'), {target: {value: '0.4'}});
+    fireEvent.blur(screen.getByLabelText('Background opacity'));
+    fireEvent.change(screen.getByLabelText('Padding (px)'), {target: {value: '12'}});
+    fireEvent.blur(screen.getByLabelText('Padding (px)'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {
+        labelBackground: {...labelBackground, opacity: 0.4}
+      }),
+      VisStateActions.updateAnnotation('ruler-1', {
+        labelBackground: {...labelBackground, padding: 12}
+      })
+    ]);
+    store.clearActions();
+    fireEvent.click(group);
+    fireEvent.click(toggle);
+    expect(group).toHaveAttribute('aria-expanded', 'false');
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {labelBackground: undefined})
+    ]);
+  });
+
   test('does not offer a count without a dataset', () => {
     renderCaption({viewport}, false);
     fireEvent.click(screen.getByText('Static text'));
@@ -557,11 +617,11 @@ describe('AnnotationManager selectors', () => {
         kind === AnnotationKind.RULER
           ? ['Line Width', 'Color', 'Custom Text', 'Distance', 'Content']
           : ['Line Width', 'Color', 'Text Side', 'Placement', 'Content'];
-      labels.forEach((label, index) => {
+      labels.forEach(label => {
         expect(screen.getByText(label).parentElement).toHaveStyle({
           minHeight: theme.inputBoxHeightSmall,
           alignItems: 'center',
-          marginBottom: kind === AnnotationKind.RULER && index === labels.length - 1 ? '0' : '8px'
+          marginBottom: '8px'
         });
       });
     }
@@ -704,6 +764,7 @@ describe('AnnotationManager selectors', () => {
     fireEvent.blur(screen.getByLabelText('Offset (px)'));
     fireEvent.click(screen.getByLabelText('Dimension line'));
     fireEvent.change(screen.getByLabelText('Start name'), {target: {value: 'A'}});
+    fireEvent.click(screen.getByRole('button', {name: 'Background'}));
     fireEvent.change(screen.getByLabelText('Background opacity'), {target: {value: '0.5'}});
     fireEvent.blur(screen.getByLabelText('Background opacity'));
     await userEvent.click(screen.getByText('Auto (metric)'));
@@ -768,79 +829,60 @@ describe('Point elevation settings', () => {
     }
     return store;
   }
-  test('groups every elevation setting and keeps background controls independent', async () => {
+  test('keeps elevation controls directly in one group and background independent', async () => {
     const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION}, {}, false);
-    const elevationGroup = screen.getByRole('button', {name: 'Elevation'});
-    const elevationToggle = within(elevationGroup).getByRole('checkbox', {name: 'Elevation'});
-    expect(elevationToggle).toBeChecked();
-    expect(elevationGroup).toHaveAttribute('aria-expanded', 'false');
+    const group = screen.getByRole('button', {name: 'Elevation'});
+    const toggle = within(group).getByRole('checkbox', {name: 'Elevation'});
+    expect(toggle).toBeChecked();
     expect(screen.queryByLabelText('Show elevation')).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', {name: 'Value to display'})).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', {name: 'Advanced'})).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
-    expect(screen.getByText('Content').compareDocumentPosition(elevationGroup)).toBe(
+    expect(screen.getByText('Content').compareDocumentPosition(group)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING
     );
-    expect(
-      screen.getByRole('button', {name: 'Background'}).compareDocumentPosition(elevationGroup)
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(screen.getByRole('button', {name: 'Background'}).compareDocumentPosition(group)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
+    const controls = [
+      'Value to display',
+      'Label units',
+      'Decimals',
+      'Vertical guide',
+      'Marker style'
+    ];
+    const expectCollapsed = () => {
+      expect(group).toHaveAttribute('aria-expanded', 'false');
+      for (const name of controls) {
+        expect(screen.queryByRole('group', {name})).not.toBeInTheDocument();
+      }
+      expect(screen.queryByLabelText('Marker height (m)')).not.toBeInTheDocument();
+      expect(screen.queryByRole('status', {name: 'Label preview'})).not.toBeInTheDocument();
+    };
+    expectCollapsed();
+    group.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(group).toHaveAttribute('aria-expanded', 'true');
+    const content = document.getElementById(
+      group.getAttribute('aria-controls') || ''
+    ) as HTMLElement;
+    for (const name of controls) {
+      expect(within(content).getByRole('group', {name})).toBeInTheDocument();
+    }
+    expect(within(content).getByLabelText('Marker height (m)')).toHaveValue(7448.36);
+    expect(within(content).getByRole('status', {name: 'Label preview'})).toHaveTextContent(
+      '7448.36 m above map zero'
+    );
+    expect(screen.queryByRole('button', {name: 'Advanced'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Measured elevation')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Measured from')).not.toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Background'})).toHaveAttribute(
       'aria-expanded',
       'false'
     );
-    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
-    elevationGroup.focus();
-    await userEvent.keyboard('{Enter}');
-    expect(elevationGroup).toHaveAttribute('aria-expanded', 'true');
-    const content = document.getElementById(
-      elevationGroup.getAttribute('aria-controls') || ''
-    ) as HTMLElement;
-    expect(within(content).getByRole('group', {name: 'Value to display'})).toBeInTheDocument();
-    expect(within(content).getByRole('group', {name: 'Label units'})).toBeInTheDocument();
-    expect(within(content).getByRole('button', {name: 'Advanced'})).toBeInTheDocument();
-    expect(within(content).getByRole('button', {name: 'Elevation appearance'})).toBeInTheDocument();
-    expect(screen.getByText('Map height')).toBeInTheDocument();
-    expect(within(content).getByRole('status', {name: 'Label preview'})).toHaveTextContent(
-      '7448.36 m above map zero'
-    );
-    expect(screen.queryByLabelText('Measured elevation')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Compare with ground')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Marker height (m)')).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', {name: 'Decimals'})).not.toBeInTheDocument();
-    const advanced = screen.getByRole('button', {name: 'Advanced'});
-    advanced.focus();
-    await userEvent.keyboard('{Enter}');
-    expect(advanced).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByLabelText('Marker height (m)')).toHaveValue(7448.36);
-    expect(screen.queryByLabelText('Measured from')).not.toBeInTheDocument();
     await userEvent.keyboard(' ');
-    expect(advanced).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByLabelText('Marker height (m)')).not.toBeInTheDocument();
-    const elevationAppearance = screen.getByRole('button', {name: 'Elevation appearance'});
-    fireEvent.click(elevationAppearance);
-    expect(
-      within(screen.getByRole('group', {name: 'Decimals'})).getByRole('button', {name: '2'})
-    ).toBeInTheDocument();
-    expect(screen.getByRole('group', {name: 'Vertical guide'})).toBeInTheDocument();
-    expect(screen.getByRole('group', {name: 'Marker style'})).toBeInTheDocument();
-    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
-    fireEvent.click(elevationAppearance);
-    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', {name: 'Decimals'})).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', {name: 'Vertical guide'})).not.toBeInTheDocument();
-    expect(screen.queryByRole('group', {name: 'Marker style'})).not.toBeInTheDocument();
-    expect(advanced).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(advanced);
+    expectCollapsed();
+    expect(toggle).toBeChecked();
+    fireEvent.click(group);
     expect(screen.getByLabelText('Marker height (m)')).toHaveValue(7448.36);
-    elevationGroup.focus();
-    await userEvent.keyboard(' ');
-    expect(elevationGroup).toHaveAttribute('aria-expanded', 'false');
-    expect(elevationToggle).toBeChecked();
-    expect(screen.queryByRole('group', {name: 'Value to display'})).not.toBeInTheDocument();
-    expect(screen.queryByRole('status', {name: 'Label preview'})).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Marker height (m)')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', {name: 'Advanced'})).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
     expect(store.getActions()).toEqual([]);
   });
   test.each<[string, number]>([
@@ -849,7 +891,6 @@ describe('Point elevation settings', () => {
     ['0', 0]
   ])('rounds an edited marker height of %s to %s metres', (draft, expected) => {
     const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION}, {anchorPoint: [1, 2, 123.456789]});
-    fireEvent.click(screen.getByRole('button', {name: 'Advanced'}));
     const height = screen.getByLabelText('Marker height (m)');
     expect(height).toHaveValue(123.457);
     fireEvent.blur(height);
@@ -868,7 +909,6 @@ describe('Point elevation settings', () => {
   test('offers only zero through three decimals without changing an existing saved precision', async () => {
     const elevation = {...DEFAULT_MAP_HEIGHT_ELEVATION, precision: 6};
     const store = renderPoint(elevation);
-    fireEvent.click(screen.getByRole('button', {name: 'Elevation appearance'}));
     within(screen.getByRole('group', {name: 'Decimals'}))
       .getByRole('button', {name: '6'})
       .focus();
@@ -901,7 +941,6 @@ describe('Point elevation settings', () => {
         field: {dataId: 'detections', name: 'altitude'},
         reference: {value: 0, unit: 'm', datum: 'MSL'}
       });
-      fireEvent.click(screen.getByRole('button', {name: 'Advanced'}));
       const tooltipId = `annotation-ruler-1-elevation-${id}-help`;
       const tooltip = document.getElementById(tooltipId);
       expect(tooltip).toHaveTextContent(text);
@@ -1038,7 +1077,6 @@ describe('Point elevation settings', () => {
       reference: {value: 990, unit: 'm', datum: 'MSL'}
     };
     const store = renderPoint(elevation);
-    fireEvent.click(screen.getByRole('button', {name: 'Advanced'}));
     for (const [name, value] of [
       ['Measured elevation', '-1000'],
       ['Marker height (m)', '4900'],
@@ -1085,7 +1123,6 @@ describe('Point elevation settings', () => {
     expect(screen.getByLabelText('Measured elevation')).toHaveValue(null);
     fireEvent.change(screen.getByLabelText('Measured elevation'), {target: {value: '0'}});
     fireEvent.blur(screen.getByLabelText('Measured elevation'));
-    fireEvent.click(screen.getByRole('button', {name: 'Advanced'}));
     fireEvent.change(screen.getByLabelText('Measured from'), {target: {value: 'Local benchmark'}});
     expect(store.getActions()).toHaveLength(1);
     fireEvent.blur(screen.getByLabelText('Measured from'));
