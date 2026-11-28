@@ -200,7 +200,7 @@ const verticalScale = z
   .strict();
 const annotationFields = z.object({
   verticalScale: verticalScale.describe(
-    'Point vertical axis at the anchor footprint. Signed labels stay independent of a shifted drawing range. Uses shared annotation typography and line styling. Can be created without a caption or elevation callout.'
+    'Point vertical axis at the anchor footprint. Signed labels stay independent of a shifted drawing range. Uses shared annotation typography and line styling. Can be created without a caption or elevation callout. Omitted settings default to 0–1000 m, 250 m spacing and zero decimal places.'
   ),
   elevation: elevation.describe(
     'Point elevation callout. Choose source map for live anchor height above map zero, or measurement for captured values and a manual or terrain reference. Terrain resolves in the live map from a loaded DEM; unavailable terrain stays explicit. Partial updates preserve other settings.'
@@ -264,7 +264,9 @@ const updateSchema = annotationFields
     verticalScale: verticalScale
       .nullable()
       .optional()
-      .describe('Partial scale settings, or null to remove the scale.'),
+      .describe(
+        'Partial scale settings, or null to remove the scale. If absent, a partial patch creates a scale using defaults: 0–1000 m, 250 m spacing, zero decimal places.'
+      ),
     elevation: elevation
       .nullable()
       .optional()

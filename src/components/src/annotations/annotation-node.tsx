@@ -14,7 +14,8 @@ import {
   getRulerLabelAngle,
   isPointVisibleOnGlobe,
   getElevationGuide,
-  getVerticalScaleGeometry
+  getVerticalScaleGeometry,
+  hasAnnotationLabel
 } from './annotation-utils';
 
 const HANDLE_RADIUS = 6;
@@ -172,7 +173,7 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
       ? getVerticalScaleGeometry(annotation, viewport, isGlobeEnabled)
       : null;
   const scaleOnly = Boolean(
-    scale && !elevation && !annotation.label?.trim() && !annotation.readout
+    scale && !elevation && !hasAnnotationLabel(annotation) && !annotation.readout
   );
   const guide =
     annotation.kind === AnnotationKind.POINT

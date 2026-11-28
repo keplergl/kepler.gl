@@ -3,7 +3,7 @@
 
 import React from 'react';
 import {DndContext} from '@dnd-kit/core';
-import {act, fireEvent, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {
   $getRoot,
   $getSelection,
@@ -21,6 +21,7 @@ import {Annotation} from '@kepler.gl/types';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
 import AnnotationText from './annotation-text';
+import AnnotationNode from './annotation-node';
 import {MapViewport} from './annotation-utils';
 
 const viewport: MapViewport = {
@@ -706,4 +707,97 @@ test('vertical scale labels inherit formatting and background and declutter coll
   expect(screen.getByText('1.00 km')).toBeInTheDocument();
   expect(point.label).toBe('');
   expect(container.querySelector('[data-annotation-part="text"]')).toBeNull();
+});
+
+test.each([
+  {label: '', editorText: 'Rich caption', visible: true},
+  {label: 'Stale caption', editorText: '', visible: false},
+  {label: 'Plain caption', editorText: undefined, visible: true}
+])('scale caption and leader agree for $label / $editorText', ({label, editorText, visible}) => {
+  const point = makeRuler({
+    kind: AnnotationKind.POINT,
+    label,
+    editorState: editorText === undefined ? undefined : captionEditorState(editorText, ''),
+    anchorPoint: [0, 0],
+    armLength: 20,
+    angle: 0,
+    verticalScale: {min: 0, max: 1000, tickSpacing: 250, unit: 'm', precision: 0}
+  });
+  const {container} = renderWithTheme(
+    <DndContext>
+      <svg>
+        <AnnotationNode
+          annotation={point}
+          viewport={viewport}
+          isEditing={false}
+          isSelected={false}
+        />
+      </svg>
+      <AnnotationText
+        annotation={point}
+        viewport={viewport}
+        isEditing={false}
+        isSelected={false}
+        isEditingText={false}
+        onSelect={jest.fn()}
+        onChangeText={jest.fn()}
+        onUpdateAnnotation={jest.fn()}
+      />
+    </DndContext>
+  );
+  const caption = container.querySelector('[data-annotation-part="text"]');
+  expect(Boolean(caption)).toBe(visible);
+  expect(Boolean(container.querySelector('circle'))).toBe(visible);
+  expect(container.querySelectorAll('path')).toHaveLength(visible ? 3 : 2);
+  expect(caption?.textContent ?? null).toBe(visible ? editorText ?? label : null);
+});
+
+test('caption edits retain tick editors while value and typography changes update readouts', () => {
+  const point = makeRuler({
+    kind: AnnotationKind.POINT,
+    label: 'Caption',
+    editorState: captionEditorState('Caption', 'color: #ff0000;'),
+    anchorPoint: [0, 0],
+    armLength: 20,
+    angle: 0,
+    verticalScale: {min: 0, max: 1000, tickSpacing: 500, unit: 'm', precision: 0}
+  });
+  const vp = {...viewport, project: ([, , z = 0]: readonly number[]) => [300, 600 - z / 10]};
+  const view = (annotation: Annotation) => (
+    <DndContext>
+      <AnnotationText
+        annotation={annotation}
+        viewport={vp}
+        isEditing={false}
+        isSelected={false}
+        isEditingText={false}
+        onSelect={jest.fn()}
+        onChangeText={jest.fn()}
+        onUpdateAnnotation={jest.fn()}
+      />
+    </DndContext>
+  );
+  const {container, rerender} = render(view(point));
+  const tickEditors = () =>
+    Array.from(container.querySelectorAll('[data-annotation-part="scale-label"] .editor-input'));
+  const original = tickEditors();
+  expect(original).toHaveLength(3);
+  rerender(
+    view({
+      ...point,
+      label: 'Changed caption',
+      editorState: captionEditorState('Changed caption', 'color: #ff0000;')
+    })
+  );
+  tickEditors().forEach((editor, i) => expect(editor).toBe(original[i]));
+  rerender(
+    view({
+      ...point,
+      editorState: captionEditorState('Caption', 'color: #00ff00;'),
+      verticalScale: {min: 0, max: 1000, tickSpacing: 500, unit: 'm', precision: 2}
+    } as Annotation)
+  );
+  for (const value of ['0.00 m', '500.00 m', '1000.00 m']) {
+    expect(screen.getByText(value)).toHaveStyle({color: '#00ff00'});
+  }
 });

@@ -15,6 +15,8 @@ import {
   getAnnotationTextBoxStyle,
   getRulerDistanceLabel,
   getVerticalScaleGeometry,
+  firstTextNode,
+  hasAnnotationLabel,
   makeMarker,
   RulerAnnotationMarker,
   isPointVisibleOnGlobe,
@@ -27,26 +29,6 @@ import {
   SerializedLexicalNode,
   SerializedTextNode
 } from 'lexical';
-
-function firstTextNode(
-  node: SerializedLexicalNode,
-  requireContent = false
-): SerializedTextNode | undefined {
-  if (!node) return undefined;
-  if (node.type === 'text') {
-    const text = node as SerializedTextNode;
-    return !requireContent || (typeof text.text === 'string' && text.text.trim())
-      ? text
-      : undefined;
-  }
-  const children = (node as SerializedElementNode).children;
-  if (!Array.isArray(children)) return undefined;
-  for (const child of children) {
-    const text = firstTextNode(child, requireContent);
-    if (text) return text;
-  }
-  return undefined;
-}
 
 function readoutEditorState(
   editorState: SerializedEditorState | undefined,
@@ -266,11 +248,8 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   );
   const hasLabel = useMemo(() => {
     if (!hasReadout && !hasElevation && !hasScale) return true;
-    const blocks = (annotation.editorState as SerializedEditorState | undefined)?.root?.children;
-    return Array.isArray(blocks)
-      ? blocks.some(node => firstTextNode(node, true))
-      : Boolean(annotation.label?.trim());
-  }, [hasReadout, hasElevation, hasScale, annotation.editorState, annotation.label]);
+    return hasAnnotationLabel(annotation);
+  }, [hasReadout, hasElevation, hasScale, annotation]);
   // Keep the editor mounted and focused when its empty caption no longer takes a row.
   const emptyLabel = !hasLabel;
   const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
@@ -522,33 +501,38 @@ const AnnotationText: FC<AnnotationTextProps> = ({
           />
         </StyledAnnotationText>
       ))}
-      {scaleLabels.map(tick => (
-        <StyledAnnotationText
-          key={tick.value}
-          data-annotation-id={annotation.id}
-          data-annotation-part="scale-label"
-          style={{
-            ...backgroundStyle,
-            left: tick.x + 10,
-            top: tick.y,
-            transform: 'translateY(-50%)',
-            opacity,
-            pointerEvents: 'none',
-            visibility: opacity === 0 ? 'hidden' : undefined
-          }}
-        >
-          <LexicalRichTextEditor
-            key={JSON.stringify([tick.label, annotation.editorState])}
-            isEditable={false}
-            editorState={readoutEditorState(
-              annotation.editorState as SerializedEditorState | undefined,
-              tick.label
-            )}
-            initialText={tick.label}
-            onChange={ignoreReadoutChange}
-          />
-        </StyledAnnotationText>
-      ))}
+      {scaleLabels.map(tick => {
+        const formattedTick = readoutEditorState(
+          annotation.editorState as SerializedEditorState | undefined,
+          tick.label
+        );
+        return (
+          <StyledAnnotationText
+            key={tick.value}
+            data-annotation-id={annotation.id}
+            data-annotation-part="scale-label"
+            style={{
+              ...backgroundStyle,
+              left: tick.x + 10,
+              top: tick.y,
+              transform: 'translateY(-50%)',
+              opacity,
+              pointerEvents: 'none',
+              visibility: opacity === 0 ? 'hidden' : undefined
+            }}
+          >
+            <LexicalRichTextEditor
+              // Caption edits do not remount ticks. Value/style changes initialize
+              // synchronously so an export frame cannot capture stale text.
+              key={JSON.stringify([tick.label, formattedTick])}
+              isEditable={false}
+              editorState={formattedTick}
+              initialText={tick.label}
+              onChange={ignoreReadoutChange}
+            />
+          </StyledAnnotationText>
+        );
+      })}
     </>
   );
 };

@@ -1125,3 +1125,15 @@ test('a terrain request converts map-height mode and rejects an explicit conflic
     }
   });
 });
+
+test('a partial scale patch on a point without a scale returns the documented defaults', async () => {
+  const {context} = setup();
+  const id = 'new-default-scale';
+  await execute(getAddAnnotationCommand(context), {...text, id, kind: 'point'});
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id, verticalScale: {precision: 2}})
+  ).toMatchObject({
+    success: true,
+    data: {verticalScale: {min: 0, max: 1000, tickSpacing: 250, unit: 'm', precision: 2}}
+  });
+});
