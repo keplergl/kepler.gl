@@ -1093,3 +1093,35 @@ test('rejects vertical scales on non-point annotations', async () => {
     await execute(getAddAnnotationCommand(context), {...text, verticalScale: {}})
   ).toMatchObject({success: false});
 });
+
+test('a terrain request converts map-height mode and rejects an explicit conflicting map mode', async () => {
+  const {context} = setup();
+  const id = 'map-to-terrain';
+  await execute(getAddAnnotationCommand(context), {
+    id,
+    kind: 'point',
+    anchorPoint: [1, 2, 9000],
+    elevation: {source: 'map', value: 7448.36, datum: 'MSL'}
+  });
+  const before = context.getVisState();
+  const reference = {source: 'terrain', datum: 'MSL'};
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id, elevation: {source: 'map', reference}})
+  ).toMatchObject({success: false, error: expect.stringContaining('measurement mode')});
+  expect(context.getVisState()).toBe(before);
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id,
+      elevation: {reference, display: 'both'}
+    })
+  ).toMatchObject({
+    success: true,
+    data: {
+      elevation: {
+        source: 'measurement',
+        value: 7448.36,
+        reference: {...reference, value: null, unit: 'm'}
+      }
+    }
+  });
+});

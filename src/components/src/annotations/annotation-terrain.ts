@@ -22,7 +22,7 @@ type TerrainMap = {
       mercatorY: number;
     };
     sourceCache?: {
-      getSourceTile?: (tileID: unknown, searchParents: boolean) => {dem?: unknown} | undefined;
+      getSourceTile?: (tileID: unknown, searchForDEM: boolean) => {dem?: unknown} | undefined;
     };
     getDEMElevation?: (tileID: unknown, x: number, y: number, extent: number) => number;
   };
@@ -42,7 +42,7 @@ export function sampleAnnotationTerrain(
     let value: number | null | undefined;
     let exaggeration = options.exaggeration ?? 1;
     if (library === 'maplibre') {
-      // MapLibre 4's public query returns a camera-relative offset. Its DEM
+      // MapLibre 4.7.1's public query returns a camera-relative offset. Its DEM
       // reader provides an absolute, unexaggerated sample, but returns zero
       // for an absent tile. Guard the covering tile before calling it. These
       // capability checks fail closed if a host changes the terrain internals.

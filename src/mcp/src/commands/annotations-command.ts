@@ -167,7 +167,7 @@ const elevation = z
           })
           .strict()
           .describe(
-            'Capture loaded basemap terrain at the anchor. Reapply to refresh. The unexaggerated measurement and exaggerated drawing height are saved for export; unavailable terrain never becomes zero.'
+            'Capture loaded basemap terrain at the anchor and select measurement mode. Send only source and datum; sampled value/unit/displayZ/coordinate/sourceId are output-only. Reapply to refresh. The unexaggerated measurement and exaggerated drawing height are saved for export; unavailable terrain never becomes zero.'
           )
       ])
       .nullable(),
@@ -413,6 +413,9 @@ function annotationConfig(
       'Invalid vertical scale: use an increasing finite range, positive spacing (at most 101 ticks), and either no drawing range or both increasing drawing heights.'
     );
   }
+  if (elevation?.reference?.source === 'terrain' && elevation.source === 'map') {
+    throw new Error('Terrain references require measurement mode; omit source or use measurement.');
+  }
   if (elevation !== undefined && kind !== AnnotationKind.POINT) {
     throw new Error('Elevation callouts are only supported for point annotations.');
   }
@@ -465,7 +468,10 @@ function annotationConfig(
                   ...(previous?.kind === AnnotationKind.POINT ? previous.elevation : {}),
                   ...elevation,
                   ...(elevation.reference?.source === 'terrain'
-                    ? {reference: {...elevation.reference, value: null, unit: 'm'}}
+                    ? {
+                        source: 'measurement',
+                        reference: {...elevation.reference, value: null, unit: 'm'}
+                      }
                     : {}),
                   ...(elevation.field === null ? {field: undefined} : {}),
                   ...(elevation.field && elevation.value === undefined ? {value: null} : {})

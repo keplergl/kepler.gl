@@ -99,6 +99,12 @@ export function getElevationGuide(
   if (!elevation || elevation.guide === 'none' || getElevationReferenceStatus(elevation))
     return null;
   const reference = elevation.reference;
+  if (
+    elevation.source !== 'map' &&
+    reference?.source === 'terrain' &&
+    reference.displayZ === undefined
+  )
+    return null;
   const z =
     elevation.source === 'map'
       ? 0
