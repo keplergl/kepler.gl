@@ -25,8 +25,6 @@ const config = {
   // the ESM entry points directly; they are transpiled via
   // transformIgnorePatterns below.
   moduleNameMapper: {
-    '^@loaders\\.gl/tiles/mvt/bundled$':
-      '<rootDir>/node_modules/@loaders.gl/tiles/dist/mvt/bundled.js',
     '^zarrita$': '<rootDir>/node_modules/zarrita/dist/src/index.js',
     '^@zarrita/storage$': '<rootDir>/node_modules/@zarrita/storage/dist/src/index.js',
     '^@zarrita/storage/(.*)$': '<rootDir>/node_modules/@zarrita/storage/dist/src/$1.js',

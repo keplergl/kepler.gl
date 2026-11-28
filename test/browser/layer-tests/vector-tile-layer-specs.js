@@ -10,7 +10,6 @@ import {
 } from '../../../src/layers/src/vector-tile/pmtiles-bounds';
 import sinon from 'sinon';
 import {createDataSourceSync} from '@loaders.gl/core';
-import {MVTLoader} from '@loaders.gl/tiles/mvt/bundled';
 import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 import {zxyToTileId} from 'pmtiles';
 import {LayerManager, MapView, WebMercatorViewport, _GlobeView} from '@deck.gl/core';
@@ -28,7 +27,7 @@ import {drainTasksForTesting} from '@kepler.gl/tasks';
 import {preparedDataset, dataId} from 'test/helpers/layer-utils';
 import {KeplerGlLayers} from '@kepler.gl/layers';
 import {MISSING_VALUE_COLOR, NO_VALUE_COLOR, RemoteTileFormat} from '@kepler.gl/constants';
-import {KeplerTable, parseVectorMetadata} from '@kepler.gl/table';
+import {KeplerTable, MVTSourceLoader, parseVectorMetadata} from '@kepler.gl/table';
 import {getFilterProps, getLayerBlendingParameters} from '@kepler.gl/utils';
 
 const {VectorTileLayer} = KeplerGlLayers;
@@ -1518,7 +1517,7 @@ for (const path of ['header', 'directory']) {
 }
 
 test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs', async t => {
-  const seed = createDataSourceSync('https://example.com/seed', MVTLoader, {
+  const seed = createDataSourceSync('https://example.com/seed', MVTSourceLoader, {
     mvt: {metadataUrl: null},
     core: {
       fetch: async () => ({
@@ -1534,7 +1533,7 @@ test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs'
   const pmMetadata = sinon
     .stub(PMTilesTileSource.prototype, 'getMetadata')
     .callsFake(async () => ({}));
-  const mvtConstruct = sinon.spy(MVTLoader, 'createDataSourceSync');
+  const mvtConstruct = sinon.spy(MVTSourceLoader, 'createDataSourceSync');
   const pmConstruct = sinon.spy(PMTilesLoader, 'createDataSourceSync');
   try {
     for (const format of [RemoteTileFormat.MVT, RemoteTileFormat.PMTILES]) {

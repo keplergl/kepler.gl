@@ -8,8 +8,13 @@ import uniq from 'es-toolkit/compat/uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
 import {createDataSourceSync} from '@loaders.gl/core';
-import {MVTLoader} from '@loaders.gl/tiles/mvt/bundled';
-import type {TileJSON} from '@loaders.gl/tiles/mvt';
+import type {CoreAPI} from '@loaders.gl/core/loader-utils';
+import {
+  MVTLoader,
+  MVTTileSource,
+  type MVTSourceLoaderOptions,
+  type TileJSON
+} from '@loaders.gl/tiles/mvt';
 import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 
 import {
@@ -36,6 +41,14 @@ import {
   StringFieldFilterProps,
   default as KeplerDataset
 } from '../kepler-table';
+
+/** Source factory supported by both the ESM app and CommonJS consumers. */
+export const MVTSourceLoader = {
+  ...MVTLoader,
+  preload: undefined,
+  createDataSourceSync: (url: string, options: MVTSourceLoaderOptions, coreApi?: CoreAPI) =>
+    new MVTTileSource(url, options, coreApi)
+};
 
 export function isTileDataset(dataset: KeplerDataset | {type: string}): boolean {
   return Boolean(dataset?.type === DatasetType.VECTOR_TILE);
@@ -751,7 +764,7 @@ export const getFieldsFromTile = async ({
 
       const tileSource =
         remoteTileFormat === RemoteTileFormat.MVT
-          ? createDataSourceSync(decodeURIComponent(tilesetUrl), MVTLoader, {
+          ? createDataSourceSync(decodeURIComponent(tilesetUrl), MVTSourceLoader, {
               mvt: {
                 metadataUrl: decodeURIComponent(metadataUrl),
                 shape: 'geojson-table'

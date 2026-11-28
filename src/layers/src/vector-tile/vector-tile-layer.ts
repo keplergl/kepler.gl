@@ -11,9 +11,11 @@ import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
 import {GeoJsonLayer, PathLayer} from '@deck.gl/layers';
 import {ClipExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {createDataSourceSync} from '@loaders.gl/core';
-import {MVTLoader} from '@loaders.gl/tiles/mvt/bundled';
 import type {MVTTileSource} from '@loaders.gl/tiles/mvt';
-import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
+import {
+  PMTilesLoaderWithParser as PMTilesLoader,
+  PMTilesTileSource
+} from '@loaders.gl/tiles/pmtiles';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
@@ -33,6 +35,7 @@ import {
 } from '@kepler.gl/constants';
 import {
   getTileUrl,
+  MVTSourceLoader,
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
   GpuFilter,
@@ -353,7 +356,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         };
 
         return tilesetDataUrl
-          ? createDataSourceSync(decodeURIComponent(tilesetDataUrl), MVTLoader, {
+          ? createDataSourceSync(decodeURIComponent(tilesetDataUrl), MVTSourceLoader, {
               mvt: {
                 metadataUrl: tilesetMetadataUrl,
                 shape: 'geojson-table'
