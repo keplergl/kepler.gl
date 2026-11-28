@@ -27,7 +27,7 @@ jest.mock('@deck.gl/react', () => {
     }
     record.current.props = props;
     record.current.deck.props = props;
-    React.useImperativeHandle(ref, () => ({deck: record.current.deck}));
+    React.useImperativeHandle(ref, () => record.current.deck);
     return null;
   });
   return {DeckGL};

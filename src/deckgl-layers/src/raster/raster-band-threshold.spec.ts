@@ -40,7 +40,7 @@ function assemble(enabled: boolean, combineBands = combineBandsFloat) {
       }`,
     modules: [rasterProcessingUniforms as ShaderModule, ...plugins.modules],
     defines: plugins.defines,
-    inject: plugins.injections,
+    pluginInjections: plugins.injections,
     injectionTargets: [
       ...plugins.injectionTargets,
       {

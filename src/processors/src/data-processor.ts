@@ -507,7 +507,7 @@ export function processKeplerglDataset(
  *   }
  * }));
  */
-export function processArrowTable(arrowTable: {data: arrow.Table}): ProcessorResult | null {
+export function processArrowTable(arrowTable: {shape?: 'arrow-table'; data: arrow.Table}): ProcessorResult | null {
   // @ts-ignore - Unknown data type causing build failures
   return processArrowBatches(arrowTable.data.batches);
 }

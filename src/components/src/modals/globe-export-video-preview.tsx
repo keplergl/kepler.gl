@@ -148,7 +148,7 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
       >
         <DeckGL
           ref={ref => {
-            this.deckRef.current = (ref?.deck as any) || null;
+            this.deckRef.current = ref;
           }}
           deviceProps={EXPORT_DECK_DEVICE_PROPS}
           {...adapterProps}

@@ -353,7 +353,7 @@ export class SwipeExportVideoPreview extends Component<
       return (
         <MapLayer $width={width} $height={height}>
           <DeckGL
-            ref={ref => setRef(deckRef, ref?.deck as any)}
+            ref={ref => setRef(deckRef, ref)}
             deviceProps={EXPORT_DECK_DEVICE_PROPS}
             {...adapterProps}
             viewState={viewState}

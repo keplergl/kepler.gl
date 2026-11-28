@@ -903,7 +903,7 @@ test.each([false, true])(
       const polygonLayer = fill.getSubLayers()[0] as ContourSurfaceLayer;
       const attributes = polygonLayer.getAttributeManager()!.getAttributes();
       expect(attributes.indices.value!.length).toBeGreaterThan(0);
-      const positions = Array.from(attributes.vertexPositions.value!);
+      const positions = Array.from(attributes.vertexPositions.value as ArrayLike<number>);
       expect(positions.every(Number.isFinite)).toBe(true);
       for (let i = 0; i < positions.length; i += 3) {
         expect(Math.abs(positions[i])).toBeLessThanOrEqual(180);
