@@ -685,6 +685,7 @@ function ElevationSettings({
   onChange: (changes: Partial<Annotation>) => void;
 }) {
   const elevation = annotation.elevation;
+  const [backgroundOpen, setBackgroundOpen] = React.useState(false);
   const [advancedOpen, setAdvancedOpen] = React.useState(false);
   const [elevationAppearanceOpen, setElevationAppearanceOpen] = React.useState(false);
   const patch = (changes: Partial<AnnotationElevation>) =>
@@ -809,6 +810,13 @@ function ElevationSettings({
   );
   return (
     <>
+      {disclosure(
+        'background',
+        'Background',
+        backgroundOpen,
+        setBackgroundOpen,
+        <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
+      )}
       {row('show', 'Show elevation', name => (
         <StyledRulerSwitch
           id={`annotation-${annotation.id}-elevation-show`}
@@ -1776,23 +1784,14 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                         />
                       ) : null}
                       {annotation.kind === AnnotationKind.POINT ? (
-                        <>
-                          <AnnotationBackgroundSettings
-                            annotation={annotation}
-                            intl={intl}
-                            onChange={changes =>
-                              visStateActions.updateAnnotation(annotation.id, changes)
-                            }
-                          />
-                          <ElevationSettings
-                            annotation={annotation}
-                            datasets={visState.datasets}
-                            intl={intl}
-                            onChange={changes =>
-                              visStateActions.updateAnnotation(annotation.id, changes)
-                            }
-                          />
-                        </>
+                        <ElevationSettings
+                          annotation={annotation}
+                          datasets={visState.datasets}
+                          intl={intl}
+                          onChange={changes =>
+                            visStateActions.updateAnnotation(annotation.id, changes)
+                          }
+                        />
                       ) : null}
                     </StyledConfigSection>
                   ) : null}

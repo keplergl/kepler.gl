@@ -761,17 +761,21 @@ describe('Point elevation settings', () => {
     );
     return store;
   }
-  test('shows general appearance before elevation and reveals advanced and elevation appearance on demand', async () => {
+  test('shows the background group before elevation and reveals elevation settings independently', async () => {
     const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION});
     expect(
       screen.getByText('Content').compareDocumentPosition(screen.getByLabelText('Show elevation'))
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(
       screen
-        .getByLabelText('Label background')
+        .getByRole('button', {name: 'Background'})
         .compareDocumentPosition(screen.getByLabelText('Show elevation'))
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(screen.queryByRole('button', {name: 'Appearance'})).not.toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Background'})).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
     expect(screen.getByText('Map height')).toBeInTheDocument();
     expect(screen.getByRole('status', {name: 'Label preview'})).toHaveTextContent(
       '7448.36 m above map zero'
@@ -796,9 +800,9 @@ describe('Point elevation settings', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('group', {name: 'Vertical guide'})).toBeInTheDocument();
     expect(screen.getByRole('group', {name: 'Marker style'})).toBeInTheDocument();
-    expect(screen.getByLabelText('Label background')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
     fireEvent.click(elevationAppearance);
-    expect(screen.getByLabelText('Label background')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
     expect(screen.queryByRole('group', {name: 'Decimals'})).not.toBeInTheDocument();
     expect(screen.queryByRole('group', {name: 'Vertical guide'})).not.toBeInTheDocument();
     expect(screen.queryByRole('group', {name: 'Marker style'})).not.toBeInTheDocument();
@@ -923,12 +927,31 @@ describe('Point elevation settings', () => {
       ]);
     }
   );
-  test('keeps the caption background editable when elevation is disabled', () => {
+  test('groups all background controls and keeps them editable when elevation is disabled', async () => {
     const store = renderPoint(undefined, {
       labelBackground: {color: '#000000', opacity: 0.7, padding: 8}
     });
     expect(screen.getByLabelText('Show elevation')).not.toBeChecked();
     expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
+    const background = screen.getByRole('button', {name: 'Background'});
+    const expectHiddenControls = () => {
+      expect(background).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
+      expect(screen.queryByText('Background color')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Background opacity')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Padding (px)')).not.toBeInTheDocument();
+    };
+    expectHiddenControls();
+    background.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(background).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Background color')).toBeInTheDocument();
+    expect(screen.getByLabelText('Background opacity')).toHaveValue(0.7);
+    expect(screen.getByLabelText('Padding (px)')).toHaveValue(8);
+    await userEvent.keyboard(' ');
+    expectHiddenControls();
+    fireEvent.click(background);
+    expect(store.getActions()).toEqual([]);
     expect(screen.getByLabelText('Label background')).toBeChecked();
     fireEvent.click(screen.getByLabelText('Label background'));
     expect(store.getActions()).toEqual([
