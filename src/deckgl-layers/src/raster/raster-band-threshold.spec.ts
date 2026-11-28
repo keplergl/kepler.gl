@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {assembleGLSLShaderPair, type ShaderModule} from '@luma.gl/shadertools';
+import {assembleGLSLShaderPair, type ShaderModule} from '@luma.gl/shaders';
 import {spawnSync} from 'child_process';
 import {prepareLumaModules} from './raster-layer/raster-layer-shaders';
 import {rasterProcessingUniforms} from './raster-processing-uniforms';

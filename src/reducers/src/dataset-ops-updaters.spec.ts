@@ -12,7 +12,7 @@ import {
   processGeojson,
   processKeplerglJSON
 } from '@kepler.gl/processors';
-import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {convertGeometryToWKB} from '@loaders.gl/core/geoarrow';
 import * as arrow from 'apache-arrow';
 import GeoJsonLayer from '../../layers/src/geojson-layer/geojson-layer';
 import {datasetSchema, VERSIONS} from '@kepler.gl/schemas';

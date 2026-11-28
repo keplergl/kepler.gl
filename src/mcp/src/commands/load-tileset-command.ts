@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {z} from 'zod';
-import {PMTilesSource} from '@loaders.gl/pmtiles';
+import {PMTilesSourceLoader} from '@loaders.gl/tiles/pmtiles';
 import {addDataToMap} from '@kepler.gl/actions';
 import {
   ALL_FIELD_TYPES,
@@ -185,7 +185,7 @@ export function getLoadTilesetCommand(ctx: KeplerContext): RoomCommand {
           const metadataUrl = args.metadataUrl ?? (pmtiles ? args.url : getMetaUrl(args.url));
           if (!metadataUrl) throw new Error('Provide a vector metadataUrl.');
           const raw = pmtiles
-            ? await PMTilesSource.createDataSource(args.url, {}).metadata
+            ? await PMTilesSourceLoader.createDataSourceSync(args.url, {}).metadata
             : await getMVTMetadata(metadataUrl);
           if (!raw) throw new Error('Failed to read vector metadata.');
           const parsed = parseVectorMetadata(raw, {tileUrl: metadataUrl});
@@ -209,7 +209,7 @@ export function getLoadTilesetCommand(ctx: KeplerContext): RoomCommand {
           let parsed;
           if (pmtiles) {
             parsed = parseVectorMetadata(
-              await PMTilesSource.createDataSource(args.url, {}).metadata,
+              await PMTilesSourceLoader.createDataSourceSync(args.url, {}).metadata,
               {tileUrl: args.url}
             );
             if (parsed?.pmtilesType !== PMTilesType.RASTER)

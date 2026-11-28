@@ -72,39 +72,23 @@ const getKeplerAliases = () => ({
   '@kepler.gl/components/charts': join(SRC_DIR, 'components', 'src', 'charts.ts')
 });
 
-/**
- * The local kepler src is built against the workspace's deck.gl 9 / luma 9 /
- * math.gl 4 / probe.gl stack in the ROOT node_modules, but the demo-app's own
- * node_modules carries older versions (deck.gl 8 / luma.gl 8). Point every
- * scoped module of those stacks at the root `src/` so the bundled kepler src
- * sees the versions it was written against — deck/luma in particular must be a
- * single instance shared with the rest of the bundle. Mirrors the existing
- * `--env.deck` aliases but applies in every mode (kepler src is now always
- * bundled). Scopes absent from root are left to normal resolution.
- *
- * `@loaders.gl` is deliberately NOT aliased: kepler src (3.3) needs loaders 4.4
- * while the demo's own `src/actions.js` still uses 4.3-era names
- * (`ParquetWasmLoader`, `_GeoJSONLoader`) that 4.4 renamed. esbuild resolves
- * per-importing-file, so leaving the scope alone gives each tree its own copy —
- * kepler src files walk up from /kepler.gl/src to root's 4.4, demo files to the
- * demo's 4.3. The two copies are independent (no shared module state), so this
- * is safe, unlike deck/luma which must not be duplicated.
- */
-const getLocalSourceStackAliases = () => {
-  const aliases = {};
-  ['@deck.gl', '@luma.gl', '@math.gl', '@probe.gl'].forEach(scope => {
-    const scopeDir = join(NODE_MODULES_DIR, scope);
-    let items;
-    try {
-      items = fs.readdirSync(scopeDir);
-    } catch {
-      return; // not installed at root — keep node resolution
-    }
-    items.forEach(mdl => {
-      aliases[`${scope}/${mdl}`] = join(scopeDir, mdl, 'src');
-    });
-  });
-  return aliases;
+// Resolve the workspace's rendering stack through its published exports so
+// imports from local Kepler and nested demo dependencies share one instance.
+const resolveWorkspaceVisgl = {
+  name: 'resolve-workspace-visgl',
+  setup(build) {
+    build.onResolve(
+      {filter: /^(?:@(?:deck|luma|math)\.gl\/|@deck\.gl-community\/|probe\.gl(?:\/|$))/},
+      args => {
+        if (args.pluginData?.resolvingWorkspaceVisgl) return;
+        return build.resolve(args.path, {
+          kind: args.kind,
+          resolveDir: join(__dirname, NODE_MODULES_DIR),
+          pluginData: {resolvingWorkspaceVisgl: true}
+        });
+      }
+    );
+  }
 };
 
 const getThirdPartyLibraryAliases = useKeplerNodePackage => {
@@ -119,7 +103,6 @@ const getThirdPartyLibraryAliases = useKeplerNodePackage => {
 
   return {
     ...getKeplerAliases(),
-    ...getLocalSourceStackAliases(),
     ...localSources,
     // Share SQLRooms UI/layout contexts across the local adapter and demo.
     '@sqlrooms/ui': join(BASE_NODE_MODULES_DIR, '@sqlrooms/ui'),
@@ -174,6 +157,10 @@ const checkEnvVariables = () => {
 const NODE_ENV = JSON.stringify(process.env.NODE_ENV || 'production');
 const config = {
   platform: 'browser',
+  conditions: ['visgl:webgl-only', 'module'],
+
+  // LERC imports Node's module helper only on its Node execution path.
+  external: ['module'],
   format: 'iife',
   logLevel: 'info',
   // Silence noisy warnings from prebuilt third-party deps (e.g. @deck.gl-community
@@ -255,27 +242,6 @@ const config = {
       }
     }
   ]
-};
-
-// Force @luma.gl/* and @deck.gl/* to the root monorepo node_modules.
-// The demo-app may install newer patch versions, but kepler.gl was built
-// and tested against the root versions (luma.gl 9.3.2 / deck.gl 9.3.1).
-// NOT added to config.plugins directly — it is injected conditionally so
-// that --env.deck / --env.deck_src modes (which alias deck.gl to a local
-// source tree) are not overridden.
-const dedupeWebglPlugin = {
-  name: 'dedupe-webgl',
-  setup(build) {
-    build.onResolve({filter: /^(@luma\.gl\/|@deck\.gl\/)/}, async args => {
-      if (args.pluginData?.deduped) return;
-      const result = await build.resolve(args.path, {
-        resolveDir: NODE_MODULES_DIR,
-        kind: args.kind,
-        pluginData: {deduped: true}
-      });
-      return result;
-    });
-  }
 };
 
 function addAliases(externals, args) {
@@ -387,6 +353,9 @@ function openURL(url) {
   const localAliases = addAliases(externals, args);
 
   if (args.includes('--build')) {
+    // Keep esbuild's Go subprocess within the memory budget of hosted builds.
+    process.env.GOMEMLIMIT ??= '2GiB';
+    process.env.GOMAXPROCS ??= '2';
     // Generate the Tailwind stylesheet for the production build. The dev
     // (`--start`) path starts a watcher, but `--build` never ran Tailwind, so
     // dist/tailwind.css (referenced by dist/index.html) only ever existed when
@@ -419,7 +388,7 @@ function openURL(url) {
         // Optionally generate a bundle analysis
         plugins: [
           ...config.plugins,
-          dedupeWebglPlugin,
+          resolveWorkspaceVisgl,
           {
             name: 'bundle-analyzer',
             setup(build) {
@@ -462,7 +431,7 @@ function openURL(url) {
     await esbuild
       .context({
         ...config,
-        plugins: [...config.plugins, ...(useDeckOverride ? [] : [dedupeWebglPlugin])],
+        plugins: [...config.plugins, ...(useDeckOverride ? [] : [resolveWorkspaceVisgl])],
         minify: false,
         sourcemap: true,
         alias: {

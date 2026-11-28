@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {WebGLDevice} from '@luma.gl/core/webgl';
 import {UpdateParameters} from '@deck.gl/core';
 import {BitmapLayer} from '@deck.gl/layers';
 import isEqual from 'es-toolkit/compat/isEqual';
@@ -55,7 +56,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       const retry = this._pendingImageRetry;
       this._pendingImageRetry = null;
       const {images: newImages, hasPendingUploads} = loadImages({
-        gl: this.context.device?.gl || this.context.gl,
+        gl: (this.context.device as WebGLDevice)?.gl || this.context.gl,
         device: this.context.device,
         images: this.state.images,
         imagesData: retry,
@@ -144,12 +145,8 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
       ...parentShaders,
       vs: buildRasterVertexShader(),
       fs: buildRasterFragmentShader(),
-      modules: [
-        ...(parentShaders.modules || []),
-        rasterUniforms,
-        rasterProcessingUniforms,
-        ...lumaModules
-      ]
+      modules: [...(parentShaders.modules || []), rasterUniforms, rasterProcessingUniforms],
+      plugins: [...(parentShaders.plugins || []), ...lumaModules]
     };
   }
 
@@ -209,7 +206,7 @@ export default class RasterLayer extends BitmapLayer<RasterLayerAddedProps> {
   }): void {
     const {images} = this.state;
     const device = this.context.device;
-    const gl = device?.gl || this.context.gl;
+    const gl = (device as WebGLDevice)?.gl || this.context.gl;
 
     const {images: newImages, hasPendingUploads} = loadImages({
       gl,

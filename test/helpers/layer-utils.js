@@ -14,7 +14,6 @@ import {
   INITIAL_VIS_STATE,
   renderDeckGlLayer,
   validateLayerWithData,
-  mapStateReducer as mapState,
   visStateReducer,
   keplerGlReducerCore
 } from '@kepler.gl/reducers';
@@ -316,6 +315,7 @@ export function testUpdateLayer(t, {layerConfig, shouldUpdate}) {
   const layer = stateWithLayer.visState.layers[0];
   t.ok(layer, 'should create layer');
 
+  const {mapState} = stateWithLayer;
   const testViewport = new MapView().makeViewport({
     width: mapState.width,
     height: mapState.height,

@@ -5,11 +5,10 @@
 // SEE: https://github.com/iTowns/itowns/blob/master/src/Core/Prefab/Globe/Atmosphere.js
 // SEE: https://developer.nvidia.com/gpugems/gpugems2/part-ii-shading-lighting-and-shadows/chapter-16-accurate-atmospheric-scattering
 
-import {COORDINATE_SYSTEM} from '@deck.gl/core';
 import {SimpleMeshLayer} from '@deck.gl/mesh-layers';
 import {SphereGeometry} from '@luma.gl/engine';
 import {Vector3} from '@math.gl/core';
-import {getSunPosition} from '@math.gl/sun';
+import {getSunPosition} from '@math.gl/earth/sun';
 
 import {DEFAULT_GLOBE_CONFIG, type GlobeConfig} from '@kepler.gl/constants';
 
@@ -347,17 +346,23 @@ export class AtmosphereSkyLayerRealistic extends SimpleMeshLayer<any, Atmosphere
 }
 
 const ATMOSPHERE_PARAMETERS = {
-  depthTest: false,
-  blendFunc: [0x0302, 0x0303, 1, 0x0303], // SRC_ALPHA, ONE_MINUS_SRC_ALPHA, ONE, ONE_MINUS_SRC_ALPHA
-  blendEquation: [0x8006, 0x8006] // FUNC_ADD
-};
+  depthCompare: 'always',
+  blend: true,
+  blendColorSrcFactor: 'src-alpha',
+  blendColorDstFactor: 'one-minus-src-alpha',
+  blendAlphaSrcFactor: 'one',
+  blendAlphaDstFactor: 'one-minus-src-alpha'
+} as const;
 
 const ATMOSPHERE_SKY_PARAMETERS = {
-  cullFace: 0x0404, // GL.FRONT
-  depthMask: false,
-  blendFunc: [0x0302, 0x0303, 1, 0x0303],
-  blendEquation: [0x8006, 0x8006]
-};
+  cullMode: 'front',
+  depthWriteEnabled: false,
+  blend: true,
+  blendColorSrcFactor: 'src-alpha',
+  blendColorDstFactor: 'one-minus-src-alpha',
+  blendAlphaSrcFactor: 'one',
+  blendAlphaDstFactor: 'one-minus-src-alpha'
+} as const;
 
 /**
  * Soft, sun-independent glow. Radii are in deck.gl common space
@@ -378,13 +383,16 @@ const HUGE_HALO_UNIFORMS = {
 };
 
 const HUGE_HALO_PARAMETERS = {
-  cullFace: 0x0404, // GL.FRONT
-  depthMask: false,
+  cullMode: 'front',
+  depthWriteEnabled: false,
   // Large shells often enclose the camera; disable depth so the ring still draws.
-  depthTest: false,
-  blendFunc: [0x0302, 0x0303, 1, 0x0303], // SRC_ALPHA, ONE_MINUS_SRC_ALPHA
-  blendEquation: [0x8006, 0x8006]
-};
+  depthCompare: 'always',
+  blend: true,
+  blendColorSrcFactor: 'src-alpha',
+  blendColorDstFactor: 'one-minus-src-alpha',
+  blendAlphaSrcFactor: 'one',
+  blendAlphaDstFactor: 'one-minus-src-alpha'
+} as const;
 
 function resolveHugeHaloRadius(config: GlobeConfig): number {
   const multiplier = Number.isFinite(config.hugeHaloRadius)
@@ -478,7 +486,7 @@ export const getGlobeAtmosphereLayer = ({config, zoom}: {config: GlobeConfig; zo
     config,
     zoomFade,
     coordinateOrigin: [0, 0, 0],
-    coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+    coordinateSystem: 'cartesian',
     getPosition: ((d: number[]) => d) as any,
     getColor: [0, 0, 0],
     mesh: GLOBE_MESH_INNER,
@@ -501,7 +509,7 @@ export const getGlobeAtmosphereSkyLayer = ({
     config,
     zoomFade,
     coordinateOrigin: [0, 0, 0],
-    coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+    coordinateSystem: 'cartesian',
     getPosition: ((d: number[]) => d) as any,
     getColor: [0, 0, 0],
     mesh: GLOBE_MESH_OUTER,
@@ -527,7 +535,7 @@ export const getGlobeHugeHaloLayer = ({config, zoom}: {config: GlobeConfig; zoom
     config,
     zoomFade,
     coordinateOrigin: [0, 0, 0],
-    coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+    coordinateSystem: 'cartesian',
     getPosition: ((d: number[]) => d) as any,
     getColor: [0, 0, 0],
     mesh: GLOBE_MESH_HUGE_HALO,

@@ -28,7 +28,7 @@
     "dist"
   ],
   "dependencies": {
-    "@deck.gl/core": "^9.4.1",
+    "@deck.gl/core": "10.0.0-alpha.2",
     "@kepler.gl/cloud-providers": "3.3.0-alpha.29",
     "@kepler.gl/constants": "3.3.0-alpha.29",
     "@kepler.gl/layers": "3.3.0-alpha.29",

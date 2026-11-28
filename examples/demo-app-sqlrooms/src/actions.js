@@ -4,10 +4,10 @@
 import {loadFiles, toggleModal} from '@kepler.gl/actions';
 import {parseUri} from '@kepler.gl/common-utils';
 import {load} from '@loaders.gl/core';
-import {CSVLoader} from '@loaders.gl/csv';
-import {GeoArrowLoader} from '@loaders.gl/arrow';
-import {_GeoJSONLoader as GeoJSONLoader} from '@loaders.gl/json';
-import {ParquetWasmLoader} from '@loaders.gl/parquet';
+import {CSVLoader} from '@loaders.gl/tables/csv';
+import {GeoArrowLoader} from '@loaders.gl/tables/arrow';
+import {GeoJSONLoader} from '@loaders.gl/tables/json';
+import {ParquetLoader} from '@loaders.gl/tables/parquet';
 
 import {
   DEMO_BASE_PATH,
@@ -262,7 +262,7 @@ function loadRemoteData(url) {
 
   // Load data
   return new Promise(resolve => {
-    const loaders = [CSVLoader, GeoArrowLoader, ParquetWasmLoader, GeoJSONLoader];
+    const loaders = [CSVLoader, GeoArrowLoader, ParquetLoader, GeoJSONLoader];
     const loadOptions = {
       csv: {
         shape: 'object-row-table'

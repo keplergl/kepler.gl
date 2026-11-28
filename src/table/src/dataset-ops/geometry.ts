@@ -3,8 +3,7 @@
 
 import {cellToParent, h3GetResolution, h3IsValid, latLngToCell} from '@kepler.gl/common-utils';
 import {booleanWithin} from '@turf/boolean-within';
-import {parseSync} from '@loaders.gl/core';
-import {WKTLoader} from '@loaders.gl/wkt';
+import {convertWKTToGeometry} from '@loaders.gl/core/wkt';
 import type {Feature, Geometry, Position} from 'geojson';
 
 const WKT_PREFIX_RE =
@@ -37,7 +36,7 @@ export function parseGeometry(raw: unknown): Feature | null {
   }
   if (typeof raw === 'string') {
     try {
-      return parseGeometry(WKT_PREFIX_RE.test(raw) ? parseSync(raw, WKTLoader) : JSON.parse(raw));
+      return parseGeometry(WKT_PREFIX_RE.test(raw) ? convertWKTToGeometry(raw) : JSON.parse(raw));
     } catch {
       return null;
     }

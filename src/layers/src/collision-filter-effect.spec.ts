@@ -129,28 +129,28 @@ describe('installCollisionFilterEffectAlignment', () => {
 });
 
 describe('snapCollisionModuleFade', () => {
-  const positionHook = 'vs:DECKGL_FILTER_GL_POSITION';
+  const positionHook = 'glsl:vs:DECKGL_FILTER_GL_POSITION';
 
-  test('appends binary fade snapping to the collision module inject', () => {
+  test('appends binary fade snapping to the collision plugin injection', () => {
     const shaders = snapCollisionModuleFade({
-      modules: [
+      plugins: [
         {
           name: 'collision',
-          inject: {[positionHook]: 'collision_fade = collision_isVisible(tex, color);'}
+          injections: {[positionHook]: 'collision_fade = collision_isVisible(tex, color);'}
         }
       ]
     });
-    const collision = shaders.modules?.find(
+    const collision = shaders.plugins?.find(
       (module: {name: string}) => module.name === 'collision'
     );
-    expect(collision.inject[positionHook]).toContain('collision_isVisible');
-    expect(collision.inject[positionHook]).toContain('collision_fade < 0.5');
+    expect(collision.injections[positionHook]).toContain('collision_isVisible');
+    expect(collision.injections[positionHook]).toContain('collision_fade < 0.5');
     expect(shaders.inject).toBeUndefined();
   });
 
   test('does not produce an object inject that deck.gl would stringify as [object Object]', () => {
     const shaders = snapCollisionModuleFade({
-      modules: [{name: 'collision', inject: {[positionHook]: 'base();'}}]
+      plugins: [{name: 'collision', injections: {[positionHook]: 'base();'}}]
     });
     const globeInject = 'if (project.projectionMode == PROJECTION_MODE_GLOBE) {}';
     const merged = (globeInject || '') + (shaders.inject?.[positionHook] || '');

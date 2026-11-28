@@ -4,7 +4,7 @@
 import {booleanWithin} from '@turf/boolean-within';
 import {point as turfPoint} from '@turf/helpers';
 import type {Feature, FeatureCollection, Polygon} from 'geojson';
-import type {TypedArray} from '@loaders.gl/loader-utils';
+import type {TypedArray} from '@loaders.gl/core/loader-utils';
 
 import {BandCombination} from './types';
 import {PRESET_OPTIONS} from './config';

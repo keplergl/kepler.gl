@@ -2,9 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import Tile3DLayer, {tile3dLoadErrorKind} from './tile3d-layer';
-import {LightingEffect, COORDINATE_SYSTEM} from '@deck.gl/core';
+import {LightingEffect} from '@deck.gl/core';
 import {UniformStore} from '@luma.gl/core';
-import type {Device} from '@luma.gl/core/dist/adapter/device';
+import type {Device} from '@luma.gl/core';
 
 const URL = 'https://assets.ion.cesium.com/57588/tileset.json';
 
@@ -638,19 +638,19 @@ describe('3D tile export and lighting transitions', () => {
   test('normalizes legacy I3S coordinate systems before rendering and preserves modern values', () => {
     const layer = initialized();
     const parent = Object.getPrototypeOf(Object.getPrototypeOf(layer));
-    const systems = [-1, 0, 1, 2, 3, 999, COORDINATE_SYSTEM.LNGLAT];
+    const systems = [-1, 0, 1, 2, 3, 999, 'lnglat'];
     const tiles = systems.map(coordinateSystem => ({content: {coordinateSystem}}));
     layer.state.tileset3d = {tiles: [...tiles, {}]};
     const renderBase = jest.spyOn(parent, 'renderLayers').mockReturnValue([]);
     expect(layer.renderLayers()).toEqual([]);
     expect(tiles.map(tile => tile.content.coordinateSystem)).toEqual([
-      COORDINATE_SYSTEM.DEFAULT,
-      COORDINATE_SYSTEM.CARTESIAN,
-      COORDINATE_SYSTEM.LNGLAT,
-      COORDINATE_SYSTEM.METER_OFFSETS,
-      COORDINATE_SYSTEM.LNGLAT_OFFSETS,
-      COORDINATE_SYSTEM.METER_OFFSETS,
-      COORDINATE_SYSTEM.LNGLAT
+      'default',
+      'cartesian',
+      'lnglat',
+      'meter-offsets',
+      'lnglat-offsets',
+      'meter-offsets',
+      'lnglat'
     ]);
     expect(renderBase).toHaveBeenCalledTimes(1);
   });

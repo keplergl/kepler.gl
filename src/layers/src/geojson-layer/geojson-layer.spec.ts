@@ -14,7 +14,10 @@ import {
   processGeojson,
   processRowObject
 } from '@kepler.gl/processors';
-import {convertGeometryToWKB, getBinaryGeometriesFromArrow} from '@loaders.gl/gis';
+import {
+  convertGeometryToWKB,
+  convertGeoArrowToBinaryFeatureCollection
+} from '@loaders.gl/core/geoarrow';
 import {datasetSchema, layerPropsV1} from '@kepler.gl/schemas';
 import {PathStyleExtension} from '@deck.gl/extensions';
 
@@ -421,8 +424,8 @@ describe('GeoJsonLayer default deck parameters', () => {
   test('flat layer in top view depth-tests but does not write depth', () => {
     const layer = new GeoJsonLayer({id: 'geojson_depth'});
     expect(propsFor(layer, {dragRotate: false})).toMatchObject({
-      depthTest: true,
-      depthMask: false
+      depthCompare: 'less-equal',
+      depthWriteEnabled: false
     });
   });
 
@@ -430,8 +433,8 @@ describe('GeoJsonLayer default deck parameters', () => {
     const layer = new GeoJsonLayer({id: 'geojson_depth'});
     layer.config.visConfig.enable3d = true;
     expect(propsFor(layer, {dragRotate: false})).toMatchObject({
-      depthTest: true,
-      depthMask: true
+      depthCompare: 'less-equal',
+      depthWriteEnabled: true
     });
   });
 
@@ -491,8 +494,8 @@ describe('GeoJsonLayer default deck parameters', () => {
     const layer = new GeoJsonLayer({id: 'geojson_offset'});
     layer.config.visConfig.elevationOffset = 12;
     expect(propsFor(layer, {dragRotate: false})).toMatchObject({
-      depthTest: true,
-      depthMask: true
+      depthCompare: 'less-equal',
+      depthWriteEnabled: true
     });
   });
 
@@ -534,8 +537,8 @@ describe('GeoJsonLayer default deck parameters', () => {
   test('3D view writes depth for flat layers so they participate in occlusion', () => {
     const layer = new GeoJsonLayer({id: 'geojson_depth'});
     expect(propsFor(layer, {dragRotate: true})).toMatchObject({
-      depthTest: true,
-      depthMask: true
+      depthCompare: 'less-equal',
+      depthWriteEnabled: true
     });
   });
 
@@ -1422,7 +1425,7 @@ describe('GeoJsonLayer native GeoArrow centroid row alignment', () => {
         ? Object.fromEntries(
             [first, empty, last].map((column, index) => [
               index,
-              getBinaryGeometriesFromArrow(column as any, encoding, {
+              convertGeoArrowToBinaryFeatureCollection(column as any, encoding, {
                 chunkOffset: [0, 3, 5][index],
                 calculateMeanCenters: true,
                 triangulate: true

@@ -6,7 +6,7 @@ import {format as d3Format} from 'd3-format';
 import moment from 'moment-timezone';
 import {StructRow} from 'apache-arrow';
 
-import {convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
+import {convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/core/geoarrow';
 
 import {
   ALL_FIELD_TYPES,

@@ -20,7 +20,7 @@
  */
 
 // @ts-ignore resolution depends on moduleResolution setting
-import {WEBGLRenderPipeline, WebGLDevice} from '@luma.gl/webgl';
+import {WEBGLRenderPipeline, WebGLDevice} from '@luma.gl/core/webgl';
 
 const MIXED_SAMPLER_RE = /different type[s]? use the same sampler location/i;
 

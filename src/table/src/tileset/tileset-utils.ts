@@ -2,14 +2,14 @@
 // Copyright contributors to the kepler.gl project
 
 import {parse} from '@loaders.gl/core';
-import {TileJSONLoader, TileJSON} from '@loaders.gl/mvt';
+import {TileJSONLoader, TileJSON} from '@loaders.gl/tiles/mvt';
 
 // TileJSONLoader omits the spec `attribution` field. parseVectorMetadata reads `attributions`.
 type TileJSONWithAttributions = TileJSON & {attributions?: string[]};
 
 /**
- * MVTSource in current loaders ignores attribution
- * TODO: remove once MVTSource is ready
+ * MVTSourceLoader in current loaders ignores attribution
+ * TODO: remove once MVTSourceLoader is ready
  */
 export async function getMVTMetadata(metadataURL: string | null): Promise<TileJSON | null> {
   if (!metadataURL) return null;

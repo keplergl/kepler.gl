@@ -4,7 +4,6 @@
 import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {PickingInfo} from '@deck.gl/core';
-import {GL} from '@luma.gl/constants';
 import {Matrix4} from '@math.gl/core';
 import {createSelector} from 'reselect';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
@@ -496,7 +495,7 @@ export default class ContourLayer extends Layer {
       data: data.data,
       extensions: [],
       // Composite nested fills on the same surface, then draw their outlines.
-      parameters: {...defaultProps.parameters, depthMask: false},
+      parameters: {...defaultProps.parameters, depthWriteEnabled: false},
       autoHighlight: false,
       extruded: false,
       ...(surface ? {modelMatrix: new Matrix4().scale([1, 1, elevationScale])} : {})
@@ -531,9 +530,8 @@ export default class ContourLayer extends Layer {
               getPolygonOffset: () => [1, 1],
               parameters: {
                 ...defaultProps.parameters,
-                depthMask: true,
-                // Per-layer WebGL masks require RGBA booleans, not a render-pass bitmask.
-                [GL.COLOR_WRITEMASK]: [false, false, false, false]
+                depthWriteEnabled: true,
+                colorMask: 0
               }
             })
           ]

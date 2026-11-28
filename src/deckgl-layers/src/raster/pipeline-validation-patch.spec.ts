@@ -25,13 +25,13 @@ function pipelineState({
 function loadPatch(exports: object): () => void {
   let patch!: () => void;
   jest.isolateModules(() => {
-    jest.doMock('@luma.gl/webgl', () => exports);
+    jest.doMock('@luma.gl/core/webgl', () => exports);
     patch = require('./pipeline-validation-patch').patchPipelineValidation;
   });
   return patch;
 }
 
-afterEach(() => jest.dontMock('@luma.gl/webgl'));
+afterEach(() => jest.dontMock('@luma.gl/core/webgl'));
 
 describe('legacy raster pipeline validation', () => {
   function setup(options: Parameters<typeof pipelineState>[0] = {}) {

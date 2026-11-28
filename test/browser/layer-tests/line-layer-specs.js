@@ -659,7 +659,7 @@ test('#LineLayer -> Arrow positions, accessors and picking on map and globe', t 
         );
         if (globeEnabled) {
           t.equal(sublayer.props.getHeight, 0, 'globe stroke stays on the sphere');
-          t.equal(sublayer.props.parameters.cull, false, 'globe stroke disables backface culling');
+          t.equal(sublayer.props.parameters.cullMode, 'none', 'globe stroke disables backface culling');
         }
         const {data: batchData} = sublayer.props;
         for (let index = 0; index < batchData.length; index++) {

@@ -646,7 +646,7 @@ export default class ArcLayer extends Layer {
     const defaultLayerProps = this.getDefaultDeckLayerProps(opts);
     const hoveredObject = this.hasHoveredObject(objectHovered);
 
-    // In globe mode deck.gl is configured with a global `cull: true` to backface-
+    // In globe mode deck.gl is configured with a global `cullMode: 'back'` to backface-
     // cull the globe surface. The arc is drawn as a billboarded triangle-strip
     // ribbon whose back-facing triangles then get culled too, making arcs partly
     // or fully invisible on the globe. Disable culling just for this layer so the
@@ -656,7 +656,7 @@ export default class ArcLayer extends Layer {
     const isGlobeMode = Boolean(mapState?.globe?.enabled);
     const blendingParameters = mapState?.layerParameters ?? {};
     const globeParameters = isGlobeMode
-      ? {parameters: {cull: false, cullMode: 'none' as const, ...blendingParameters}}
+      ? {parameters: {cullMode: 'none', ...blendingParameters}}
       : {};
 
     const useArrowLayer = Boolean(this.geoArrowVector0);

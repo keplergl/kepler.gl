@@ -6,7 +6,7 @@
  */
 
 import {load, FetchError} from '@loaders.gl/core';
-import {QuantizedMeshLoader} from '@loaders.gl/terrain';
+import {QuantizedMeshLoader} from '@loaders.gl/raster/terrain';
 import memoize from 'es-toolkit/compat/memoize';
 
 import {sleep, withPublicTitilerCorsCacheKey} from '@kepler.gl/common-utils';

@@ -1521,7 +1521,9 @@ export default function MapContainerFactory(
         views,
         layers: finalDeckGlLayers,
         effects,
-        parameters: isGlobeMode ? {cull: true} : getLayerBlendingParameters(visState.layerBlending)
+        parameters: isGlobeMode
+          ? {cullMode: 'back'}
+          : getLayerBlendingParameters(visState.layerBlending)
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {

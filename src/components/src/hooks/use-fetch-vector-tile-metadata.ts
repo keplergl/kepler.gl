@@ -3,8 +3,8 @@
 
 import {useEffect, useState} from 'react';
 
-import {TileJSON} from '@loaders.gl/mvt';
-import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
+import {TileJSON} from '@loaders.gl/tiles/mvt';
+import {PMTilesSourceLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 
 import {RemoteTileFormat} from '@kepler.gl/constants';
 import {getMVTMetadata, VectorTileMetadata, getFieldsFromTile} from '@kepler.gl/table';
@@ -57,14 +57,14 @@ export default function useFetchVectorTileMetadata({
           if (remoteTileFormat === RemoteTileFormat.MVT) {
             metadata = await getMVTMetadata(metadataUrl);
 
-            // MVTSource returns messy partial metadata
-            // MVTSource.createDataSource('', {
+            // MVTSourceLoader returns messy partial metadata
+            // MVTSourceLoader.createDataSourceSync('', {
             //   mvt: {
             //     metadataUrl: decodeURIComponent(url)
             //   }
             // })
           } else {
-            const tileSource = PMTilesSource.createDataSource(metadataUrl, {});
+            const tileSource = PMTilesSourceLoader.createDataSourceSync(metadataUrl, {});
             metadata = await tileSource.metadata;
           }
 
