@@ -729,7 +729,11 @@ describe('AnnotationManager selectors', () => {
 });
 
 describe('Point elevation settings', () => {
-  function renderPoint(elevation?: AnnotationElevation, overrides: Partial<Annotation> = {}) {
+  function renderPoint(
+    elevation?: AnnotationElevation,
+    overrides: Partial<Annotation> = {},
+    expandElevation = true
+  ) {
     const state = makeState(true, true);
     Object.assign(state.visState.annotations[0], {
       kind: AnnotationKind.POINT,
@@ -759,25 +763,44 @@ describe('Point elevation settings', () => {
         </Provider>
       </IntlWrapper>
     );
+    if (elevation && expandElevation) {
+      fireEvent.click(screen.getByRole('button', {name: 'Elevation'}));
+    }
     return store;
   }
-  test('shows the background group before elevation and reveals elevation settings independently', async () => {
-    const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION});
+  test('groups every elevation setting and keeps background controls independent', async () => {
+    const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION}, {}, false);
+    const elevationGroup = screen.getByRole('button', {name: 'Elevation'});
+    const elevationToggle = within(elevationGroup).getByRole('checkbox', {name: 'Elevation'});
+    expect(elevationToggle).toBeChecked();
+    expect(elevationGroup).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByLabelText('Show elevation')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', {name: 'Value to display'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Advanced'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
+    expect(screen.getByText('Content').compareDocumentPosition(elevationGroup)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
     expect(
-      screen.getByText('Content').compareDocumentPosition(screen.getByLabelText('Show elevation'))
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(
-      screen
-        .getByRole('button', {name: 'Background'})
-        .compareDocumentPosition(screen.getByLabelText('Show elevation'))
+      screen.getByRole('button', {name: 'Background'}).compareDocumentPosition(elevationGroup)
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.getByRole('button', {name: 'Background'})).toHaveAttribute(
       'aria-expanded',
       'false'
     );
     expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
+    elevationGroup.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(elevationGroup).toHaveAttribute('aria-expanded', 'true');
+    const content = document.getElementById(
+      elevationGroup.getAttribute('aria-controls') || ''
+    ) as HTMLElement;
+    expect(within(content).getByRole('group', {name: 'Value to display'})).toBeInTheDocument();
+    expect(within(content).getByRole('group', {name: 'Label units'})).toBeInTheDocument();
+    expect(within(content).getByRole('button', {name: 'Advanced'})).toBeInTheDocument();
+    expect(within(content).getByRole('button', {name: 'Elevation appearance'})).toBeInTheDocument();
     expect(screen.getByText('Map height')).toBeInTheDocument();
-    expect(screen.getByRole('status', {name: 'Label preview'})).toHaveTextContent(
+    expect(within(content).getByRole('status', {name: 'Label preview'})).toHaveTextContent(
       '7448.36 m above map zero'
     );
     expect(screen.queryByLabelText('Measured elevation')).not.toBeInTheDocument();
@@ -809,6 +832,15 @@ describe('Point elevation settings', () => {
     expect(advanced).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(advanced);
     expect(screen.getByLabelText('Marker height (m)')).toHaveValue(7448.36);
+    elevationGroup.focus();
+    await userEvent.keyboard(' ');
+    expect(elevationGroup).toHaveAttribute('aria-expanded', 'false');
+    expect(elevationToggle).toBeChecked();
+    expect(screen.queryByRole('group', {name: 'Value to display'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('status', {name: 'Label preview'})).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Marker height (m)')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Advanced'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
     expect(store.getActions()).toEqual([]);
   });
   test.each<[string, number]>([
@@ -919,7 +951,7 @@ describe('Point elevation settings', () => {
     'enables map height without inventing a measured value for anchor $anchorPoint',
     ({anchorPoint}) => {
       const store = renderPoint(undefined, {anchorPoint});
-      fireEvent.click(screen.getByLabelText('Show elevation'));
+      fireEvent.click(screen.getByRole('checkbox', {name: 'Elevation'}));
       expect(store.getActions()).toEqual([
         VisStateActions.updateAnnotation('ruler-1', {
           elevation: {...DEFAULT_MAP_HEIGHT_ELEVATION}
@@ -931,7 +963,7 @@ describe('Point elevation settings', () => {
     const store = renderPoint(undefined, {
       labelBackground: {color: '#000000', opacity: 0.7, padding: 8}
     });
-    expect(screen.getByLabelText('Show elevation')).not.toBeChecked();
+    expect(screen.getByRole('checkbox', {name: 'Elevation'})).not.toBeChecked();
     expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
     const background = screen.getByRole('button', {name: 'Background'});
     const toggle = screen.getByRole('checkbox', {name: 'Background'});
@@ -982,6 +1014,22 @@ describe('Point elevation settings', () => {
       ]);
     }
   );
+  test.each([false, true])(
+    'toggles elevation from its collapsed header with the keyboard (enabled: %s)',
+    async enabled => {
+      const elevation = {...DEFAULT_MAP_HEIGHT_ELEVATION};
+      const store = renderPoint(enabled ? elevation : undefined, {}, false);
+      const group = screen.getByRole('button', {name: 'Elevation'});
+      const toggle = within(group).getByRole('checkbox', {name: 'Elevation'});
+      expect(toggle).toHaveProperty('checked', enabled);
+      toggle.focus();
+      await userEvent.keyboard(' ');
+      expect(group).toHaveAttribute('aria-expanded', 'false');
+      expect(store.getActions()).toEqual([
+        VisStateActions.updateAnnotation('ruler-1', {elevation: enabled ? undefined : elevation})
+      ]);
+    }
+  );
   test('keeps signed measurements independent from anchor and reference drawing heights', () => {
     const elevation: AnnotationElevation = {
       ...DEFAULT_ANNOTATION_ELEVATION,
@@ -1010,7 +1058,7 @@ describe('Point elevation settings', () => {
     fireEvent.change(screen.getByLabelText('Measured elevation'), {target: {value: ''}});
     fireEvent.blur(screen.getByLabelText('Measured elevation'));
     expect(store.getActions()).toEqual([]);
-    fireEvent.click(screen.getByLabelText('Show elevation'));
+    fireEvent.click(screen.getByRole('checkbox', {name: 'Elevation'}));
     expect(store.getActions()).toEqual([
       VisStateActions.updateAnnotation('ruler-1', {elevation: undefined})
     ]);
