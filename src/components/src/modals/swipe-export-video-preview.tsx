@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Component, RefObject, forwardRef, ForwardedRef} from 'react';
-import {DeckGL} from '@deck.gl/react';
+import {DeckGL} from '@deck.gl/react/legacy';
 import ReactMapGL, {type MapRef, useControl} from 'react-map-gl/maplibre';
 // @ts-ignore module resolution mismatch with moduleResolution:"node"
 import {MapboxOverlay} from '@deck.gl/mapbox';
@@ -353,7 +353,7 @@ export class SwipeExportVideoPreview extends Component<
       return (
         <MapLayer $width={width} $height={height}>
           <DeckGL
-            ref={ref => setRef(deckRef, ref)}
+            ref={ref => setRef(deckRef, ref?.deck ?? null)}
             deviceProps={EXPORT_DECK_DEVICE_PROPS}
             {...adapterProps}
             viewState={viewState}

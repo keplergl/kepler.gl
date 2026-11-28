@@ -16,7 +16,7 @@ jest.mock('./video-annotation-overlay', () => ({
 const mockDecks = [];
 const mockMaps = [];
 const mockOverlays = [];
-jest.mock('@deck.gl/react', () => {
+jest.mock('@deck.gl/react/legacy', () => {
   const React = require('react');
   const DeckGL = React.forwardRef((props, ref) => {
     const record = React.useRef();
@@ -27,7 +27,7 @@ jest.mock('@deck.gl/react', () => {
     }
     record.current.props = props;
     record.current.deck.props = props;
-    React.useImperativeHandle(ref, () => record.current.deck);
+    React.useImperativeHandle(ref, () => ({deck: record.current.deck}));
     return null;
   });
   return {DeckGL};
