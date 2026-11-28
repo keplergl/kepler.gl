@@ -18,6 +18,7 @@ import type {VideoAnnotationFrame} from './video-annotation-encoder';
 jest.mock('@kepler.gl/utils', () => ({
   ...jest.requireActual('../../../utils/src/annotation-ruler'),
   ...jest.requireActual('../../../utils/src/annotation-elevation'),
+  ...jest.requireActual('../../../utils/src/annotation-vertical-scale'),
   hexToRgb: jest.requireActual('../../../utils/src/color-utils').hexToRgb,
   getLayerOpacityFactor: jest.requireActual('../../../utils/src/layer-visibility')
     .getLayerOpacityFactor,
@@ -612,3 +613,52 @@ test.each([
     expect(domtoimage.toPng).toHaveBeenCalledTimes(1);
   }
 );
+
+test('native preview and capture share signed scale labels and reproject the axis after rotation', async () => {
+  const {canvas, frame} = setup({
+    mapState: {longitude: 0, latitude: 0, zoom: 10, pitch: 60, bearing: 0},
+    annotations: [
+      {
+        ...annotation,
+        kind: 'POINT',
+        label: '',
+        armLength: 20,
+        angle: 0,
+        verticalScale: {
+          min: -1,
+          max: 1,
+          tickSpacing: 1,
+          unit: 'km',
+          precision: 1,
+          displayMin: 0,
+          displayMax: 10000
+        }
+      }
+    ]
+  });
+  const view = render(<VideoAnnotationOverlay frame={frame} />);
+  const first = view.container
+    .querySelector('[data-annotation-part="scale-axis"]')!
+    .getAttribute('d');
+  frame.mapState = {...frame.mapState, bearing: 90, pitch: 45};
+  view.rerender(<VideoAnnotationOverlay frame={frame} />);
+  const rotated = view.container
+    .querySelector('[data-annotation-part="scale-axis"]')!
+    .getAttribute('d');
+  expect(rotated).not.toBe(first);
+  const previewLabels = Array.from(
+    view.container.querySelectorAll('[data-annotation-part="scale-label"]')
+  ).map(n => n.textContent);
+  expect(previewLabels).toEqual(['-1.0 km', '0.0 km', '1.0 km']);
+  jest.mocked(domtoimage.toPng).mockImplementation(async (node: HTMLElement) => {
+    expect(
+      Array.from(node.querySelectorAll('[data-annotation-part="scale-label"]')).map(
+        n => n.textContent
+      )
+    ).toEqual(previewLabels);
+    expect(node.querySelector('[data-annotation-part="scale-axis"]')).toHaveAttribute('d', rotated);
+    return 'data:image/png;base64,annotation';
+  });
+  await act(async () => compositeVideoAnnotations(canvas, frame));
+  expect(domtoimage.toPng).toHaveBeenCalledTimes(1);
+});

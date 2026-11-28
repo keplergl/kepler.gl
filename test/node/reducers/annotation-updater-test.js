@@ -749,3 +749,41 @@ test('#visStateReducer -> terrain snapshots survive vertical edits and invalidat
   );
   t.end();
 });
+
+test('#visStateReducer -> vertical scales normalize, duplicate and clear on kind changes', t => {
+  const verticalScale = {
+    min: -1,
+    max: 1,
+    tickSpacing: 1,
+    unit: 'km',
+    precision: 1,
+    displayMin: 0,
+    displayMax: 6000
+  };
+  let state = reducer(
+    undefined,
+    VisStateActions.addAnnotation({id: 'scale', kind: AnnotationKind.POINT, verticalScale})
+  );
+  t.deepEqual(state.annotations[0].verticalScale, verticalScale, 'keeps the scale');
+  state = reducer(state, VisStateActions.duplicateAnnotation('scale'));
+  t.deepEqual(state.annotations[0].verticalScale, verticalScale, 'duplicates the scale');
+  t.notEqual(
+    state.annotations[0].verticalScale,
+    state.annotations[1].verticalScale,
+    'owns copied settings'
+  );
+  state = reducer(state, VisStateActions.updateAnnotation('scale', {kind: AnnotationKind.RULER}));
+  t.notOk(
+    state.annotations.find(a => a.id === 'scale').verticalScale,
+    'other kinds cannot inherit scales'
+  );
+  state = reducer(
+    state,
+    VisStateActions.addAnnotation({
+      id: 'invalid-scale',
+      verticalScale: {...verticalScale, tickSpacing: 0}
+    })
+  );
+  t.notOk(state.annotations[0].verticalScale, 'discards invalid scale');
+  t.end();
+});

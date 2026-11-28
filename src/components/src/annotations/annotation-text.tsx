@@ -14,6 +14,9 @@ import {
 import {
   getAnnotationTextBoxStyle,
   getRulerDistanceLabel,
+  getVerticalScaleGeometry,
+  firstTextNode,
+  hasAnnotationLabel,
   makeMarker,
   RulerAnnotationMarker,
   isPointVisibleOnGlobe,
@@ -26,26 +29,6 @@ import {
   SerializedLexicalNode,
   SerializedTextNode
 } from 'lexical';
-
-function firstTextNode(
-  node: SerializedLexicalNode,
-  requireContent = false
-): SerializedTextNode | undefined {
-  if (!node) return undefined;
-  if (node.type === 'text') {
-    const text = node as SerializedTextNode;
-    return !requireContent || (typeof text.text === 'string' && text.text.trim())
-      ? text
-      : undefined;
-  }
-  const children = (node as SerializedElementNode).children;
-  if (!Array.isArray(children)) return undefined;
-  for (const child of children) {
-    const text = firstTextNode(child, requireContent);
-    if (text) return text;
-  }
-  return undefined;
-}
 
 function readoutEditorState(
   editorState: SerializedEditorState | undefined,
@@ -247,6 +230,11 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       ? getAnnotationElevationLabels(annotation.elevation, annotation.anchorPoint[2] ?? 0)
       : [];
   const hasElevation = elevationLabels.length > 0;
+  const scale =
+    annotation.kind === AnnotationKind.POINT
+      ? getVerticalScaleGeometry(annotation, viewport, isGlobeEnabled)
+      : null;
+  const hasScale = Boolean(scale);
   const hasReadout = showCustomText && Boolean(annotation.readout);
   const formattedReadout = useMemo(
     () =>
@@ -259,12 +247,9 @@ const AnnotationText: FC<AnnotationTextProps> = ({
     [hasReadout, annotation.editorState, readoutValue]
   );
   const hasLabel = useMemo(() => {
-    if (!hasReadout && !hasElevation) return true;
-    const blocks = (annotation.editorState as SerializedEditorState | undefined)?.root?.children;
-    return Array.isArray(blocks)
-      ? blocks.some(node => firstTextNode(node, true))
-      : Boolean(annotation.label?.trim());
-  }, [hasReadout, hasElevation, annotation.editorState, annotation.label]);
+    if (!hasReadout && !hasElevation && !hasScale) return true;
+    return hasAnnotationLabel(annotation);
+  }, [hasReadout, hasElevation, hasScale, annotation]);
   // Keep the editor mounted and focused when its empty caption no longer takes a row.
   const emptyLabel = !hasLabel;
   const distanceText = isRuler && annotation.showDistance ? getRulerDistanceLabel(annotation) : '';
@@ -287,6 +272,19 @@ const AnnotationText: FC<AnnotationTextProps> = ({
       }
     : {};
   const isDraggable = !isRuler;
+  // Cull crowded labels at low pitch/zoom, while retaining all tick geometry.
+  const labelFontSize = Number.parseFloat(
+    firstTextNode(
+      (annotation.editorState as SerializedEditorState | undefined)?.root as SerializedLexicalNode
+    )?.style?.match(/font-size:\s*([\d.]+)px/)?.[1] ?? '12'
+  );
+  const labelSpacing = Math.max(18, labelFontSize * 1.5) + (background?.padding ?? 0) * 2;
+  const scaleLabels: NonNullable<typeof scale>['ticks'] = [];
+  for (const tick of [...(scale?.ticks ?? [])].reverse()) {
+    if (scaleLabels.every(next => Math.hypot(next.x - tick.x, next.y - tick.y) >= labelSpacing)) {
+      scaleLabels.unshift(tick);
+    }
+  }
   const {attributes, listeners, setNodeRef} = useDraggable({
     id: `${annotation.id}:MOVE_TEXT`,
     disabled: !isDraggable
@@ -335,8 +333,12 @@ const AnnotationText: FC<AnnotationTextProps> = ({
           );
         })()
       : [];
-  const hasMidpointText = showCustomText || Boolean(distanceText);
-  if (!hasMidpointText && !endpoints.length) return null;
+  const hasMidpointText =
+    (!hasScale || !isGlobeEnabled || isPointVisibleOnGlobe(annotation.anchorPoint, viewport)) &&
+    ((showCustomText &&
+      (!hasScale || hasLabel || hasReadout || hasElevation || (isEditing && isSelected))) ||
+      Boolean(distanceText));
+  if (!hasMidpointText && !endpoints.length && !scaleLabels.length) return null;
 
   return (
     <>
@@ -409,7 +411,9 @@ const AnnotationText: FC<AnnotationTextProps> = ({
               isEditable={isEditing && isEditingText && showCustomText}
               editorState={
                 (annotation.editorState as SerializedEditorState | undefined) ??
-                ((styledRuler || hasElevation) && !annotation.label ? EMPTY_LABEL_STATE : undefined)
+                ((styledRuler || hasElevation || hasScale) && !annotation.label
+                  ? EMPTY_LABEL_STATE
+                  : undefined)
               }
               initialText={annotation.label}
               onChange={handleEditorChange}
@@ -497,6 +501,38 @@ const AnnotationText: FC<AnnotationTextProps> = ({
           />
         </StyledAnnotationText>
       ))}
+      {scaleLabels.map(tick => {
+        const formattedTick = readoutEditorState(
+          annotation.editorState as SerializedEditorState | undefined,
+          tick.label
+        );
+        return (
+          <StyledAnnotationText
+            key={tick.value}
+            data-annotation-id={annotation.id}
+            data-annotation-part="scale-label"
+            style={{
+              ...backgroundStyle,
+              left: tick.x + 10,
+              top: tick.y,
+              transform: 'translateY(-50%)',
+              opacity,
+              pointerEvents: 'none',
+              visibility: opacity === 0 ? 'hidden' : undefined
+            }}
+          >
+            <LexicalRichTextEditor
+              // Caption edits do not remount ticks. Value/style changes initialize
+              // synchronously so an export frame cannot capture stale text.
+              key={JSON.stringify([tick.label, formattedTick])}
+              isEditable={false}
+              editorState={formattedTick}
+              initialText={tick.label}
+              onChange={ignoreReadoutChange}
+            />
+          </StyledAnnotationText>
+        );
+      })}
     </>
   );
 };

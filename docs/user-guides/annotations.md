@@ -121,4 +121,34 @@ The bundled MapLibre 4.7.1 adapter checks for a real covering DEM tile before re
 
 Terrain reference requests accept only `source` and `datum`. The sample fields returned by `map.list-annotations` (`value`, `unit`, `displayZ`, `coordinate`, `sourceId`) are output-only: omit `reference` when patching precision or other appearance settings to preserve the snapshot. Sending `{source: "terrain", datum: "MSL"}` requests a fresh sample and selects measured mode, including on an existing map-height callout. Explicitly combining that request with `elevation.source: "map"` is rejected; provide the measured value and its datum to display a measured elevation.
 
+## Vertical scales (MCP/AI)
+
+Use a Point annotation's `verticalScale` to draw a geographic vertical axis with signed labels. Setup is available through MCP/AI; the settings panel keeps its existing controls. Scales use the annotation's line color/width, typography, label background, visibility, and zoom fades. A caption and elevation callout are optional.
+
+For example, `map.add-annotation` can create a scale for values from −1 to +1 km, drawn from 0 to 6000 metres to match a shifted, exaggerated layer:
+
+```json
+{
+  "id": "height-scale",
+  "kind": "point",
+  "anchorPoint": [-101.830429, 33.518337],
+  "verticalScale": {
+    "min": -1,
+    "max": 1,
+    "tickSpacing": 1,
+    "unit": "km",
+    "precision": 2,
+    "displayMin": 0,
+    "displayMax": 6000
+  },
+  "fontSize": 18
+}
+```
+
+The labels are **−1.00 km**, **0.00 km**, and **1.00 km**, drawn at 0, 3000, and 6000 metres. Without `displayMin` and `displayMax`, drawing heights are the labelled values converted to metres. Supply both drawing bounds together, with the upper bound greater than the lower. The anchor's longitude/latitude positions the scale; its Z does not offset the configured range. This axis does not change layer heights or infer a vertical datum.
+
+`unit` supports `m`, `km`, and `ft`; `precision` supports zero to six decimal places. The range must increase and spacing must be positive, with at most 101 ticks. Both endpoints are included even when spacing does not divide the range exactly. Labels stay screen-aligned and crowded labels are hidden at low pitch/zoom. Globe-occluded ticks and segments are hidden. An axis segment is shown only when both endpoint ticks are visible; a scale crossing the horizon starts at its first visible tick, which may leave a gap above the globe silhouette.
+
+Partial `map.update-annotation` patches preserve other scale settings. If the point has no scale, a partial patch creates one using defaults of 0–1000 m, 250 m spacing, and zero decimal places, with the supplied fields overriding those defaults. For example, `{verticalScale: {precision: 2}}` creates that range with two decimal places. The command returns the effective configuration. Set `verticalScale` to `null` to remove it; retain a caption, readout, or elevation callout if keeping the Point annotation. Changing annotation type removes the scale. Duplication, saved maps, HTML export, native previews, and recordings preserve its configuration and use the shared renderer. Use a kepler.gl version with vertical-scale support when reopening exports.
+
 [Back to table of contents](README.md)

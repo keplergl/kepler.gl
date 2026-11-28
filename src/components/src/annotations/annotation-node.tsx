@@ -13,7 +13,9 @@ import {
   getRulerDimensionOffset,
   getRulerLabelAngle,
   isPointVisibleOnGlobe,
-  getElevationGuide
+  getElevationGuide,
+  getVerticalScaleGeometry,
+  hasAnnotationLabel
 } from './annotation-utils';
 
 const HANDLE_RADIUS = 6;
@@ -166,6 +168,13 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
   const marker = makeMarker(annotation, viewport, isGlobeEnabled);
   const {kind, x, y, tx, ty} = marker;
   const elevation = annotation.kind === AnnotationKind.POINT ? annotation.elevation : undefined;
+  const scale =
+    annotation.kind === AnnotationKind.POINT
+      ? getVerticalScaleGeometry(annotation, viewport, isGlobeEnabled)
+      : null;
+  const scaleOnly = Boolean(
+    scale && !elevation && !hasAnnotationLabel(annotation) && !annotation.readout
+  );
   const guide =
     annotation.kind === AnnotationKind.POINT
       ? getElevationGuide(annotation, viewport, isGlobeEnabled)
@@ -218,13 +227,15 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
     case AnnotationKind.ARROW:
       body = (
         <>
-          <path
-            d={`M0,0 L${tx},${ty}`}
-            stroke={lineColor}
-            fill="none"
-            strokeWidth={lineWidth}
-            strokeLinecap="round"
-          />
+          {!scaleOnly ? (
+            <path
+              d={`M0,0 L${tx},${ty}`}
+              stroke={lineColor}
+              fill="none"
+              strokeWidth={lineWidth}
+              strokeLinecap="round"
+            />
+          ) : null}
           {kind === AnnotationKind.ARROW ? (
             <path
               transform={
@@ -235,7 +246,7 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
               fill={lineColor}
             />
           ) : null}
-          {kind === AnnotationKind.POINT && elevation?.marker !== 'none' ? (
+          {kind === AnnotationKind.POINT && !scaleOnly && elevation?.marker !== 'none' ? (
             <circle
               r={elevation?.marker === 'ring' ? 6 : lineWidth * 1.5}
               fill={elevation?.marker === 'ring' ? 'none' : lineColor}
@@ -315,6 +326,22 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
         pointerEvents: opacity === 0 ? 'none' : undefined
       }}
     >
+      {scale ? (
+        <g
+          data-annotation-part="vertical-scale"
+          fill="none"
+          stroke={lineColor}
+          strokeWidth={lineWidth}
+        >
+          <path data-annotation-part="scale-axis" d={scale.path} />
+          <path
+            data-annotation-part="scale-ticks"
+            d={scale.ticks
+              .map(tick => `M${tick.dx - 4},${tick.dy} L${tick.dx + 4},${tick.dy}`)
+              .join(' ')}
+          />
+        </g>
+      ) : null}
       {guide ? (
         <path
           data-annotation-part="elevation-guide"
@@ -325,7 +352,9 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
           strokeDasharray={elevation?.guide === 'dashed' ? '6 3' : undefined}
         />
       ) : null}
-      {body}
+      {!scale || !isGlobeEnabled || isPointVisibleOnGlobe(annotation.anchorPoint, viewport)
+        ? body
+        : null}
     </g>
   );
 };

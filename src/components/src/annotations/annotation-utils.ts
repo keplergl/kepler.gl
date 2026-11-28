@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {
+  SerializedEditorState,
+  SerializedElementNode,
+  SerializedLexicalNode,
+  SerializedTextNode
+} from 'lexical';
 import {addMetersToLngLat} from '@math.gl/web-mercator';
 import {
   Annotation,
@@ -9,7 +15,11 @@ import {
   AnnotationElevation,
   PointAnnotation
 } from '@kepler.gl/types';
-import {ELEVATION_UNIT_METERS, getElevationReferenceStatus} from '@kepler.gl/utils';
+import {
+  ELEVATION_UNIT_METERS,
+  getElevationReferenceStatus,
+  getAnnotationVerticalScaleTicks
+} from '@kepler.gl/utils';
 import {formatLineLengthLabel} from '@kepler.gl/layers';
 import {point} from '@turf/helpers';
 import distance from '@turf/distance';
@@ -24,6 +34,34 @@ import {
   isBelowOriented,
   textPlacementFromAngle
 } from '@kepler.gl/constants';
+
+export function firstTextNode(
+  node: SerializedLexicalNode,
+  requireContent = false
+): SerializedTextNode | undefined {
+  if (!node) return undefined;
+  if (node.type === 'text') {
+    const text = node as SerializedTextNode;
+    return !requireContent || (typeof text.text === 'string' && text.text.trim())
+      ? text
+      : undefined;
+  }
+  const children = (node as SerializedElementNode).children;
+  if (!Array.isArray(children)) return undefined;
+  for (const child of children) {
+    const text = firstTextNode(child, requireContent);
+    if (text) return text;
+  }
+  return undefined;
+}
+
+/** Match Lexical's precedence: a saved editor state overrides the plain-text fallback. */
+export function hasAnnotationLabel(annotation: Annotation): boolean {
+  const blocks = (annotation.editorState as SerializedEditorState | undefined)?.root?.children;
+  return Array.isArray(blocks)
+    ? blocks.some(node => firstTextNode(node, true))
+    : Boolean(annotation.label?.trim());
+}
 
 export type LngLatAltitude = [number, number] | [number, number, number];
 
@@ -49,6 +87,72 @@ export type PickElevation = (
   field: NonNullable<AnnotationElevation['field']>
 ) => {coordinate: ReadonlyArray<number>; value: number | null} | null;
 
+// The SVG and text overlays share immutable annotation/viewport inputs. Weak
+// keys release geometry when either an annotation or a camera frame is replaced.
+const verticalScaleGeometryCache = new WeakMap<
+  PointAnnotation,
+  WeakMap<MapViewport, Map<boolean, ReturnType<typeof projectVerticalScaleGeometry>>>
+>();
+
+/** Project once per annotation/view so the SVG and text overlays share tick geometry. */
+export function getVerticalScaleGeometry(
+  annotation: PointAnnotation,
+  viewport: MapViewport,
+  globe = false
+) {
+  if (!annotation.verticalScale) return null;
+  let views = verticalScaleGeometryCache.get(annotation);
+  if (!views) {
+    views = new WeakMap();
+    verticalScaleGeometryCache.set(annotation, views);
+  }
+  let projections = views.get(viewport);
+  if (!projections) {
+    projections = new Map();
+    views.set(viewport, projections);
+  }
+  if (!projections.has(globe)) {
+    projections.set(globe, projectVerticalScaleGeometry(annotation, viewport, globe));
+  }
+  return projections.get(globe) ?? null;
+}
+
+/** Project a signed scale at one geographic footprint; tick labels remain screen-aligned. */
+function projectVerticalScaleGeometry(
+  annotation: PointAnnotation,
+  viewport: MapViewport,
+  globe = false
+) {
+  if (!annotation.verticalScale) return null;
+  const [x, y] = viewport.project(onNearestWorldCopy(annotation.anchorPoint, viewport));
+  if (![x, y].every(Number.isFinite)) return null;
+  const ticks = getAnnotationVerticalScaleTicks(annotation.verticalScale).map(tick => {
+    const point: [number, number, number] = [
+      annotation.anchorPoint[0],
+      annotation.anchorPoint[1],
+      tick.height
+    ];
+    const [tx, ty] = viewport.project(onNearestWorldCopy(point, viewport));
+    return {
+      ...tick,
+      x: tx,
+      y: ty,
+      dx: tx - x,
+      dy: ty - y,
+      visible: [tx, ty].every(Number.isFinite) && (!globe || isPointVisibleOnGlobe(point, viewport))
+    };
+  });
+  const path = ticks
+    .slice(1)
+    .flatMap((tick, i) =>
+      tick.visible && ticks[i].visible
+        ? [`M${ticks[i].dx},${ticks[i].dy} L${tick.dx},${tick.dy}`]
+        : []
+    )
+    .join(' ');
+  return {path, ticks: ticks.filter(tick => tick.visible)};
+}
+
 /** A geographic vertical, not a screen-space line dropped straight down. */
 export function getElevationGuide(
   annotation: PointAnnotation,
@@ -72,7 +176,12 @@ export function getElevationGuide(
         (reference?.value == null ? NaN : reference.value * ELEVATION_UNIT_METERS[reference.unit]);
   if (!Number.isFinite(z)) return null;
   const point: [number, number, number] = [annotation.anchorPoint[0], annotation.anchorPoint[1], z];
-  if (globe && !isPointVisibleOnGlobe(point, viewport)) return null;
+  if (
+    globe &&
+    (!isPointVisibleOnGlobe(annotation.anchorPoint, viewport) ||
+      !isPointVisibleOnGlobe(point, viewport))
+  )
+    return null;
   const [x, y] = viewport.project(onNearestWorldCopy(annotation.anchorPoint, viewport));
   const [ex, ey] = viewport.project(onNearestWorldCopy(point, viewport));
   return [x, y, ex, ey].every(Number.isFinite) ? {ex: ex - x, ey: ey - y} : null;
@@ -518,11 +627,19 @@ export function isPointVisibleOnGlobe(
   return angularDistanceDeg(point, [roundTrip[0], roundTrip[1]]) < GLOBE_VISIBILITY_TOLERANCE_DEG;
 }
 
-/** Partially visible rulers are clipped by their renderer; other annotations use the anchor. */
+/** Rulers and vertical scales may extend beyond an occluded anchor; their renderers hide occluded geometry. */
 export function isAnnotationVisibleOnGlobe(annotation: Annotation, viewport: MapViewport): boolean {
   if (annotation.kind === AnnotationKind.TEXT && annotation.viewport) return true;
   return (
     isPointVisibleOnGlobe(annotation.anchorPoint, viewport) ||
+    (annotation.kind === AnnotationKind.POINT &&
+      annotation.verticalScale &&
+      getAnnotationVerticalScaleTicks(annotation.verticalScale).some(({height}) =>
+        isPointVisibleOnGlobe(
+          [annotation.anchorPoint[0], annotation.anchorPoint[1], height],
+          viewport
+        )
+      )) ||
     (annotation.kind === AnnotationKind.RULER &&
       isPointVisibleOnGlobe(annotation.endPoint, viewport))
   );

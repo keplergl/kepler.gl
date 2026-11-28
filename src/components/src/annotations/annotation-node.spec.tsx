@@ -17,7 +17,12 @@ import {
   getRulerDistanceLabel,
   RulerAnnotationMarker
 } from './annotation-utils';
-import {getElevationGuide, movePoint} from './annotation-utils';
+import {
+  getElevationGuide,
+  getVerticalScaleGeometry,
+  isAnnotationVisibleOnGlobe,
+  movePoint
+} from './annotation-utils';
 // @ts-ignore Experimental export is missing from the repository's deck.gl type augmentation.
 import {_GlobeViewport as GlobeViewport} from '@deck.gl/core';
 
@@ -589,4 +594,144 @@ test('terrain guides use captured display height and hide unavailable terrain', 
       vp
     )
   ).toBeNull();
+});
+
+test.each([
+  [0, 0],
+  [62, 0],
+  [62, 90],
+  [62, 180]
+])('vertical scale stays at its geographic footprint at pitch %s bearing %s', (pitch, bearing) => {
+  const point = {
+    ...annotation,
+    kind: AnnotationKind.POINT as const,
+    label: '',
+    anchorPoint: [-101.8, 33.5, 100] as [number, number, number],
+    verticalScale: {
+      min: -1,
+      max: 1,
+      tickSpacing: 1,
+      unit: 'km' as const,
+      precision: 1,
+      displayMin: 0,
+      displayMax: 6000
+    }
+  };
+  const vp = new WebMercatorViewport({
+    longitude: -101.8,
+    latitude: 33.5,
+    width: 800,
+    height: 600,
+    zoom: 9,
+    pitch,
+    bearing
+  });
+  const geometry = getVerticalScaleGeometry(point, vp as unknown as MapViewport)!;
+  const origin = vp.project(point.anchorPoint);
+  expect(geometry.ticks).toHaveLength(3);
+  geometry.ticks.forEach((tick, i) => {
+    const expected = vp.project([-101.8, 33.5, i * 3000]);
+    expect(origin[0] + tick.dx).toBeCloseTo(expected[0]);
+    expect(origin[1] + tick.dy).toBeCloseTo(expected[1]);
+  });
+  const {container} = render(
+    <svg>
+      <AnnotationNode
+        annotation={point}
+        viewport={vp as unknown as MapViewport}
+        isEditing={false}
+        isSelected={false}
+      />
+    </svg>
+  );
+  expect(container.querySelector('[data-annotation-part="scale-axis"]')).toHaveAttribute(
+    'd',
+    geometry.path
+  );
+  expect(container.querySelectorAll('path')).toHaveLength(2);
+  expect(container.querySelector('circle')).toBeNull();
+});
+
+test('vertical scale excludes nonfinite projections and globe-occluded ticks', () => {
+  const point = {
+    ...annotation,
+    kind: AnnotationKind.POINT as const,
+    anchorPoint: [180, 0] as [number, number],
+    verticalScale: {min: 0, max: 1000, tickSpacing: 250, unit: 'm' as const, precision: 0}
+  };
+  const globe = new GlobeViewport({longitude: 0, latitude: 0, zoom: 0, width: 800, height: 600});
+  expect(getVerticalScaleGeometry(point, globe, true)).toEqual({path: '', ticks: []});
+  expect(getVerticalScaleGeometry(point, {...viewport, project: () => [NaN, NaN]})).toBeNull();
+});
+
+test('a scale above the globe horizon stays visible without exposing its hidden anchor', () => {
+  const point = {
+    ...annotation,
+    kind: AnnotationKind.POINT as const,
+    anchorPoint: [60, 0, 0] as [number, number, number],
+    elevation: {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      source: 'measurement' as const,
+      value: 0,
+      datum: 'MSL',
+      reference: {
+        source: 'manual' as const,
+        value: 100000,
+        unit: 'm' as const,
+        datum: 'MSL',
+        displayZ: 100000
+      }
+    },
+    verticalScale: {min: 0, max: 100000, tickSpacing: 25000, unit: 'm' as const, precision: 0}
+  };
+  const globe = new GlobeViewport({longitude: 0, latitude: 0, width: 800, height: 600, zoom: 4});
+  const geometry = getVerticalScaleGeometry(point, globe, true)!;
+  expect(geometry.ticks.length).toBeGreaterThan(0);
+  expect(geometry.ticks.map(t => t.value)).not.toContain(0);
+  expect(isAnnotationVisibleOnGlobe(point, globe)).toBe(true);
+  expect(getElevationGuide(point, globe, true)).toBeNull();
+  expect(getElevationGuide(point, globe)).not.toBeNull();
+  const {container} = render(
+    <DndContext>
+      <svg>
+        <AnnotationNode annotation={point} viewport={globe} isGlobeEnabled isEditing isSelected />
+      </svg>
+    </DndContext>
+  );
+  expect(container.querySelector('[data-annotation-part="scale-axis"]')).toHaveAttribute(
+    'd',
+    geometry.path
+  );
+  expect(container.querySelector('circle')).toBeNull();
+  expect(container.querySelector('[data-annotation-part="elevation-guide"]')).toBeNull();
+});
+
+test('scale geometry shares projections across overlays and refreshes for changed inputs', () => {
+  const point = {
+    ...annotation,
+    kind: AnnotationKind.POINT as const,
+    verticalScale: {min: 0, max: 1000, tickSpacing: 250, unit: 'm' as const, precision: 0}
+  };
+  const project = jest.fn(([, , z = 0]: readonly number[]) => [100, 200 - z]);
+  const vp = {...viewport, project};
+  const geometry = getVerticalScaleGeometry(point, vp);
+  expect(geometry?.ticks.map(tick => tick.y)).toEqual([200, -50, -300, -550, -800]);
+  expect(project).toHaveBeenCalledTimes(6);
+  expect(getVerticalScaleGeometry(point, vp)).toBe(geometry);
+  expect(project).toHaveBeenCalledTimes(6);
+  expect(
+    getVerticalScaleGeometry({...point, verticalScale: {...point.verticalScale, max: 500}}, vp)
+      ?.ticks
+  ).toHaveLength(3);
+  expect(project).toHaveBeenCalledTimes(10);
+  const nextView = {...vp, project: jest.fn(() => [400, 300])};
+  expect(getVerticalScaleGeometry(point, nextView)?.ticks.map(tick => tick.y)).toEqual([
+    300, 300, 300, 300, 300
+  ]);
+  expect(nextView.project).toHaveBeenCalledTimes(6);
+  // Projection mode is part of the cache key even when the viewport is shared.
+  const globe = new GlobeViewport({longitude: 0, latitude: 0, width: 800, height: 600, zoom: 0});
+  const hidden = {...point, anchorPoint: [180, 0] as [number, number]};
+  expect(getVerticalScaleGeometry(hidden, globe)?.ticks).toHaveLength(5);
+  expect(getVerticalScaleGeometry(hidden, globe, true)?.ticks).toHaveLength(0);
 });
