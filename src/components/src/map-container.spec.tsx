@@ -10,7 +10,7 @@ import {ScatterplotLayer} from '@deck.gl/layers';
 import {EditableGeoJsonLayer, ViewMode} from '@deck.gl-community/editable-layers';
 import {Timeline} from '@luma.gl/engine';
 import {EDITOR_MODES} from '@kepler.gl/constants';
-import {BitmapOverlayLayer, getEditorLayer} from '@kepler.gl/layers';
+import {BitmapOverlayLayer, getEditorLayer, KeplerGlLayers} from '@kepler.gl/layers';
 import MapContainerFactory from './map-container';
 import {isPointVisibleOnGlobe} from './annotations/annotation-utils';
 import {
@@ -28,7 +28,7 @@ import {MapViewStateContext, MapViewStateContextProvider} from './map-view-state
 import type {CameraTour} from '@kepler.gl/types';
 import {theme} from '@kepler.gl/styles';
 import {messages} from '@kepler.gl/localization';
-import {getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
+import {createDataContainer, getApplicationConfig, initApplicationConfig} from '@kepler.gl/utils';
 
 jest.mock('styled-components', () => ({
   __esModule: true,
@@ -1535,44 +1535,60 @@ test('keeps selection ownership through reducer updates and layer reordering', (
   expect(props.visStateActions.wmsFeatureInfo).not.toHaveBeenCalled();
 });
 
-test('elevation picking reads a numeric source field through the picked layer without substituting render Z', () => {
-  const row = [-1000, 'not an altitude'];
-  const getHoverData = jest.fn(() => row);
-  const layer = {config: {dataId: 'detections'}, hasHoveredObject: () => true, getHoverData};
-  const table = {
-    fields: [
-      {name: 'altitude', type: 'real', fieldIdx: 0},
-      {name: 'name', type: 'string', fieldIdx: 1}
-    ],
-    dataContainer: {}
-  };
-  const container = new MapContainer({
-    visState: {layers: [layer], datasets: {detections: table}, animationConfig: {}}
-  });
-  const info = {coordinate: [-101.830429, 33.518337, 9000], index: 4, object: {index: 7}};
-  const pickObject = jest.fn(() => info);
-  container._deck = {pickObject};
-  const field = {dataId: 'detections', name: 'altitude'};
-  expect(container._pickAnnotationElevation([10, 20], field)).toEqual({
-    coordinate: info.coordinate,
-    value: -1000
-  });
-  expect(getHoverData).toHaveBeenCalledWith(
-    info.object,
-    table.dataContainer,
-    table.fields,
-    {},
-    info
-  );
-  expect(pickObject).toHaveBeenCalledWith({x: 10, y: 20, radius: 0, unproject3D: true});
-  for (const value of [null, '', NaN, Infinity]) {
-    row[0] = value as any;
-    expect(container._pickAnnotationElevation([10, 20], field).value).toBeNull();
+test.each(['point', 'geojson', 'geoarrow'])(
+  'elevation picking reads a %s source row without substituting render Z',
+  type => {
+    const row = [-1000, 'not an altitude'];
+    const layer =
+      type === 'point'
+        ? new KeplerGlLayers.PointLayer({dataId: 'detections'})
+        : new KeplerGlLayers.GeojsonLayer({dataId: 'detections'});
+    if (type === 'geoarrow') {
+      (layer as InstanceType<typeof KeplerGlLayers.GeojsonLayer>).geoArrowMode = true;
+    }
+    jest.spyOn(layer, 'hasHoveredObject').mockReturnValue({} as any);
+    const getHoverData = jest.spyOn(layer, 'getHoverData');
+    const table = {
+      fields: [
+        {name: 'altitude', type: 'real', fieldIdx: 0},
+        {name: 'name', type: 'string', fieldIdx: 1}
+      ],
+      dataContainer: createDataContainer([row])
+    };
+    const container = new MapContainer({
+      visState: {layers: [layer], datasets: {detections: table}, animationConfig: {}}
+    });
+    const info = {
+      coordinate: [-101.830429, 33.518337, 9000],
+      index: 0,
+      object: type === 'geoarrow' ? null : type === 'point' ? {index: 0} : {properties: {index: 0}}
+    };
+    const pickObject = jest.fn(() => info);
+    container._deck = {pickObject};
+    const field = {dataId: 'detections', name: 'altitude'};
+    expect(container._pickAnnotationElevation([10, 20], field)).toEqual({
+      coordinate: info.coordinate,
+      value: -1000
+    });
+    expect(getHoverData).toHaveBeenCalledWith(
+      info.object ?? info.index,
+      table.dataContainer,
+      table.fields,
+      {},
+      info
+    );
+    expect(pickObject).toHaveBeenCalledWith({x: 10, y: 20, radius: 0, unproject3D: true});
+    row[0] = 0;
+    expect(container._pickAnnotationElevation([10, 20], field).value).toBe(0);
+    for (const value of [null, '', NaN, Infinity]) {
+      row[0] = value as any;
+      expect(container._pickAnnotationElevation([10, 20], field).value).toBeNull();
+    }
+    expect(
+      container._pickAnnotationElevation([10, 20], {...field, name: 'missing'}).value
+    ).toBeNull();
+    expect(
+      container._pickAnnotationElevation([10, 20], {...field, dataId: 'other'}).value
+    ).toBeNull();
   }
-  expect(
-    container._pickAnnotationElevation([10, 20], {...field, name: 'missing'}).value
-  ).toBeNull();
-  expect(
-    container._pickAnnotationElevation([10, 20], {...field, dataId: 'other'}).value
-  ).toBeNull();
-});
+);

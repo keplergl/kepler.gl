@@ -502,3 +502,58 @@ test('#mergeAnnotations -> source fields follow dataset replacements without ref
   t.equal(point.elevation.field.dataId, 'original', 'original provenance is immutable');
   t.end();
 });
+
+test('#mergeAnnotations -> replaces both dependencies of parked elevations in either order', t => {
+  for (const dataIds of [
+    ['counts', 'elevations'],
+    ['elevations', 'counts']
+  ]) {
+    const elevation = {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      value: 7448.36,
+      field: {dataId: 'elevations', name: 'altitude'}
+    };
+    const readout = {type: 'count', dataId: 'counts'};
+    const state = makeState([
+      makeAnnotation({id: 'count', readout}),
+      makeAnnotation({id: 'both', readout, elevation}),
+      makeAnnotation({id: 'static'}),
+      makeAnnotation({id: 'elevation', elevation}),
+      makeAnnotation({id: 'other', readout: {type: 'count', dataId: 'other-data'}})
+    ]);
+    const source = JSON.parse(JSON.stringify(state.annotations));
+    const firstParked = replaceDatasetDepsInState(state, {
+      dataId: dataIds[0],
+      dataIdToUse: `${dataIds[0]}-replacement`
+    });
+    const firstSnapshot = JSON.parse(JSON.stringify(firstParked.annotationsToBeMerged));
+    const parked = replaceDatasetDepsInState(firstParked, {
+      dataId: dataIds[1],
+      dataIdToUse: `${dataIds[1]}-replacement`
+    });
+    const merged = mergeAnnotations(parked, [...parked.annotationsToBeMerged].reverse());
+    t.deepEqual(
+      merged.annotations.map(a => a.id),
+      source.map(a => a.id),
+      'restores original order'
+    );
+    const point = merged.annotations.find(a => a.id === 'both');
+    t.deepEqual(point.readout, {...readout, dataId: 'counts-replacement'}, 'rewrites count source');
+    t.deepEqual(
+      point.elevation,
+      {
+        ...elevation,
+        field: {...elevation.field, dataId: 'elevations-replacement'}
+      },
+      'rewrites elevation source without changing the captured measurement'
+    );
+    t.equal(merged.annotations[4], state.annotations[4], 'keeps unrelated annotations intact');
+    t.deepEqual(state.annotations, source, 'does not mutate active annotations');
+    t.deepEqual(
+      firstParked.annotationsToBeMerged,
+      firstSnapshot,
+      'does not mutate parked annotations'
+    );
+  }
+  t.end();
+});

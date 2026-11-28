@@ -4,6 +4,7 @@
 import {
   DEFAULT_ANNOTATION_ELEVATION,
   getAnnotationElevationLabels,
+  getElevationReferenceStatus,
   normalizeAnnotationElevation
 } from './annotation-elevation';
 
@@ -57,11 +58,34 @@ test('missing measurements or references never become zero; mismatched datums ca
     '7.45 km above sea level',
     'Ground reference unavailable'
   ]);
-  for (const datum of ['ellipsoid', 'unknown']) {
+  for (const datum of ['ellipsoid', 'EGM96']) {
     expect(getAnnotationElevationLabels({...lightning, datum})[1]).toBe(
       'Vertical references do not match'
     );
   }
+});
+
+test.each([
+  ['unknown', 'unknown'],
+  ['UNKNOWN', 'MSL'],
+  ['MSL', 'unknown']
+])('unknown datums %s/%s cannot produce a relative height or guide', (datum, referenceDatum) => {
+  const elevation = {
+    ...lightning,
+    datum,
+    reference: {...lightning.reference, datum: referenceDatum}
+  };
+  expect(getElevationReferenceStatus(elevation)).toBe('Vertical datum unknown');
+  expect(getAnnotationElevationLabels(elevation)[1]).toBe('Vertical datum unknown');
+});
+
+test('distinguishes measurements with named and unknown vertical datums', () => {
+  expect(getAnnotationElevationLabels({...lightning, datum: 'EGM96'})[0]).toBe(
+    '7.45 km above EGM96'
+  );
+  expect(getAnnotationElevationLabels({...lightning, datum: 'unknown'})[0]).toBe(
+    '7.45 km (vertical datum unknown)'
+  );
 });
 
 test.each([
@@ -79,8 +103,11 @@ test.each([
   expect(normalizeAnnotationElevation(value)).toBeUndefined();
 });
 
-test('normalization copies saved settings without changing their sign or source provenance', () => {
-  const value = {...lightning, field: {dataId: 'detections', name: 'altitude'}};
+test.each([
+  {dataId: 'detections', name: 'altitude'},
+  {dataId: ' detections', name: ' altitude '}
+])('normalization preserves exact source identifiers %j', field => {
+  const value = {...lightning, field};
   const result = normalizeAnnotationElevation(value)!;
   expect(result).toEqual(value);
   expect(result.reference).not.toBe(value.reference);

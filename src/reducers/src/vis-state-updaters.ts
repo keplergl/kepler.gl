@@ -7528,6 +7528,21 @@ export function replaceDatasetDepsInState<T extends VisState>(
             ? toArray(replacedState[mergerOptions.toMergeProp] ?? [])
             : [];
 
+        // An annotation can reference one dataset for its count and another for
+        // its elevation. Update both even if the first replacement parked it.
+        if (props[i] === 'annotations' && replaceParentDatasetIds && parkedElsewhere.length) {
+          const replacements = replaceParentDatasetIds(parkedElsewhere, dataId, dataIdToUse);
+          if (replacements?.length) {
+            const byId = new Map(replacements.map(annotation => [annotation.id, annotation]));
+            replacedState = {
+              ...replacedState,
+              annotationsToBeMerged: parkedElsewhere.map(
+                annotation => byId.get(annotation.id) ?? annotation
+              )
+            };
+          }
+        }
+
         const replacedItem =
           replaceParentDatasetIds?.(propValue, dataId, dataIdToUse) ||
           defaultReplaceParentDatasetIds(propValue, dataId, dataIdToUse);

@@ -729,14 +729,15 @@ describe('AnnotationManager selectors', () => {
 });
 
 describe('Point elevation settings', () => {
-  function renderPoint(elevation?: AnnotationElevation) {
+  function renderPoint(elevation?: AnnotationElevation, overrides: Partial<Annotation> = {}) {
     const state = makeState(true, true);
     Object.assign(state.visState.annotations[0], {
       kind: AnnotationKind.POINT,
       anchorPoint: [1, 2, 7448.36],
       elevation,
       armLength: 40,
-      angle: 0
+      angle: 0,
+      ...overrides
     });
     Object.assign(state.visState, {
       datasets: {
@@ -760,13 +761,30 @@ describe('Point elevation settings', () => {
     );
     return store;
   }
-  test('enables an elevation label without assuming a datum or ground height', () => {
-    const store = renderPoint();
-    fireEvent.click(screen.getByLabelText('Show elevation'));
+  test.each<{anchorPoint: Annotation['anchorPoint']}>([
+    {anchorPoint: [1, 2]},
+    {anchorPoint: [1, 2, 9000]}
+  ])(
+    'enables elevation without inferring a measurement from anchor $anchorPoint',
+    ({anchorPoint}) => {
+      const store = renderPoint(undefined, {anchorPoint});
+      fireEvent.click(screen.getByLabelText('Show elevation'));
+      expect(store.getActions()).toEqual([
+        VisStateActions.updateAnnotation('ruler-1', {
+          elevation: {...DEFAULT_ANNOTATION_ELEVATION}
+        })
+      ]);
+    }
+  );
+  test('keeps the caption background editable when elevation is disabled', () => {
+    const store = renderPoint(undefined, {
+      labelBackground: {color: '#000000', opacity: 0.7, padding: 8}
+    });
+    expect(screen.getByLabelText('Show elevation')).not.toBeChecked();
+    expect(screen.getByLabelText('Label background')).toBeChecked();
+    fireEvent.click(screen.getByLabelText('Label background'));
     expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {
-        elevation: {...DEFAULT_ANNOTATION_ELEVATION, value: 7448.36}
-      })
+      VisStateActions.updateAnnotation('ruler-1', {labelBackground: undefined})
     ]);
   });
   test('keeps signed measurements independent from anchor and reference drawing heights', () => {

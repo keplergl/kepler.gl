@@ -128,6 +128,7 @@ import {
   computeDeckLayers,
   getZoomOpacityAnnotationTargetId,
   getLayerHoverProp,
+  getLayerHoverPropValue,
   getLayerZoomOpacityFactor,
   LayerHoverProp,
   prepareLayersForDeck,
@@ -999,13 +1000,13 @@ export default function MapContainerFactory(
         const column = table.fields.find(item => item.name === field.name);
         if (!column || !['integer', 'real'].includes(column.type)) return {coordinate, value: null};
         const row = layer.getHoverData(
-          info.object,
+          info.object ?? info.index,
           table.dataContainer,
           table.fields,
           animationConfig,
           info
         );
-        const value = row?.[column.fieldIdx];
+        const value = getLayerHoverPropValue(row, column.fieldIdx);
         return {
           coordinate,
           value: typeof value === 'number' && Number.isFinite(value) ? value : null

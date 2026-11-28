@@ -89,8 +89,11 @@ export function getElevationReferenceStatus(elevation: AnnotationElevation): str
   if (!elevation.reference) return 'Ground reference unavailable';
   if (
     elevation.datum.toLowerCase() === 'unknown' ||
-    elevation.datum.toLowerCase() !== elevation.reference.datum.toLowerCase()
+    elevation.reference.datum.toLowerCase() === 'unknown'
   ) {
+    return 'Vertical datum unknown';
+  }
+  if (elevation.datum.toLowerCase() !== elevation.reference.datum.toLowerCase()) {
     return 'Vertical references do not match';
   }
   return null;
@@ -106,7 +109,11 @@ export function getAnnotationElevationLabels(elevation: AnnotationElevation): st
     labels.push(
       meters === null || !Number.isFinite(meters)
         ? 'Elevation unavailable'
-        : `${format(meters)} ${datum.toUpperCase() === 'MSL' ? 'above sea level' : datum}`
+        : `${format(meters)} ${
+            datum.toLowerCase() === 'unknown'
+              ? '(vertical datum unknown)'
+              : `above ${datum.toUpperCase() === 'MSL' ? 'sea level' : datum}`
+          }`
     );
   }
   if (display !== 'altitude') {

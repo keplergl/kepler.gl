@@ -736,12 +736,7 @@ function ElevationSettings({
           checked={Boolean(elevation)}
           onChange={event =>
             onChange({
-              elevation: event.target.checked
-                ? {
-                    ...DEFAULT_ANNOTATION_ELEVATION,
-                    value: annotation.anchorPoint[2] ?? 0
-                  }
-                : undefined
+              elevation: event.target.checked ? {...DEFAULT_ANNOTATION_ELEVATION} : undefined
             })
           }
         />
@@ -882,9 +877,9 @@ function ElevationSettings({
             ['none', 'dot', 'ring'].map(id => ({id, label: label(id, id)})),
             marker => patch({marker: marker as AnnotationElevation['marker']})
           )}
-          <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
         </>
       ) : null}
+      <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
     </>
   );
 }
