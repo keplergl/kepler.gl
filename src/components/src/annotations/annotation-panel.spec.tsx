@@ -872,57 +872,76 @@ describe('Point elevation settings', () => {
     });
   });
 
-  test('keeps measured elevation fields visible and disabled while the callout is off', async () => {
+  test.each<{name: string; changes: Partial<AnnotationElevation>}>([
+    {name: 'legacy manual value', changes: {value: 0}},
+    {name: 'manual value', changes: {source: 'measurement', value: -1000}},
+    {
+      name: 'data field awaiting capture',
+      changes: {
+        source: 'measurement',
+        value: null,
+        field: {dataId: 'detections', name: 'altitude'}
+      }
+    },
+    {
+      name: 'unavailable data field',
+      changes: {value: 100, field: {dataId: ' missing dataset ', name: ' altitude '}}
+    }
+  ])('preserves $name settings when styling and toggling a measured callout', async ({changes}) => {
     const elevation: AnnotationElevation = {
       ...DEFAULT_ANNOTATION_ELEVATION,
-      value: 100,
+      unit: 'ft',
       datum: 'MSL',
-      reference: {value: 42, unit: 'm', datum: 'MSL'},
-      display: 'both'
+      reference: {value: 42, unit: 'm', datum: 'MSL', displayZ: 60},
+      display: 'both',
+      ...changes
     };
     const store = renderLivePoint({elevation});
     const group = screen.getByRole('button', {name: 'Elevation'});
     const toggle = within(group).getByRole('checkbox', {name: 'Elevation'});
     fireEvent.click(group);
-    const measured = screen.getByLabelText('Measured elevation');
-    fireEvent.change(measured, {target: {value: '321.987'}});
-    fireEvent.blur(measured);
+    const content = document.getElementById(
+      group.getAttribute('aria-controls') || ''
+    ) as HTMLElement;
+    const source = within(content).getByText(elevation.field ? 'Data field' : 'Manual value');
+    expect(source).toBeVisible();
+    expect(within(content).queryByRole('spinbutton')).not.toBeInTheDocument();
+    expect(within(content).queryByRole('textbox')).not.toBeInTheDocument();
+    expect(within(content).queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(
+      within(content).queryByRole('group', {name: 'Value to display'})
+    ).not.toBeInTheDocument();
+    expect(within(content).queryByRole('group', {name: 'Dataset'})).not.toBeInTheDocument();
+    expect(within(content).queryByRole('group', {name: 'Field'})).not.toBeInTheDocument();
+    expect(
+      within(content).queryByRole('button', {name: /Manual value|Data field/})
+    ).not.toBeInTheDocument();
+    const units = screen.getByRole('group', {name: 'Label units'});
+    within(units).getByRole('button').focus();
+    await userEvent.keyboard('{Enter}');
+    await userEvent.click(screen.getByTitle('m'));
+    expect(store.getState().visState.annotations[0]).toMatchObject({
+      anchorPoint: [1, 2, 7448.36],
+      elevation: {...elevation, outputUnit: 'm'}
+    });
     fireEvent.click(toggle);
     expect(group).toHaveAttribute('aria-expanded', 'true');
     expect(toggle).not.toBeChecked();
     expect((store.getState().visState.annotations[0] as PointAnnotation).elevation).toBeUndefined();
-    expect(measured).toBeVisible();
-    expect(measured).toHaveValue(321.987);
-    for (const name of [
-      'Measured elevation',
-      'Marker height (m)',
-      'Ground elevation',
-      'Measured from',
-      'Ground measured from',
-      'Ground draw height (m)'
-    ]) {
-      expect(screen.getByLabelText(name)).toBeVisible();
-      expect(screen.getByLabelText(name)).toBeDisabled();
+    expect(source).toBeVisible();
+    for (const name of ['Label units', 'Decimals', 'Vertical guide', 'Marker style']) {
+      const selector = within(screen.getByRole('group', {name})).getByRole('button');
+      expect(selector).toBeVisible();
+      expect(selector).toHaveAttribute('aria-disabled', 'true');
+      expect(selector).not.toHaveAttribute('tabindex');
     }
-    expect(screen.getByLabelText('Compare with ground')).toBeDisabled();
-    expect(screen.getByText('Compare with ground')).toBeVisible();
-    const selector = within(screen.getByRole('group', {name: 'Value to display'})).getByRole(
-      'button',
-      {name: 'Manual value'}
-    );
-    expect(selector).toHaveAttribute('aria-disabled', 'true');
-    expect(selector).not.toHaveAttribute('tabindex');
-    fireEvent.keyDown(selector, {key: 'Enter'});
-    expect(screen.queryByText('Map height')).not.toBeInTheDocument();
-    measured.focus();
-    expect(measured).not.toHaveFocus();
-    await userEvent.keyboard('9');
-    expect(measured).toHaveValue(321.987);
+    fireEvent.keyDown(within(units).getByRole('button'), {key: 'Enter'});
+    expect(screen.queryByTitle('km')).not.toBeInTheDocument();
     fireEvent.click(toggle);
-    expect(measured).not.toBeDisabled();
+    expect(within(units).getByRole('button')).not.toHaveAttribute('aria-disabled', 'true');
     expect(store.getState().visState.annotations[0]).toHaveProperty('elevation', {
       ...elevation,
-      value: 321.987
+      outputUnit: 'm'
     });
   });
 
@@ -930,20 +949,13 @@ describe('Point elevation settings', () => {
     renderLivePoint({});
     fireEvent.click(screen.getByRole('button', {name: 'Elevation'}));
     expect(screen.getByRole('checkbox', {name: 'Elevation'})).not.toBeChecked();
-    expect(screen.getByLabelText('Marker height (m)')).toBeDisabled();
-    for (const name of [
-      'Value to display',
-      'Label units',
-      'Decimals',
-      'Vertical guide',
-      'Marker style'
-    ]) {
+    expect(screen.getByLabelText('Map height (m)')).toBeDisabled();
+    for (const name of ['Label units', 'Decimals', 'Vertical guide', 'Marker style']) {
       expect(within(screen.getByRole('group', {name})).getByRole('button')).toHaveAttribute(
         'aria-disabled',
         'true'
       );
     }
-    expect(screen.getByText('Map height')).toBeVisible();
   });
 
   function renderPoint(
@@ -997,19 +1009,13 @@ describe('Point elevation settings', () => {
     expect(screen.getByRole('button', {name: 'Background'}).compareDocumentPosition(group)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING
     );
-    const controls = [
-      'Value to display',
-      'Label units',
-      'Decimals',
-      'Vertical guide',
-      'Marker style'
-    ];
+    const controls = ['Label units', 'Decimals', 'Vertical guide', 'Marker style'];
     const expectCollapsed = () => {
       expect(group).toHaveAttribute('aria-expanded', 'false');
       for (const name of controls) {
         expect(screen.queryByRole('group', {name})).not.toBeInTheDocument();
       }
-      expect(screen.queryByLabelText('Marker height (m)')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Map height (m)')).not.toBeInTheDocument();
     };
     expectCollapsed();
     group.focus();
@@ -1021,7 +1027,13 @@ describe('Point elevation settings', () => {
     for (const name of controls) {
       expect(within(content).getByRole('group', {name})).toBeInTheDocument();
     }
-    expect(within(content).getByLabelText('Marker height (m)')).toHaveValue(7448.36);
+    expect(within(content).getByLabelText('Map height (m)')).toHaveValue(7448.36);
+    expect(within(content).getAllByRole('spinbutton')).toHaveLength(1);
+    expect(
+      within(content).queryByRole('group', {name: 'Value to display'})
+    ).not.toBeInTheDocument();
+    expect(within(content).queryByText('Manual value')).not.toBeInTheDocument();
+    expect(within(content).queryByText('Data field')).not.toBeInTheDocument();
     expect(within(content).queryByRole('status', {name: 'Label preview'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Advanced'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
@@ -1035,7 +1047,7 @@ describe('Point elevation settings', () => {
     expectCollapsed();
     expect(toggle).toBeChecked();
     fireEvent.click(group);
-    expect(screen.getByLabelText('Marker height (m)')).toHaveValue(7448.36);
+    expect(screen.getByLabelText('Map height (m)')).toHaveValue(7448.36);
     expect(store.getActions()).toEqual([]);
   });
   test.each<[string, number]>([
@@ -1044,7 +1056,7 @@ describe('Point elevation settings', () => {
     ['0', 0]
   ])('rounds an edited marker height of %s to %s metres', (draft, expected) => {
     const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION}, {anchorPoint: [1, 2, 123.456789]});
-    const height = screen.getByLabelText('Marker height (m)');
+    const height = screen.getByLabelText('Map height (m)');
     expect(height).toHaveValue(123.457);
     fireEvent.blur(height);
     expect(store.getActions()).toEqual([]);
@@ -1079,63 +1091,34 @@ describe('Point elevation settings', () => {
     ]);
   });
   test.each([
-    ['captured', 'Drag the anchor onto a feature'],
-    ['compareGround', 'Enter a known ground elevation'],
-    ['anchorHeight', 'Marker height controls drawing only'],
-    ['datum', 'Use the same height reference for both values'],
-    ['referenceDatum', 'Use the same height reference for both values']
-  ])('shows %s guidance only in its shared help tooltip', async (id, text) => {
-    // JSDOM matches :hover on every element in an unfocused document.
-    const hasFocus = jest.spyOn(document, 'hasFocus').mockReturnValue(true);
-    try {
-      const user = userEvent.setup();
-      const store = renderPoint({
-        ...DEFAULT_ANNOTATION_ELEVATION,
-        field: {dataId: 'detections', name: 'altitude'},
-        reference: {value: 0, unit: 'm', datum: 'MSL'}
-      });
-      const tooltipId = `annotation-ruler-1-elevation-${id}-help`;
-      const tooltip = document.getElementById(tooltipId);
-      expect(tooltip).toHaveTextContent(text);
-      expect(tooltip).not.toBeVisible();
-      const help = document.querySelector(`[data-for="${tooltipId}"]`) as HTMLElement;
-      await user.hover(help);
-      await waitFor(() => expect(tooltip).toBeVisible());
-      await user.unhover(help);
-      await waitFor(() => expect(tooltip).not.toBeVisible());
-      expect(store.getActions()).toEqual([]);
-    } finally {
-      hasFocus.mockRestore();
+    ['detections', 'Detections'],
+    ['missing dataset', 'missing dataset']
+  ])(
+    'identifies the read-only field source %s in its help tooltip',
+    async (dataId, datasetLabel) => {
+      // JSDOM matches :hover on every element in an unfocused document.
+      const hasFocus = jest.spyOn(document, 'hasFocus').mockReturnValue(true);
+      try {
+        const user = userEvent.setup();
+        const store = renderPoint({
+          ...DEFAULT_ANNOTATION_ELEVATION,
+          field: {dataId, name: 'altitude'}
+        });
+        const tooltipId = 'annotation-ruler-1-elevation-source-help';
+        const tooltip = document.getElementById(tooltipId);
+        expect(tooltip).toHaveTextContent(`${datasetLabel}: altitude`);
+        expect(tooltip).not.toBeVisible();
+        const help = document.querySelector(`[data-for="${tooltipId}"]`) as HTMLElement;
+        await user.hover(help);
+        await waitFor(() => expect(tooltip).toBeVisible());
+        await user.unhover(help);
+        await waitFor(() => expect(tooltip).not.toBeVisible());
+        expect(store.getActions()).toEqual([]);
+      } finally {
+        hasFocus.mockRestore();
+      }
     }
-  });
-  test('switching from map height to manual input does not copy the drawing height into a measurement', async () => {
-    const elevation = {...DEFAULT_MAP_HEIGHT_ELEVATION};
-    const store = renderPoint(elevation);
-    await userEvent.click(screen.getByText('Map height'));
-    await userEvent.click(screen.getByText('Manual value'));
-    expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {
-        elevation: {...elevation, source: 'measurement', field: undefined}
-      })
-    ]);
-  });
-  test('ground settings are optional and removing comparison resets the displayed value to altitude', () => {
-    const elevation: AnnotationElevation = {
-      ...DEFAULT_ANNOTATION_ELEVATION,
-      value: 10,
-      datum: 'MSL',
-      display: 'both',
-      reference: {value: 2, unit: 'm', datum: 'MSL'}
-    };
-    const store = renderPoint(elevation);
-    expect(screen.getByLabelText('Ground elevation')).toHaveValue(2);
-    fireEvent.click(screen.getByLabelText('Compare with ground'));
-    expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {
-        elevation: {...elevation, reference: null, display: 'altitude'}
-      })
-    ]);
-  });
+  );
   test.each<{anchorPoint: Annotation['anchorPoint']}>([
     {anchorPoint: [1, 2]},
     {anchorPoint: [1, 2, 9000]}
@@ -1222,68 +1205,4 @@ describe('Point elevation settings', () => {
       ]);
     }
   );
-  test('keeps signed measurements independent from anchor and reference drawing heights', () => {
-    const elevation: AnnotationElevation = {
-      ...DEFAULT_ANNOTATION_ELEVATION,
-      value: 7448.36,
-      datum: 'MSL',
-      reference: {value: 990, unit: 'm', datum: 'MSL'}
-    };
-    const store = renderPoint(elevation);
-    for (const [name, value] of [
-      ['Measured elevation', '-1000'],
-      ['Marker height (m)', '4900'],
-      ['Ground draw height (m)', '5900']
-    ]) {
-      fireEvent.change(screen.getByLabelText(name), {target: {value}});
-      fireEvent.blur(screen.getByLabelText(name));
-    }
-    expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {elevation: {...elevation, value: -1000}}),
-      VisStateActions.updateAnnotation('ruler-1', {anchorPoint: [1, 2, 4900]}),
-      VisStateActions.updateAnnotation('ruler-1', {
-        elevation: {...elevation, reference: {...elevation.reference!, displayZ: 5900}}
-      })
-    ]);
-    store.clearActions();
-    fireEvent.change(screen.getByLabelText('Measured elevation'), {target: {value: ''}});
-    fireEvent.blur(screen.getByLabelText('Measured elevation'));
-    expect(store.getActions()).toEqual([]);
-    fireEvent.click(screen.getByRole('checkbox', {name: 'Elevation'}));
-    expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {elevation: undefined})
-    ]);
-  });
-  test('selecting a numeric source requires a fresh capture instead of retaining a stale value', async () => {
-    const elevation: AnnotationElevation = {...DEFAULT_ANNOTATION_ELEVATION, value: 7448.36};
-    const store = renderPoint(elevation);
-    await userEvent.click(screen.getByText('Manual value'));
-    await userEvent.click(screen.getByText('Data field'));
-    expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {
-        elevation: {
-          ...elevation,
-          source: 'measurement',
-          value: null,
-          field: {dataId: 'detections', name: 'altitude'}
-        }
-      })
-    ]);
-  });
-  test('manual missing values stay empty until entered and datum names preserve internal spaces', () => {
-    const elevation = {...DEFAULT_ANNOTATION_ELEVATION};
-    const store = renderPoint(elevation);
-    expect(screen.getByLabelText('Measured elevation')).toHaveValue(null);
-    fireEvent.change(screen.getByLabelText('Measured elevation'), {target: {value: '0'}});
-    fireEvent.blur(screen.getByLabelText('Measured elevation'));
-    fireEvent.change(screen.getByLabelText('Measured from'), {target: {value: 'Local benchmark'}});
-    expect(store.getActions()).toHaveLength(1);
-    fireEvent.blur(screen.getByLabelText('Measured from'));
-    expect(store.getActions()).toEqual([
-      VisStateActions.updateAnnotation('ruler-1', {elevation: {...elevation, value: 0}}),
-      VisStateActions.updateAnnotation('ruler-1', {
-        elevation: {...elevation, datum: 'Local benchmark'}
-      })
-    ]);
-  });
 });

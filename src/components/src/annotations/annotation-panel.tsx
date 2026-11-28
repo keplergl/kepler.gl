@@ -73,8 +73,7 @@ import {
   rgbToHex,
   DEFAULT_RULER_STYLE,
   DEFAULT_ANNOTATION_ELEVATION,
-  DEFAULT_MAP_HEIGHT_ELEVATION,
-  ELEVATION_UNIT_METERS
+  DEFAULT_MAP_HEIGHT_ELEVATION
 } from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {angleForTextPlacement, getTextPlacement} from './annotation-utils';
@@ -719,36 +718,6 @@ function AnnotationBackgroundSettings({
   );
 }
 
-function ElevationDatumInput({
-  label,
-  value,
-  onChange
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const [draft, setDraft] = React.useState(value);
-  React.useEffect(() => setDraft(value), [value]);
-  const commit = () => {
-    const next = draft.trim() || 'unknown';
-    setDraft(next);
-    if (next !== value) onChange(next);
-  };
-  return (
-    <StyledCaptionInput
-      aria-label={label}
-      value={draft}
-      maxLength={64}
-      onChange={event => setDraft(event.target.value)}
-      onBlur={commit}
-      onKeyDown={event => {
-        if (event.key === 'Enter') event.currentTarget.blur();
-      }}
-    />
-  );
-}
-
 function ElevationSettings({
   annotation,
   datasets,
@@ -821,43 +790,22 @@ function ElevationSettings({
       </div>
     ));
   const units = ['m', 'km', 'ft'].map(unit => ({id: unit, label: unit}));
-  const numericInput = (
-    id: string,
-    fallback: string,
-    value: number | null,
-    change: (value: number) => void
-  ) =>
-    row(id, fallback, name => (
-      <CaptionMarginInput
-        label={name}
-        value={value}
-        min={-Infinity}
-        step={0.01}
-        onChange={change}
-      />
-    ));
-  const datumInput = (
-    id: string,
-    fallback: string,
-    value: string,
-    change: (value: string) => void
-  ) =>
-    row(
-      id,
-      fallback,
-      name => <ElevationDatumInput label={name} value={value} onChange={change} />,
-      label(
-        'datumHelp',
-        'Use the same height reference for both values, such as MSL for sea level. Leave unknown if you do not know it.'
+  const mapHeight = elevation.source === 'map';
+  const sourceHelp = elevation.field
+    ? intl.formatMessage(
+        {
+          id: 'annotationManager.elevation.fieldSourceHelp',
+          defaultMessage: '{dataset}: {field}. Configure this source through MCP/AI.'
+        },
+        {
+          dataset: datasets?.[elevation.field.dataId]?.label ?? elevation.field.dataId,
+          field: elevation.field.name
+        }
       )
-    );
-  const reference = elevation?.reference;
-  const mapHeight = elevation?.source === 'map';
-  const datasetOptions = Object.values(datasets || {}).filter(table =>
-    table.fields?.some(field => ['integer', 'real'].includes(field.type))
-  );
-  const table = datasetOptions.find(table => table.id === elevation?.field?.dataId);
-  const fields = table?.fields.filter(field => ['integer', 'real'].includes(field.type)) ?? [];
+    : label(
+        'manualSourceHelp',
+        'Configure the measured value and height reference through MCP/AI.'
+      );
   return (
     <AnnotationConfigGroup
       id={`annotation-${annotation.id}-elevation`}
@@ -865,170 +813,36 @@ function ElevationSettings({
       checked={enabled}
       onToggle={enabled => onChange({elevation: enabled ? {...elevation} : undefined})}
     >
-      {select(
-        'valueSource',
-        'Value to display',
-        mapHeight ? 'map' : elevation.field ? 'field' : 'manual',
-        [
-          {id: 'map', label: label('mapHeight', 'Map height')},
-          {id: 'manual', label: label('manualValue', 'Manual value')},
-          ...(datasetOptions.length || elevation.field
-            ? [{id: 'field', label: label('dataField', 'Data field')}]
-            : [])
-        ],
-        source => {
-          if (source === 'map') patch({source: 'map'});
-          else if (source === 'manual') patch({source: 'measurement', field: undefined});
-          else if (elevation.field) patch({source: 'measurement'});
-          else if (datasetOptions.length) {
-            const dataset = datasetOptions[0];
-            const field = dataset.fields.find(field => ['integer', 'real'].includes(field.type))!;
-            patch({
-              source: 'measurement',
-              field: {dataId: dataset.id, name: field.name},
-              value: null
-            });
-          }
-        }
-      )}
-      {!mapHeight ? (
-        <>
-          {elevation.field ? (
-            <>
-              {select(
-                'dataset',
-                'Dataset',
-                elevation.field.dataId,
-                datasetOptions.map(table => ({id: table.id, label: table.label})),
-                dataId => {
-                  const table = datasetOptions.find(table => table.id === dataId)!;
-                  patch({
-                    field: {
-                      dataId,
-                      name: table.fields.find(field => ['integer', 'real'].includes(field.type))!
-                        .name
-                    },
-                    value: null
-                  });
-                }
-              )}
-              {select(
-                'fieldName',
-                'Field',
-                elevation.field.name,
-                fields.map(field => ({id: field.name, label: field.name})),
-                name => patch({field: {...elevation.field!, name}, value: null})
-              )}
-              {row(
-                'captured',
-                'Captured value',
-                () => (
-                  <span>{elevation.value ?? '—'}</span>
-                ),
-                label(
-                  'fieldCaptureHelp',
-                  'Drag the anchor onto a feature to capture its value. A missed pick clears the value.'
-                )
-              )}
-            </>
-          ) : (
-            numericInput('value', 'Measured elevation', elevation.value, value => patch({value}))
-          )}
-          {select('measurementUnits', 'Measurement units', elevation.unit, units, unit =>
-            patch({unit: unit as ElevationUnit})
-          )}
-          {row(
-            'compareGround',
-            'Compare with ground',
-            name => (
-              <StyledRulerSwitch
-                id={`annotation-${annotation.id}-elevation-compareGround`}
-                aria-label={name}
-                checked={Boolean(reference)}
-                onChange={event =>
-                  patch({
-                    reference: event.target.checked
-                      ? {value: 0, unit: elevation.unit, datum: elevation.datum}
-                      : null,
-                    display: event.target.checked ? 'both' : 'altitude'
-                  })
-                }
-              />
+      {mapHeight
+        ? row('mapHeightMeters', 'Map height (m)', name => (
+            <CaptionMarginInput
+              label={name}
+              value={annotation.anchorPoint[2] ?? 0}
+              min={-Infinity}
+              step={0.001}
+              precision={3}
+              onChange={z =>
+                onChange({
+                  anchorPoint: [annotation.anchorPoint[0], annotation.anchorPoint[1], z]
+                })
+              }
+            />
+          ))
+        : row(
+            'source',
+            'Source',
+            () => (
+              <span>
+                {elevation.field
+                  ? label('dataField', 'Data field')
+                  : label('manualValue', 'Manual value')}
+              </span>
             ),
-            label(
-              'groundHelp',
-              'Enter a known ground elevation. Set matching height references; ground is not detected automatically.'
-            )
+            sourceHelp
           )}
-          {reference ? (
-            <>
-              {numericInput('groundElevation', 'Ground elevation', reference.value, value =>
-                patch({reference: {...reference, value}})
-              )}
-              {select('groundUnits', 'Ground units', reference.unit, units, unit =>
-                patch({reference: {...reference, unit: unit as ElevationUnit}})
-              )}
-              {select(
-                'display',
-                'Show',
-                elevation.display,
-                [
-                  {id: 'altitude', label: label('altitude', 'Elevation')},
-                  {id: 'relative', label: label('relative', 'Above ground')},
-                  {id: 'both', label: label('both', 'Both')}
-                ],
-                display => patch({display: display as AnnotationElevation['display']})
-              )}
-            </>
-          ) : null}
-        </>
-      ) : null}
       {select('outputUnits', 'Label units', elevation.outputUnit, units, outputUnit =>
         patch({outputUnit: outputUnit as ElevationUnit})
       )}
-      {row(
-        'anchorHeight',
-        'Marker height (m)',
-        name => (
-          <CaptionMarginInput
-            label={name}
-            value={annotation.anchorPoint[2] ?? 0}
-            min={-Infinity}
-            step={0.001}
-            precision={3}
-            onChange={z =>
-              onChange({
-                anchorPoint: [annotation.anchorPoint[0], annotation.anchorPoint[1], z]
-              })
-            }
-          />
-        ),
-        !mapHeight
-          ? label(
-              'measurementHelp',
-              'Marker height controls drawing only. Measured elevation stays independent, even when the layer height is exaggerated.'
-            )
-          : undefined
-      )}
-      {!mapHeight ? (
-        <>
-          {datumInput('datum', 'Measured from', elevation.datum, datum => patch({datum}))}
-          {reference ? (
-            <>
-              {datumInput('referenceDatum', 'Ground measured from', reference.datum, datum =>
-                patch({reference: {...reference, datum}})
-              )}
-              {numericInput(
-                'referenceHeight',
-                'Ground draw height (m)',
-                reference.displayZ ?? reference.value * ELEVATION_UNIT_METERS[reference.unit],
-                displayZ => patch({reference: {...reference, displayZ}})
-              )}
-            </>
-          ) : null}
-        </>
-      ) : null}
-
       {select(
         'precision',
         'Decimals',
