@@ -8,6 +8,7 @@ import {
   INITIAL_VIS_STATE,
   replaceDatasetDepsInState
 } from '@kepler.gl/reducers';
+import {DEFAULT_ANNOTATION_ELEVATION} from '@kepler.gl/utils';
 import {AnnotationKind} from '@kepler.gl/constants';
 
 const makeState = (annotations = []) => ({
@@ -444,5 +445,115 @@ test('#mergeAnnotations -> normalizes ruler presentation without changing legacy
   t.equal(result[2].rulerStyle.offset, 0, 'invalid offset uses a safe default');
   t.notOk(result[2].labelBackground, 'invalid background is discarded');
   t.notOk(result[3].rulerStyle, 'ruler style is ignored for other annotation kinds');
+  t.end();
+});
+
+test('#mergeAnnotations -> elevation values remain captured and malformed settings do not remove the point', t => {
+  const elevation = {
+    ...DEFAULT_ANNOTATION_ELEVATION,
+    value: 7448.36,
+    datum: 'MSL',
+    field: {dataId: 'missing-dataset', name: 'altitude'}
+  };
+  const result = mergeAnnotations(makeState(), [
+    makeAnnotation({id: 'captured', elevation}),
+    makeAnnotation({id: 'invalid', elevation: {...elevation, value: NaN}}),
+    makeAnnotation({id: 'legacy'}),
+    makeAnnotation({id: 'text', kind: AnnotationKind.TEXT, elevation})
+  ]).annotations;
+  t.equal(result.length, 4, 'all annotations survive import');
+  t.deepEqual(
+    result[0].elevation,
+    elevation,
+    'a captured value does not require its dataset to remain loaded'
+  );
+  t.notEqual(result[0].elevation.field, elevation.field, 'source metadata is copied');
+  t.notOk(result[1].elevation, 'invalid settings are discarded without inventing a zero');
+  t.notOk(result[2].elevation, 'legacy settings stay omitted');
+  t.notOk(result[3].elevation, 'only point annotations have elevation');
+  t.end();
+});
+
+test('#mergeAnnotations -> source fields follow dataset replacements without refreshing captured elevations', t => {
+  const elevation = {
+    ...DEFAULT_ANNOTATION_ELEVATION,
+    value: 7448.36,
+    field: {dataId: 'original', name: 'altitude'}
+  };
+  const point = makeAnnotation({elevation, readout: {type: 'count', dataId: 'other'}});
+  const state = makeState([point, makeAnnotation({id: 'static'})]);
+  const parked = replaceDatasetDepsInState(state, {dataId: 'original', dataIdToUse: 'replacement'});
+  const merged = mergeAnnotations(parked, parked.annotationsToBeMerged);
+  t.deepEqual(
+    merged.annotations.map(a => a.id),
+    ['ann-1', 'static'],
+    'preserves annotation ordering'
+  );
+  t.deepEqual(
+    merged.annotations[0].elevation,
+    {...elevation, field: {...elevation.field, dataId: 'replacement'}},
+    'rewrites only source provenance'
+  );
+  t.deepEqual(
+    merged.annotations[0].readout,
+    point.readout,
+    'unrelated count readout remains intact'
+  );
+  t.equal(point.elevation.field.dataId, 'original', 'original provenance is immutable');
+  t.end();
+});
+
+test('#mergeAnnotations -> replaces both dependencies of parked elevations in either order', t => {
+  for (const dataIds of [
+    ['counts', 'elevations'],
+    ['elevations', 'counts']
+  ]) {
+    const elevation = {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      value: 7448.36,
+      field: {dataId: 'elevations', name: 'altitude'}
+    };
+    const readout = {type: 'count', dataId: 'counts'};
+    const state = makeState([
+      makeAnnotation({id: 'count', readout}),
+      makeAnnotation({id: 'both', readout, elevation}),
+      makeAnnotation({id: 'static'}),
+      makeAnnotation({id: 'elevation', elevation}),
+      makeAnnotation({id: 'other', readout: {type: 'count', dataId: 'other-data'}})
+    ]);
+    const source = JSON.parse(JSON.stringify(state.annotations));
+    const firstParked = replaceDatasetDepsInState(state, {
+      dataId: dataIds[0],
+      dataIdToUse: `${dataIds[0]}-replacement`
+    });
+    const firstSnapshot = JSON.parse(JSON.stringify(firstParked.annotationsToBeMerged));
+    const parked = replaceDatasetDepsInState(firstParked, {
+      dataId: dataIds[1],
+      dataIdToUse: `${dataIds[1]}-replacement`
+    });
+    const merged = mergeAnnotations(parked, [...parked.annotationsToBeMerged].reverse());
+    t.deepEqual(
+      merged.annotations.map(a => a.id),
+      source.map(a => a.id),
+      'restores original order'
+    );
+    const point = merged.annotations.find(a => a.id === 'both');
+    t.deepEqual(point.readout, {...readout, dataId: 'counts-replacement'}, 'rewrites count source');
+    t.deepEqual(
+      point.elevation,
+      {
+        ...elevation,
+        field: {...elevation.field, dataId: 'elevations-replacement'}
+      },
+      'rewrites elevation source without changing the captured measurement'
+    );
+    t.equal(merged.annotations[4], state.annotations[4], 'keeps unrelated annotations intact');
+    t.deepEqual(state.annotations, source, 'does not mutate active annotations');
+    t.deepEqual(
+      firstParked.annotationsToBeMerged,
+      firstSnapshot,
+      'does not mutate parked annotations'
+    );
+  }
   t.end();
 });

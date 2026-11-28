@@ -62,7 +62,8 @@ import {
   Viewport,
   SplitMap,
   SplitMapLayers,
-  Effect
+  Effect,
+  AnnotationElevation
 } from '@kepler.gl/types';
 import {
   errorNotification,
@@ -127,6 +128,7 @@ import {
   computeDeckLayers,
   getZoomOpacityAnnotationTargetId,
   getLayerHoverProp,
+  getLayerHoverPropValue,
   getLayerZoomOpacityFactor,
   LayerHoverProp,
   prepareLayersForDeck,
@@ -968,6 +970,47 @@ export default function MapContainerFactory(
           return null;
         }
         return coordinate;
+      } catch {
+        return null;
+      }
+    };
+
+    _pickAnnotationElevation = (
+      xy: [number, number],
+      field: NonNullable<AnnotationElevation['field']>
+    ) => {
+      try {
+        const info = this._deck?.pickObject({x: xy[0], y: xy[1], radius: 0, unproject3D: true});
+        const coordinate = info?.coordinate;
+        if (
+          !Array.isArray(coordinate) ||
+          coordinate.length < 3 ||
+          !coordinate.every(Number.isFinite)
+        )
+          return null;
+        const {layers, datasets, animationConfig} = this.props.visState;
+        const layer = layers.find(
+          item =>
+            !item.isAggregated && item.config.dataId === field.dataId && item.hasHoveredObject(info)
+        );
+        const table = Object.prototype.hasOwnProperty.call(datasets, field.dataId)
+          ? datasets[field.dataId]
+          : undefined;
+        if (!layer || !table) return {coordinate, value: null};
+        const column = table.fields.find(item => item.name === field.name);
+        if (!column || !['integer', 'real'].includes(column.type)) return {coordinate, value: null};
+        const row = layer.getHoverData(
+          info.object ?? info.index,
+          table.dataContainer,
+          table.fields,
+          animationConfig,
+          info
+        );
+        const value = getLayerHoverPropValue(row, column.fieldIdx);
+        return {
+          coordinate,
+          value: typeof value === 'number' && Number.isFinite(value) ? value : null
+        };
       } catch {
         return null;
       }
@@ -2024,6 +2067,7 @@ export default function MapContainerFactory(
             viewport={this._getAnnotationViewport(mapState, internalViewState)}
             isGlobeEnabled={Boolean(mapState.globe?.enabled)}
             pickWorldPosition={this._pickWorldPosition}
+            pickElevation={this._pickAnnotationElevation}
             updateAnnotation={visStateActions.updateAnnotation}
             setSelectedAnnotation={visStateActions.setSelectedAnnotation}
           />

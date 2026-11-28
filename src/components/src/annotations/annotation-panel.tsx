@@ -14,7 +14,14 @@ import {
   ActionHandler
 } from '@kepler.gl/actions';
 import {visStateLens, mapStateLens} from '@kepler.gl/reducers';
-import {Annotation, RulerAnnotation, RulerStyle} from '@kepler.gl/types';
+import {
+  Annotation,
+  RulerAnnotation,
+  RulerStyle,
+  PointAnnotation,
+  AnnotationElevation,
+  ElevationUnit
+} from '@kepler.gl/types';
 import {
   AnnotationKind,
   AnnotationTextSide,
@@ -41,7 +48,8 @@ import {
   DrawPoint,
   EyeSeen,
   EyeUnseen,
-  Trash
+  Trash,
+  VertThreeDots
 } from '../common/icons';
 import {StyledPanelHeader, Tooltip, Button, ButtonGroup, Input} from '../common/styled-components';
 import Switch from '../common/switch';
@@ -49,11 +57,30 @@ import ItemSelector from '../common/item-selector/item-selector';
 import Slider from '../common/slider/slider';
 import Portaled from '../common/portaled';
 import TippyTooltip from '../common/tippy-tooltip';
+import InfoHelperFactory from '../common/info-helper';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
-import {getCameraSnapshot, hexToRgb, rgbToHex, DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
+import {
+  ConfigGroupCollapsibleContent,
+  ConfigGroupContent,
+  LayerConfigGroupLabelFactory,
+  StyledConfigGroupHeader,
+  StyledLayerConfigGroup,
+  StyledLayerConfigGroupAction
+} from '../side-panel/layer-panel/layer-config-group';
+import {
+  getCameraSnapshot,
+  hexToRgb,
+  rgbToHex,
+  DEFAULT_RULER_STYLE,
+  DEFAULT_ANNOTATION_ELEVATION,
+  DEFAULT_MAP_HEIGHT_ELEVATION
+} from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
 import {angleForTextPlacement, getTextPlacement} from './annotation-utils';
 import {MapViewStateContext} from '../map-view-state-context';
+
+const InfoHelper = InfoHelperFactory();
+const LayerConfigGroupLabel = LayerConfigGroupLabelFactory(InfoHelper);
 
 const AnnotationArrowIcon = (props: Partial<BaseProps>) => (
   <Base viewBox="0 0 24 24" {...props}>
@@ -337,30 +364,43 @@ function CaptionMarginInput({
   label,
   value,
   max,
+  min = 0,
   step = 1,
+  precision,
   onChange
 }: {
   label: string;
-  value: number;
+  value: number | null;
   max?: number;
+  min?: number;
   step?: number;
+  precision?: number;
   onChange: (value: number) => void;
 }) {
-  const [draft, setDraft] = React.useState(String(value));
-  React.useEffect(() => setDraft(String(value)), [value]);
+  const inputValue =
+    value !== null && precision !== undefined ? Number(value.toFixed(precision)) : value;
+  const [draft, setDraft] = React.useState(String(inputValue ?? ''));
+  React.useEffect(() => setDraft(String(inputValue ?? '')), [inputValue]);
   const commit = () => {
     const next = Number(draft);
-    if (draft.trim() && Number.isFinite(next) && next >= 0 && (max === undefined || next <= max)) {
-      if (next !== value) onChange(next);
+    if (
+      draft.trim() &&
+      Number.isFinite(next) &&
+      next >= min &&
+      (max === undefined || next <= max)
+    ) {
+      const committedValue = precision === undefined ? next : Number(next.toFixed(precision));
+      if (precision !== undefined) setDraft(String(committedValue));
+      if (committedValue !== inputValue) onChange(committedValue);
     } else {
-      setDraft(String(value));
+      setDraft(String(inputValue ?? ''));
     }
   };
   return (
     <StyledCaptionInput
       aria-label={label}
       type="number"
-      min={0}
+      min={Number.isFinite(min) ? min : undefined}
       step={step}
       max={max}
       value={draft}
@@ -452,7 +492,6 @@ function RulerSettings({
         }}
       />
     ));
-  const background = annotation.labelBackground;
   return (
     <>
       {row('styledDistance', 'Styled distance', name => (
@@ -533,48 +572,259 @@ function RulerSettings({
           )}
         </>
       ) : null}
-      {row('labelBackground', 'Label background', name => (
-        <StyledRulerSwitch
-          id={`annotation-${annotation.id}-labelBackground`}
-          aria-label={name}
-          checked={Boolean(background)}
-          onChange={event =>
-            onChange({
-              labelBackground: event.target.checked
-                ? {color: '#000000', opacity: 0.7, padding: 8}
-                : undefined
-            })
+    </>
+  );
+}
+
+function AnnotationConfigGroup({
+  id,
+  label,
+  checked,
+  onToggle,
+  children
+}: {
+  id: string;
+  label: string;
+  checked: boolean;
+  onToggle: (enabled: boolean) => void;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed: !open})}>
+      <StyledConfigGroupHeader
+        collapsible
+        role="button"
+        tabIndex={0}
+        aria-label={label}
+        aria-expanded={open}
+        aria-controls={`${id}-content`}
+        onClick={event => {
+          if (event.target instanceof Element && event.target.closest('.kg-checkbox')) return;
+          setOpen(!open);
+        }}
+        onKeyDown={event => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            if (!event.repeat) setOpen(!open);
           }
+        }}
+      >
+        <LayerConfigGroupLabel label={label} collapsed={!open} />
+        <StyledLayerConfigGroupAction className="layer-config-group__action">
+          <Switch
+            id={`${id}-enabled`}
+            label={
+              <span
+                style={{
+                  position: 'absolute',
+                  width: 1,
+                  height: 1,
+                  overflow: 'hidden',
+                  clipPath: 'inset(50%)'
+                }}
+              >
+                {label}
+              </span>
+            }
+            checked={checked}
+            onChange={event => onToggle(event.target.checked)}
+          />
+          <VertThreeDots height="18px" />
+        </StyledLayerConfigGroupAction>
+      </StyledConfigGroupHeader>
+      <ConfigGroupContent
+        as="fieldset"
+        className={classnames('layer-config-group__content', {disabled: !checked})}
+        id={`${id}-content`}
+        disabled={!checked}
+        aria-disabled={!checked}
+        style={{border: 0, margin: 0, padding: 0, minWidth: 0}}
+      >
+        {open ? <ConfigGroupCollapsibleContent>{children}</ConfigGroupCollapsibleContent> : null}
+      </ConfigGroupContent>
+    </StyledLayerConfigGroup>
+  );
+}
+
+function AnnotationBackgroundSettings({
+  annotation,
+  intl,
+  onChange
+}: {
+  annotation: Annotation;
+  intl: IntlShape;
+  onChange: (changes: Partial<Annotation>) => void;
+}) {
+  const enabled = Boolean(annotation.labelBackground);
+  const [lastBackground, setLastBackground] = React.useState(
+    annotation.labelBackground ?? {color: '#000000', opacity: 0.7, padding: 8}
+  );
+  React.useEffect(() => {
+    if (annotation.labelBackground) setLastBackground(annotation.labelBackground);
+  }, [annotation.labelBackground]);
+  const background = annotation.labelBackground ?? lastBackground;
+  const patch = (changes: Partial<typeof background>) => {
+    if (!enabled) return;
+    const next = {...background, ...changes};
+    setLastBackground(next);
+    onChange({labelBackground: next});
+  };
+  const row = (id: string, fallback: string, control: (name: string) => React.ReactNode) => (
+    <StyledConfigRow key={id}>
+      <StyledConfigLabel as="label" htmlFor={`annotation-${annotation.id}-${id}`}>
+        {intl.formatMessage({id: `annotationManager.${id}`, defaultMessage: fallback})}
+      </StyledConfigLabel>
+      {control(intl.formatMessage({id: `annotationManager.${id}`, defaultMessage: fallback}))}
+    </StyledConfigRow>
+  );
+  return (
+    <AnnotationConfigGroup
+      id={`annotation-${annotation.id}-background`}
+      label={intl.formatMessage({id: 'annotationManager.background', defaultMessage: 'Background'})}
+      checked={enabled}
+      onToggle={enabled =>
+        onChange({
+          labelBackground: enabled ? {...background} : undefined
+        })
+      }
+    >
+      {row('backgroundColor', 'Background color', () => (
+        <InlineColorPicker
+          color={hexToRgb(background.color)}
+          disabled={!enabled}
+          onSetColor={rgb => patch({color: rgbToHex(rgb)})}
         />
       ))}
-      {background ? (
-        <>
-          {row('backgroundColor', 'Background color', () => (
-            <InlineColorPicker
-              color={hexToRgb(background.color)}
-              onSetColor={rgb => onChange({labelBackground: {...background, color: rgbToHex(rgb)}})}
-            />
-          ))}
-          {row('backgroundOpacity', 'Background opacity', name => (
+      {row('backgroundOpacity', 'Background opacity', name => (
+        <CaptionMarginInput
+          label={name}
+          value={background.opacity}
+          max={1}
+          step={0.1}
+          onChange={opacity => patch({opacity})}
+        />
+      ))}
+      {row('labelPadding', 'Padding (px)', name => (
+        <CaptionMarginInput
+          label={name}
+          value={background.padding}
+          max={100}
+          onChange={padding => patch({padding})}
+        />
+      ))}
+    </AnnotationConfigGroup>
+  );
+}
+
+function ElevationSettings({
+  annotation,
+  intl,
+  onChange
+}: {
+  annotation: PointAnnotation;
+  intl: IntlShape;
+  onChange: (changes: Partial<Annotation>) => void;
+}) {
+  const enabled = Boolean(annotation.elevation);
+  const [lastElevation, setLastElevation] = React.useState(
+    annotation.elevation ?? {...DEFAULT_MAP_HEIGHT_ELEVATION}
+  );
+  React.useEffect(() => {
+    if (annotation.elevation) setLastElevation(annotation.elevation);
+  }, [annotation.elevation]);
+  const elevation = annotation.elevation ?? lastElevation;
+  const patch = (changes: Partial<AnnotationElevation>) => {
+    if (!enabled) return;
+    const next = {...DEFAULT_ANNOTATION_ELEVATION, ...elevation, ...changes};
+    setLastElevation(next);
+    onChange({elevation: next});
+  };
+  const label = (id: string, fallback: string) =>
+    intl.formatMessage({id: `annotationManager.elevation.${id}`, defaultMessage: fallback});
+  const row = (id: string, fallback: string, control: (name: string) => React.ReactNode) => (
+    <StyledConfigRow key={id}>
+      <StyledConfigLabel>
+        <label htmlFor={`annotation-${annotation.id}-elevation-${id}`}>{label(id, fallback)}</label>
+      </StyledConfigLabel>
+      {control(label(id, fallback))}
+    </StyledConfigRow>
+  );
+  const select = (
+    id: string,
+    fallback: string,
+    value: string,
+    options: {id: string; label: string}[],
+    change: (value: string) => void
+  ) =>
+    row(id, fallback, name => (
+      <div role="group" aria-label={name}>
+        <StyledSelect
+          key={enabled ? 'enabled' : 'disabled'}
+          disabled={!enabled}
+          options={options}
+          selectedItems={options.find(option => option.id === value) ?? {id: value, label: value}}
+          displayOption="label"
+          getOptionValue="id"
+          multiSelect={false}
+          searchable={false}
+          onChange={value => {
+            if (enabled && typeof value === 'string') change(value);
+          }}
+        />
+      </div>
+    ));
+  const units = ['m', 'km', 'ft'].map(unit => ({id: unit, label: unit}));
+  const mapHeight = elevation.source === 'map';
+  return (
+    <AnnotationConfigGroup
+      id={`annotation-${annotation.id}-elevation`}
+      label={label('elevation', 'Elevation')}
+      checked={enabled}
+      onToggle={enabled => onChange({elevation: enabled ? {...elevation} : undefined})}
+    >
+      {mapHeight
+        ? row('mapHeightMeters', 'Map height (m)', name => (
             <CaptionMarginInput
               label={name}
-              value={background.opacity}
-              max={1}
-              step={0.1}
-              onChange={opacity => onChange({labelBackground: {...background, opacity}})}
+              value={annotation.anchorPoint[2] ?? 0}
+              min={-Infinity}
+              step={0.001}
+              precision={3}
+              onChange={z =>
+                onChange({
+                  anchorPoint: [annotation.anchorPoint[0], annotation.anchorPoint[1], z]
+                })
+              }
             />
-          ))}
-          {row('labelPadding', 'Padding (px)', name => (
-            <CaptionMarginInput
-              label={name}
-              value={background.padding}
-              max={100}
-              onChange={padding => onChange({labelBackground: {...background, padding}})}
-            />
-          ))}
-        </>
-      ) : null}
-    </>
+          ))
+        : null}
+      {select('outputUnits', 'Label units', elevation.outputUnit, units, outputUnit =>
+        patch({outputUnit: outputUnit as ElevationUnit})
+      )}
+      {select(
+        'precision',
+        'Decimals',
+        String(elevation.precision),
+        Array.from({length: 4}, (_, i) => ({id: String(i), label: String(i)})),
+        value => patch({precision: Number(value)})
+      )}
+      {select(
+        'guide',
+        'Vertical guide',
+        elevation.guide,
+        ['none', 'solid', 'dashed'].map(id => ({id, label: label(id, id)})),
+        guide => patch({guide: guide as AnnotationElevation['guide']})
+      )}
+      {select(
+        'marker',
+        'Marker style',
+        elevation.marker,
+        ['none', 'dot', 'ring'].map(id => ({id, label: label(id, id)})),
+        marker => patch({marker: marker as AnnotationElevation['marker']})
+      )}
+    </AnnotationConfigGroup>
   );
 }
 
@@ -803,7 +1053,8 @@ const StyledColorDropdown = styled.div`
 const InlineColorPicker: React.FC<{
   color: [number, number, number];
   onSetColor: (value: [number, number, number]) => void;
-}> = ({color, onSetColor}) => {
+  disabled?: boolean;
+}> = ({color, onSetColor, disabled = false}) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const hexColor = React.useMemo(() => rgbToHex(color), [color]);
   const colorBlockStyle = React.useMemo(
@@ -819,11 +1070,11 @@ const InlineColorPicker: React.FC<{
 
   return (
     <StyledColorButtonWrapper>
-      <Button onClick={() => setIsOpen(!isOpen)}>
+      <Button disabled={disabled} onClick={() => setIsOpen(!isOpen)}>
         <div style={colorBlockStyle} />
         <ArrowDownSmall />
       </Button>
-      <Portaled top={0} left={0} isOpened={isOpen} onClose={() => setIsOpen(false)}>
+      <Portaled top={0} left={0} isOpened={isOpen && !disabled} onClose={() => setIsOpen(false)}>
         <StyledColorDropdown>
           <SingleColorPalette selectedColor={hexColor} onSelectColor={handleSelectColor} />
         </StyledColorDropdown>
@@ -1295,6 +1546,22 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                         <CaptionSettings
                           annotation={annotation}
                           datasets={visState.datasets}
+                          intl={intl}
+                          onChange={changes =>
+                            visStateActions.updateAnnotation(annotation.id, changes)
+                          }
+                        />
+                      ) : null}
+                      <AnnotationBackgroundSettings
+                        annotation={annotation}
+                        intl={intl}
+                        onChange={changes =>
+                          visStateActions.updateAnnotation(annotation.id, changes)
+                        }
+                      />
+                      {annotation.kind === AnnotationKind.POINT ? (
+                        <ElevationSettings
+                          annotation={annotation}
                           intl={intl}
                           onChange={changes =>
                             visStateActions.updateAnnotation(annotation.id, changes)

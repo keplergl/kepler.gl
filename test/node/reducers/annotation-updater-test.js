@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {DEFAULT_ANNOTATION_ELEVATION} from '@kepler.gl/utils';
+
 import test from 'tape';
 import {
   getZoomOpacityAnnotationTargetId,
@@ -664,5 +666,46 @@ test('#visStateReducer -> ruler presentation survives endpoint updates and clear
     })
   );
   t.notOk(state.annotations[0].labelBackground, 'invalid updates cannot enter runtime state');
+  t.end();
+});
+
+test('#visStateReducer -> point elevation normalizes, duplicates and clears when changing kind', t => {
+  const elevation = {
+    ...DEFAULT_ANNOTATION_ELEVATION,
+    value: -1000,
+    datum: 'MSL',
+    reference: {value: 0, unit: 'm', datum: 'MSL', displayZ: 5900}
+  };
+  let state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({
+      id: 'height',
+      kind: AnnotationKind.POINT,
+      elevation,
+      anchorPoint: [0, 0, 4900]
+    })
+  );
+  t.deepEqual(
+    state.annotations[0].elevation,
+    elevation,
+    'accepts signed source values independently from drawn height'
+  );
+  state = reducer(state, VisStateActions.duplicateAnnotation('height'));
+  t.deepEqual(state.annotations[0].elevation, elevation, 'duplicates elevation');
+  t.notEqual(
+    state.annotations[0].elevation.reference,
+    state.annotations[1].elevation.reference,
+    'duplicates own reference'
+  );
+  state = reducer(state, VisStateActions.updateAnnotation('height', {kind: AnnotationKind.RULER}));
+  t.notOk(
+    state.annotations.find(a => a.id === 'height').elevation,
+    'rulers cannot inherit point elevation'
+  );
+  state = reducer(
+    state,
+    VisStateActions.addAnnotation({id: 'invalid', elevation: {...elevation, value: Infinity}})
+  );
+  t.notOk(state.annotations[0].elevation, 'invalid measurement is discarded');
   t.end();
 });

@@ -92,6 +92,34 @@ export type TextAnnotation = BaseAnnotation & {
 
 export type PointAnnotation = AnnotationWithArm & {
   kind: AnnotationKind.POINT;
+  elevation?: AnnotationElevation;
+};
+
+export type ElevationUnit = 'm' | 'km' | 'ft';
+
+/** A map height or a captured measurement independent of rendering altitude. */
+export type AnnotationElevation = {
+  /** Omitted preserves captured-measurement behavior in existing saved callouts. */
+  source?: 'map' | 'measurement';
+  /** Null means no valid measurement has been captured. */
+  value: number | null;
+  unit: ElevationUnit;
+  /** Named vertical datum, e.g. MSL; unknown cannot be used for a difference. */
+  datum: string;
+  /** Selecting a field captures its value when the anchor is next dragged onto a feature. */
+  field?: {dataId: string; name: string};
+  reference: {
+    value: number;
+    unit: ElevationUnit;
+    datum: string;
+    /** Rendering height in metres. Omitted means the reference value converted to metres. */
+    displayZ?: number;
+  } | null;
+  display: 'altitude' | 'relative' | 'both';
+  outputUnit: ElevationUnit;
+  precision: number;
+  guide: 'none' | 'solid' | 'dashed';
+  marker: 'none' | 'dot' | 'ring';
 };
 
 export type ArrowAnnotation = AnnotationWithArm & {

@@ -11,6 +11,7 @@ Annotations add text, points, arrows, circles, and rulers to your map. You can k
 - [Dateline and globe views](#dateline-and-globe-views)
 - [Manage annotations](#manage-annotations)
 - [Save and export](#save-and-export)
+- [Point elevation callouts](#point-elevation-callouts)
 <!-- /TOC -->
 
 ## Open the annotations panel
@@ -75,5 +76,37 @@ Use [Export Map](./k-save-and-export.md#export-map) to save or share your annota
 - **HTML** includes the ruler configuration. Editable exports support annotation editing; view-only exports display rulers with editing controls hidden.
 
 Use a kepler.gl version that supports ruler annotations when loading or sharing saved maps.
+
+## Annotation backgrounds
+
+Text, Point, Arrow, Circle, and Ruler annotations all have a collapsible **Background** group. Its inline header switch enables the label background; color, opacity, and padding controls appear inside. Enabling the background and expanding the group are independent actions. When switched off, an expanded group keeps its controls visible but greyed out and disabled.
+
+## Point elevation callouts
+
+Select a **Point** annotation and enable the inline switch in the **Elevation** group header. Expand the group to configure the callout. New callouts show **Map height**: the picked marker height in metres above the map's zero plane. Drag the anchor to update the height. A two-coordinate anchor is at map zero. This is a drawing height, not an automatically measured altitude or height above terrain; shifted or exaggerated layers also shift this value.
+
+The **Elevation** group keeps the map-height setup to five controls:
+
+- **Map height (m)** edits the marker height to at most three decimal places. Its vertical guide ends at map zero.
+- **Label units** selects metres, kilometres, or feet.
+- **Decimals** offers zero to three decimal places.
+- **Vertical guide** selects no guide, a solid line, or a dashed line.
+- **Marker style** selects no marker, a dot, or a ring.
+
+Switching elevation off leaves these controls visible but greyed out and disabled while the group is expanded. An optional caption shares its typography and background with the elevation label. The separate **Background** group above **Elevation** remains available with elevation disabled.
+
+**Manual value** and **Data field** setup is available through MCP/AI. Existing measured callouts keep their configuration and expose only label units, decimals, guide, and marker controls. The map-height editor is hidden for measured callouts so the drawing height cannot be confused with the measurement.
+
+Through MCP/AI, you can configure:
+
+- A manual measured value, its units, and height reference (`elevation.value`, `unit`, and `datum`). `MSL` means sea level; leave `datum` as `unknown` if it is not known.
+- A dataset and numeric field (`elevation.field`). Drag the anchor onto a feature to capture the field value independently of its drawing position. Data/filter changes do not refresh the captured value; dragging the anchor does. A missed pick or missing/non-numeric value clears it. Aggregated bins cannot supply a measurement.
+- A known ground elevation and height reference (`elevation.reference`), and whether to show elevation, height above the reference, or both (`elevation.display`). Ground is not detected automatically. Comparisons require matching, known height references. An optional `reference.displayZ` sets the ground drawing height; otherwise it defaults to the reference elevation converted to metres.
+
+For the lightning example, ask the AI to configure a measured elevation of `7448.36 m`, a ground reference of `990 m`, both relative to `MSL`, and to display both values in kilometres with two decimals. The labels read **7.45 km above sea level** and **6.46 km above reference**. The marker can have a separate drawing height, such as `9000 m`; map-height mode would instead label **9.00 km above map zero**.
+
+Missing measurements and unknown/mismatched height references remain explicit. Negative values keep their sign, and differences are calculated before rounding. Guides stay at the anchor's longitude and latitude as the camera moves; globe-occluded reference points are hidden.
+
+Saved maps retain their selected source mode, measurements, reference, and styling. Existing callouts without a source mode retain measured-value behavior. Map-height mode leaves saved measurement settings intact but ignores them until a measured source is selected through MCP/AI. Both modes use the shared renderer for HTML export, native previews, and recordings. MCP supports `elevation.source: "map"` for anchor height and `"measurement"` for captured values; omission preserves existing behavior, partial updates retain other settings, and `elevation: null` removes the callout. Automatic terrain lookup remains unsupported.
 
 [Back to table of contents](README.md)

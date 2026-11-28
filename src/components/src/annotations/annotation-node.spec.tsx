@@ -6,7 +6,8 @@ import {DndContext} from '@dnd-kit/core';
 import {render} from '@testing-library/react';
 
 import {AnnotationKind} from '@kepler.gl/constants';
-import {DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
+import {DEFAULT_RULER_STYLE, DEFAULT_ANNOTATION_ELEVATION} from '@kepler.gl/utils';
+import {WebMercatorViewport} from '@deck.gl/core';
 import {Annotation} from '@kepler.gl/types';
 
 import AnnotationNode, {RulerEndpointHandles} from './annotation-node';
@@ -16,6 +17,7 @@ import {
   getRulerDistanceLabel,
   RulerAnnotationMarker
 } from './annotation-utils';
+import {getElevationGuide, movePoint} from './annotation-utils';
 // @ts-ignore Experimental export is missing from the repository's deck.gl type augmentation.
 import {_GlobeViewport as GlobeViewport} from '@deck.gl/core';
 
@@ -394,4 +396,150 @@ test('globe dimension rulers retain clipped surface arcs and only decorate visib
     )
   ).toBe(true);
   expect(container.innerHTML).not.toMatch(/NaN|Infinity/);
+});
+
+test.each([
+  [0, 0],
+  [62, 0],
+  [62, 90],
+  [62, 180]
+])(
+  'keeps an elevation guide at its geographic footprint at pitch %s bearing %s',
+  (pitch, bearing) => {
+    const point = {
+      ...annotation,
+      kind: AnnotationKind.POINT as const,
+      anchorPoint: [-101.830429, 33.518337, 7448.36] as [number, number, number],
+      elevation: {
+        ...DEFAULT_ANNOTATION_ELEVATION,
+        value: 7448.36,
+        datum: 'MSL',
+        reference: {value: 990, unit: 'm' as const, datum: 'MSL'}
+      }
+    };
+    const vp = new WebMercatorViewport({
+      longitude: -101.830429,
+      latitude: 33.518337,
+      width: 800,
+      height: 600,
+      zoom: 8,
+      pitch,
+      bearing
+    });
+    const guide = getElevationGuide(point, vp as unknown as MapViewport)!;
+    const top = vp.project(point.anchorPoint);
+    const bottom = vp.project([-101.830429, 33.518337, 990]);
+    expect(top[0] + guide.ex).toBeCloseTo(bottom[0]);
+    expect(top[1] + guide.ey).toBeCloseTo(bottom[1]);
+    const {container} = render(
+      <svg>
+        <AnnotationNode
+          annotation={point}
+          viewport={vp as unknown as MapViewport}
+          isEditing={false}
+          isSelected={false}
+        />
+      </svg>
+    );
+    expect(container.querySelector('[data-annotation-part="elevation-guide"]')).toHaveAttribute(
+      'd',
+      `M0,0 L${guide.ex},${guide.ey}`
+    );
+    expect(container.querySelector('[data-annotation-part="elevation-guide"]')).toHaveAttribute(
+      'stroke-dasharray',
+      '6 3'
+    );
+    expect(container.querySelector('circle')).toHaveAttribute('fill', 'none');
+  }
+);
+
+test('uses explicit display height without changing measurements and hides unavailable or globe-occluded references', () => {
+  const point = {
+    ...annotation,
+    kind: AnnotationKind.POINT as const,
+    anchorPoint: [84.2, 0, 1000] as [number, number, number],
+    elevation: {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      value: -1000,
+      datum: 'MSL',
+      reference: {value: 0, unit: 'm' as const, datum: 'MSL', displayZ: 6000}
+    }
+  };
+  const vp = {...viewport, project: ([lng, lat, z = 0]: readonly number[]) => [lng, lat - z]};
+  expect(getElevationGuide(point, vp)).toEqual({ex: 0, ey: -5000});
+  const globe = new GlobeViewport({longitude: 0, latitude: 0, width: 800, height: 600, zoom: 4});
+  expect(
+    getElevationGuide(
+      {
+        ...point,
+        elevation: {...point.elevation, reference: {...point.elevation.reference, displayZ: 0}}
+      },
+      globe,
+      true
+    )
+  ).toBeNull();
+  expect(
+    getElevationGuide({...point, elevation: {...point.elevation, reference: null}}, vp)
+  ).toBeNull();
+  expect(
+    getElevationGuide({...point, elevation: {...point.elevation, datum: 'ellipsoid'}}, vp)
+  ).toBeNull();
+  expect(
+    getElevationGuide({...point, elevation: {...point.elevation, guide: 'none'}}, vp)
+  ).toBeNull();
+});
+
+test('captures source altitude separately from picked Z and clears a missing field value on the next pick', () => {
+  const point = {
+    ...annotation,
+    kind: AnnotationKind.POINT as const,
+    elevation: {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      value: 7448.36,
+      field: {dataId: 'detections', name: 'altitude'}
+    }
+  };
+  const pick = jest.fn(() => ({coordinate: [1, 2, 9000], value: -1000}));
+  expect(movePoint(point, {x: 2, y: 3}, viewport, undefined, pick)).toEqual({
+    anchorPoint: [1, 2, 9000],
+    elevation: {...point.elevation, value: -1000}
+  });
+  expect(pick).toHaveBeenCalledWith([102, 203], point.elevation.field);
+  expect(
+    movePoint(
+      point,
+      {x: 2, y: 3},
+      viewport,
+      () => [1, 2, 9000],
+      () => null
+    )
+  ).toMatchObject({
+    elevation: {value: null}
+  });
+});
+
+test('map height uses a zero guide and follows picked Z without changing saved measurements', () => {
+  const point = {
+    ...annotation,
+    kind: AnnotationKind.POINT as const,
+    anchorPoint: [1, 2, 9000] as [number, number, number],
+    elevation: {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      source: 'map' as const,
+      value: 7448.36,
+      field: {dataId: 'detections', name: 'altitude'},
+      reference: {value: 990, unit: 'm' as const, datum: 'MSL', displayZ: 5000}
+    }
+  };
+  const vp = {...viewport, project: ([lng, lat, z = 0]: readonly number[]) => [lng, lat - z]};
+  expect(getElevationGuide(point, vp)).toEqual({ex: 0, ey: 9000});
+  expect(
+    getElevationGuide({...point, elevation: {...point.elevation, reference: null}}, vp)
+  ).toEqual({ex: 0, ey: 9000});
+  const pickElevation = jest.fn();
+  expect(movePoint(point, {x: 2, y: 3}, vp, () => [2, 3, 500], pickElevation)).toEqual({
+    anchorPoint: [2, 3, 500]
+  });
+  expect(pickElevation).not.toHaveBeenCalled();
+  expect(point.elevation.value).toBe(7448.36);
 });

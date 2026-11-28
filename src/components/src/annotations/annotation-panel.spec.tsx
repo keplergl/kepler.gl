@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import {DEFAULT_ANNOTATION_ELEVATION, DEFAULT_MAP_HEIGHT_ELEVATION} from '@kepler.gl/utils';
+
 import React, {useContext} from 'react';
 import {Provider} from 'react-redux';
+import {createStore} from 'redux';
 import configureStore from 'redux-mock-store';
 import {fireEvent, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -10,9 +13,9 @@ import {WebMercatorViewport} from '@math.gl/web-mercator';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
-import {Annotation} from '@kepler.gl/types';
+import {Annotation, AnnotationElevation, PointAnnotation} from '@kepler.gl/types';
 import {VisStateActions} from '@kepler.gl/actions';
-import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, visStateReducer} from '@kepler.gl/reducers';
 import {theme} from '@kepler.gl/styles';
 import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
 
@@ -45,6 +48,26 @@ const makeState = (showCustomText: boolean, showDistance: boolean) => ({
     selectedAnnotationId: 'ruler-1'
   },
   mapState: {longitude: 0, latitude: 0}
+});
+
+const originalIntersectionObserver = window.IntersectionObserver;
+
+beforeAll(() => {
+  window.IntersectionObserver = class {
+    observe() {
+      return undefined;
+    }
+    unobserve() {
+      return undefined;
+    }
+    disconnect() {
+      return undefined;
+    }
+  } as unknown as typeof IntersectionObserver;
+});
+
+afterAll(() => {
+  window.IntersectionObserver = originalIntersectionObserver;
 });
 
 describe('AnnotationManager placement', () => {
@@ -363,26 +386,6 @@ describe('AnnotationManager line width slider', () => {
 });
 
 describe('AnnotationManager selectors', () => {
-  const originalIntersectionObserver = window.IntersectionObserver;
-
-  beforeAll(() => {
-    window.IntersectionObserver = class {
-      observe() {
-        return undefined;
-      }
-      unobserve() {
-        return undefined;
-      }
-      disconnect() {
-        return undefined;
-      }
-    } as unknown as typeof IntersectionObserver;
-  });
-
-  afterAll(() => {
-    window.IntersectionObserver = originalIntersectionObserver;
-  });
-
   const renderCaption = (changes: Partial<Annotation> = {}, withDatasets = true) => {
     const state = makeState(true, true);
     const store = mockStore({
@@ -531,6 +534,73 @@ describe('AnnotationManager selectors', () => {
     ]);
   });
 
+  const backgroundKinds = [
+    AnnotationKind.TEXT,
+    AnnotationKind.POINT,
+    AnnotationKind.ARROW,
+    AnnotationKind.CIRCLE,
+    AnnotationKind.RULER
+  ];
+  test.each(backgroundKinds)('enables a background from the collapsed header for %s', kind => {
+    const store = renderCaption({kind});
+    const group = screen.getByRole('button', {name: 'Background'});
+    const toggle = within(group).getByRole('checkbox', {name: 'Background'});
+    expect(toggle).not.toBeChecked();
+    expect(group).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByLabelText('Background opacity')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('button', {name: 'Elevation'})).toHaveLength(
+      kind === AnnotationKind.POINT ? 1 : 0
+    );
+    fireEvent.click(group);
+    expect(screen.getByLabelText('Background opacity')).toHaveValue(0.7);
+    expect(screen.getByLabelText('Background opacity')).toBeDisabled();
+    expect(screen.getByLabelText('Padding (px)')).toHaveValue(8);
+    expect(screen.getByLabelText('Padding (px)')).toBeDisabled();
+    expect(screen.getByText('Background color')).toBeVisible();
+    fireEvent.click(group);
+    fireEvent.click(toggle);
+    expect(group).toHaveAttribute('aria-expanded', 'false');
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {
+        labelBackground: {color: '#000000', opacity: 0.7, padding: 8}
+      })
+    ]);
+  });
+  test.each(backgroundKinds)('groups and edits existing background settings for %s', kind => {
+    const labelBackground = {color: '#123456', opacity: 0.7, padding: 8};
+    const store = renderCaption({kind, labelBackground});
+    const group = screen.getByRole('button', {name: 'Background'});
+    const toggle = within(group).getByRole('checkbox', {name: 'Background'});
+    expect(toggle).toBeChecked();
+    expect(group).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByLabelText('Background opacity')).not.toBeInTheDocument();
+    fireEvent.click(group);
+    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
+    expect(screen.getByText('Background color')).toBeInTheDocument();
+    expect(screen.getByLabelText('Background opacity')).toHaveValue(0.7);
+    expect(screen.getByLabelText('Padding (px)')).toHaveValue(8);
+    fireEvent.change(screen.getByLabelText('Background opacity'), {target: {value: '0.4'}});
+    fireEvent.blur(screen.getByLabelText('Background opacity'));
+    fireEvent.change(screen.getByLabelText('Padding (px)'), {target: {value: '12'}});
+    fireEvent.blur(screen.getByLabelText('Padding (px)'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {
+        labelBackground: {...labelBackground, opacity: 0.4}
+      }),
+      VisStateActions.updateAnnotation('ruler-1', {
+        labelBackground: {...labelBackground, padding: 12}
+      })
+    ]);
+    store.clearActions();
+    fireEvent.click(group);
+    fireEvent.click(toggle);
+    expect(group).toHaveAttribute('aria-expanded', 'false');
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {labelBackground: undefined})
+    ]);
+  });
+
   test('does not offer a count without a dataset', () => {
     renderCaption({viewport}, false);
     fireEvent.click(screen.getByText('Static text'));
@@ -555,11 +625,11 @@ describe('AnnotationManager selectors', () => {
         kind === AnnotationKind.RULER
           ? ['Line Width', 'Color', 'Custom Text', 'Distance', 'Content']
           : ['Line Width', 'Color', 'Text Side', 'Placement', 'Content'];
-      labels.forEach((label, index) => {
+      labels.forEach(label => {
         expect(screen.getByText(label).parentElement).toHaveStyle({
           minHeight: theme.inputBoxHeightSmall,
           alignItems: 'center',
-          marginBottom: index === labels.length - 1 ? '0' : '8px'
+          marginBottom: '8px'
         });
       });
     }
@@ -702,6 +772,7 @@ describe('AnnotationManager selectors', () => {
     fireEvent.blur(screen.getByLabelText('Offset (px)'));
     fireEvent.click(screen.getByLabelText('Dimension line'));
     fireEvent.change(screen.getByLabelText('Start name'), {target: {value: 'A'}});
+    fireEvent.click(screen.getByRole('button', {name: 'Background'}));
     fireEvent.change(screen.getByLabelText('Background opacity'), {target: {value: '0.5'}});
     fireEvent.blur(screen.getByLabelText('Background opacity'));
     await userEvent.click(screen.getByText('Auto (metric)'));
@@ -724,4 +795,382 @@ describe('AnnotationManager selectors', () => {
     fireEvent.blur(screen.getByLabelText('Background opacity'));
     expect(store.getActions()).toEqual([]);
   });
+});
+
+describe('Point elevation settings', () => {
+  function renderLivePoint(changes: Partial<Annotation>) {
+    const seed = makeState(true, true);
+    const initialState: {
+      visState: ReturnType<typeof visStateReducer>;
+      mapState: typeof INITIAL_MAP_STATE;
+    } = {
+      visState: {
+        ...INITIAL_VIS_STATE,
+        ...seed.visState,
+        annotations: [
+          {
+            ...seed.visState.annotations[0],
+            kind: AnnotationKind.POINT,
+            anchorPoint: [1, 2, 7448.36],
+            armLength: 40,
+            angle: 0,
+            ...changes
+          } as Annotation
+        ]
+      },
+      mapState: INITIAL_MAP_STATE
+    };
+    const store = createStore(
+      (
+        state: typeof initialState = initialState,
+        action: Parameters<typeof visStateReducer>[1]
+      ): typeof initialState => ({
+        ...state,
+        visState: visStateReducer(state.visState, action)
+      })
+    );
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+    return store;
+  }
+
+  test('keeps background controls visible and disabled and restores their last values', async () => {
+    const labelBackground = {color: '#123456', opacity: 0.4, padding: 12};
+    const store = renderLivePoint({labelBackground});
+    const group = screen.getByRole('button', {name: 'Background'});
+    const toggle = within(group).getByRole('checkbox', {name: 'Background'});
+    fireEvent.click(group);
+    const opacity = screen.getByLabelText('Background opacity');
+    fireEvent.change(opacity, {target: {value: '0.55'}});
+    fireEvent.blur(opacity);
+    fireEvent.click(toggle);
+    expect(group).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).not.toBeChecked();
+    expect(store.getState().visState.annotations[0].labelBackground).toBeUndefined();
+    expect(opacity).toBeVisible();
+    expect(opacity).toHaveValue(0.55);
+    expect(opacity).toBeDisabled();
+    expect(screen.getByLabelText('Padding (px)')).toHaveValue(12);
+    expect(screen.getByLabelText('Padding (px)')).toBeDisabled();
+    const content = document.getElementById(
+      group.getAttribute('aria-controls') || ''
+    ) as HTMLElement;
+    expect(within(content).getByRole('button')).toBeDisabled();
+    toggle.focus();
+    await userEvent.tab();
+    expect(screen.getByRole('button', {name: 'Elevation'})).toHaveFocus();
+    fireEvent.click(toggle);
+    expect(opacity).not.toBeDisabled();
+    expect(store.getState().visState.annotations[0].labelBackground).toEqual({
+      ...labelBackground,
+      opacity: 0.55
+    });
+  });
+
+  test.each<{name: string; changes: Partial<AnnotationElevation>}>([
+    {name: 'legacy manual value', changes: {value: 0}},
+    {name: 'manual value', changes: {source: 'measurement', value: -1000}},
+    {
+      name: 'data field awaiting capture',
+      changes: {
+        source: 'measurement',
+        value: null,
+        field: {dataId: 'detections', name: 'altitude'}
+      }
+    },
+    {
+      name: 'unavailable data field',
+      changes: {value: 100, field: {dataId: ' missing dataset ', name: ' altitude '}}
+    }
+  ])('preserves $name settings when styling and toggling a measured callout', async ({changes}) => {
+    const elevation: AnnotationElevation = {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      unit: 'ft',
+      datum: 'MSL',
+      reference: {value: 42, unit: 'm', datum: 'MSL', displayZ: 60},
+      display: 'both',
+      ...changes
+    };
+    const store = renderLivePoint({elevation});
+    const group = screen.getByRole('button', {name: 'Elevation'});
+    const toggle = within(group).getByRole('checkbox', {name: 'Elevation'});
+    fireEvent.click(group);
+    const content = document.getElementById(
+      group.getAttribute('aria-controls') || ''
+    ) as HTMLElement;
+    expect(within(content).queryByRole('spinbutton')).not.toBeInTheDocument();
+    expect(within(content).queryByRole('textbox')).not.toBeInTheDocument();
+    expect(within(content).queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(
+      within(content).queryByRole('group', {name: 'Value to display'})
+    ).not.toBeInTheDocument();
+    expect(within(content).queryByRole('group', {name: 'Dataset'})).not.toBeInTheDocument();
+    expect(within(content).queryByRole('group', {name: 'Field'})).not.toBeInTheDocument();
+    expect(
+      within(content).queryByRole('button', {name: /Manual value|Data field/})
+    ).not.toBeInTheDocument();
+    const units = screen.getByRole('group', {name: 'Label units'});
+    within(units).getByRole('button').focus();
+    await userEvent.keyboard('{Enter}');
+    await userEvent.click(screen.getByTitle('m'));
+    expect(store.getState().visState.annotations[0]).toMatchObject({
+      anchorPoint: [1, 2, 7448.36],
+      elevation: {...elevation, outputUnit: 'm'}
+    });
+    fireEvent.click(toggle);
+    expect(group).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).not.toBeChecked();
+    expect((store.getState().visState.annotations[0] as PointAnnotation).elevation).toBeUndefined();
+    for (const name of ['Label units', 'Decimals', 'Vertical guide', 'Marker style']) {
+      const selector = within(screen.getByRole('group', {name})).getByRole('button');
+      expect(selector).toBeVisible();
+      expect(selector).toHaveAttribute('aria-disabled', 'true');
+      expect(selector).not.toHaveAttribute('tabindex');
+    }
+    fireEvent.keyDown(within(units).getByRole('button'), {key: 'Enter'});
+    expect(screen.queryByTitle('km')).not.toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(within(units).getByRole('button')).not.toHaveAttribute('aria-disabled', 'true');
+    expect(store.getState().visState.annotations[0]).toHaveProperty('elevation', {
+      ...elevation,
+      outputUnit: 'm'
+    });
+  });
+
+  test('shows disabled default elevation controls before elevation has been enabled', () => {
+    renderLivePoint({});
+    fireEvent.click(screen.getByRole('button', {name: 'Elevation'}));
+    expect(screen.getByRole('checkbox', {name: 'Elevation'})).not.toBeChecked();
+    expect(screen.getByLabelText('Map height (m)')).toBeDisabled();
+    for (const name of ['Label units', 'Decimals', 'Vertical guide', 'Marker style']) {
+      expect(within(screen.getByRole('group', {name})).getByRole('button')).toHaveAttribute(
+        'aria-disabled',
+        'true'
+      );
+    }
+  });
+
+  function renderPoint(
+    elevation?: AnnotationElevation,
+    overrides: Partial<Annotation> = {},
+    expandElevation = true
+  ) {
+    const state = makeState(true, true);
+    Object.assign(state.visState.annotations[0], {
+      kind: AnnotationKind.POINT,
+      anchorPoint: [1, 2, 7448.36],
+      elevation,
+      armLength: 40,
+      angle: 0,
+      ...overrides
+    });
+    Object.assign(state.visState, {
+      datasets: {
+        detections: {
+          id: 'detections',
+          label: 'Detections',
+          fields: [
+            {name: 'altitude', type: 'real'},
+            {name: 'name', type: 'string'}
+          ]
+        }
+      }
+    });
+    const store = mockStore(state);
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+    if (elevation && expandElevation) {
+      fireEvent.click(screen.getByRole('button', {name: 'Elevation'}));
+    }
+    return store;
+  }
+  test('keeps elevation controls directly in one group and background independent', async () => {
+    const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION}, {}, false);
+    const group = screen.getByRole('button', {name: 'Elevation'});
+    const toggle = within(group).getByRole('checkbox', {name: 'Elevation'});
+    expect(toggle).toBeChecked();
+    expect(screen.queryByLabelText('Show elevation')).not.toBeInTheDocument();
+    expect(screen.getByText('Content').compareDocumentPosition(group)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
+    expect(screen.getByRole('button', {name: 'Background'}).compareDocumentPosition(group)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
+    const controls = ['Label units', 'Decimals', 'Vertical guide', 'Marker style'];
+    const expectCollapsed = () => {
+      expect(group).toHaveAttribute('aria-expanded', 'false');
+      for (const name of controls) {
+        expect(screen.queryByRole('group', {name})).not.toBeInTheDocument();
+      }
+      expect(screen.queryByLabelText('Map height (m)')).not.toBeInTheDocument();
+    };
+    expectCollapsed();
+    group.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(group).toHaveAttribute('aria-expanded', 'true');
+    const content = document.getElementById(
+      group.getAttribute('aria-controls') || ''
+    ) as HTMLElement;
+    for (const name of controls) {
+      expect(within(content).getByRole('group', {name})).toBeInTheDocument();
+    }
+    expect(within(content).getByLabelText('Map height (m)')).toHaveValue(7448.36);
+    expect(within(content).getAllByRole('spinbutton')).toHaveLength(1);
+    expect(
+      within(content).queryByRole('group', {name: 'Value to display'})
+    ).not.toBeInTheDocument();
+    expect(within(content).queryByText('Manual value')).not.toBeInTheDocument();
+    expect(within(content).queryByText('Data field')).not.toBeInTheDocument();
+    expect(within(content).queryByRole('status', {name: 'Label preview'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Advanced'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Measured elevation')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Measured from')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Background'})).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    await userEvent.keyboard(' ');
+    expectCollapsed();
+    expect(toggle).toBeChecked();
+    fireEvent.click(group);
+    expect(screen.getByLabelText('Map height (m)')).toHaveValue(7448.36);
+    expect(store.getActions()).toEqual([]);
+  });
+  test.each<[string, number]>([
+    ['12.34567', 12.346],
+    ['-12.34567', -12.346],
+    ['0', 0]
+  ])('rounds an edited marker height of %s to %s metres', (draft, expected) => {
+    const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION}, {anchorPoint: [1, 2, 123.456789]});
+    const height = screen.getByLabelText('Map height (m)');
+    expect(height).toHaveValue(123.457);
+    fireEvent.blur(height);
+    expect(store.getActions()).toEqual([]);
+    fireEvent.change(height, {target: {value: ''}});
+    fireEvent.blur(height);
+    expect(height).toHaveValue(123.457);
+    expect(store.getActions()).toEqual([]);
+    fireEvent.change(height, {target: {value: draft}});
+    fireEvent.blur(height);
+    expect(height).toHaveValue(expected);
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {anchorPoint: [1, 2, expected]})
+    ]);
+  });
+  test('offers only zero through three decimals without changing an existing saved precision', async () => {
+    const elevation = {...DEFAULT_MAP_HEIGHT_ELEVATION, precision: 6};
+    const store = renderPoint(elevation);
+    within(screen.getByRole('group', {name: 'Decimals'}))
+      .getByRole('button', {name: '6'})
+      .focus();
+    await userEvent.keyboard('{Enter}');
+    const menu = screen.getByTitle('0').closest('.list-selector') as HTMLElement;
+    expect(
+      within(menu)
+        .getAllByText(/^\d$/)
+        .map(option => option.textContent)
+    ).toEqual(['0', '1', '2', '3']);
+    expect(store.getActions()).toEqual([]);
+    await userEvent.click(within(menu).getByText('3'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {elevation: {...elevation, precision: 3}})
+    ]);
+  });
+  test.each<{anchorPoint: Annotation['anchorPoint']}>([
+    {anchorPoint: [1, 2]},
+    {anchorPoint: [1, 2, 9000]}
+  ])(
+    'enables map height without inventing a measured value for anchor $anchorPoint',
+    ({anchorPoint}) => {
+      const store = renderPoint(undefined, {anchorPoint});
+      fireEvent.click(screen.getByRole('checkbox', {name: 'Elevation'}));
+      expect(store.getActions()).toEqual([
+        VisStateActions.updateAnnotation('ruler-1', {
+          elevation: {...DEFAULT_MAP_HEIGHT_ELEVATION}
+        })
+      ]);
+    }
+  );
+  test('keeps the background switch in the header and collapses only its settings', async () => {
+    const store = renderPoint(undefined, {
+      labelBackground: {color: '#000000', opacity: 0.7, padding: 8}
+    });
+    expect(screen.getByRole('checkbox', {name: 'Elevation'})).not.toBeChecked();
+    expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
+    const background = screen.getByRole('button', {name: 'Background'});
+    const toggle = screen.getByRole('checkbox', {name: 'Background'});
+    expect(within(background).getByRole('checkbox', {name: 'Background'})).toBe(toggle);
+    const expectHiddenControls = () => {
+      expect(background).toHaveAttribute('aria-expanded', 'false');
+      expect(toggle).toBeChecked();
+      expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
+      expect(screen.queryByText('Background color')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Background opacity')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Padding (px)')).not.toBeInTheDocument();
+    };
+    expectHiddenControls();
+    background.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(background).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Background color')).toBeInTheDocument();
+    expect(screen.getByLabelText('Background opacity')).toHaveValue(0.7);
+    expect(screen.getByLabelText('Padding (px)')).toHaveValue(8);
+    expect(screen.queryByText('Label background')).not.toBeInTheDocument();
+    await userEvent.keyboard(' ');
+    expectHiddenControls();
+    fireEvent.click(background);
+    expect(store.getActions()).toEqual([]);
+    fireEvent.click(toggle);
+    expect(background).toHaveAttribute('aria-expanded', 'true');
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {labelBackground: undefined})
+    ]);
+  });
+  test.each([false, true])(
+    'toggles the background from its collapsed header with the keyboard (enabled: %s)',
+    async enabled => {
+      const labelBackground = {color: '#000000', opacity: 0.7, padding: 8};
+      const store = renderPoint(undefined, {
+        labelBackground: enabled ? labelBackground : undefined
+      });
+      const background = screen.getByRole('button', {name: 'Background'});
+      const toggle = screen.getByRole('checkbox', {name: 'Background'});
+      expect(toggle).toHaveProperty('checked', enabled);
+      toggle.focus();
+      await userEvent.keyboard(' ');
+      expect(background).toHaveAttribute('aria-expanded', 'false');
+      expect(store.getActions()).toEqual([
+        VisStateActions.updateAnnotation('ruler-1', {
+          labelBackground: enabled ? undefined : labelBackground
+        })
+      ]);
+    }
+  );
+  test.each([false, true])(
+    'toggles elevation from its collapsed header with the keyboard (enabled: %s)',
+    async enabled => {
+      const elevation = {...DEFAULT_MAP_HEIGHT_ELEVATION};
+      const store = renderPoint(enabled ? elevation : undefined, {}, false);
+      const group = screen.getByRole('button', {name: 'Elevation'});
+      const toggle = within(group).getByRole('checkbox', {name: 'Elevation'});
+      expect(toggle).toHaveProperty('checked', enabled);
+      toggle.focus();
+      await userEvent.keyboard(' ');
+      expect(group).toHaveAttribute('aria-expanded', 'false');
+      expect(store.getActions()).toEqual([
+        VisStateActions.updateAnnotation('ruler-1', {elevation: enabled ? undefined : elevation})
+      ]);
+    }
+  );
 });

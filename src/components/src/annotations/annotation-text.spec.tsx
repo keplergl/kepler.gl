@@ -16,7 +16,7 @@ import {
 } from 'lexical';
 
 import {AnnotationKind} from '@kepler.gl/constants';
-import {DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
+import {DEFAULT_RULER_STYLE, DEFAULT_ANNOTATION_ELEVATION} from '@kepler.gl/utils';
 import {Annotation} from '@kepler.gl/types';
 import {renderWithTheme} from 'test/helpers/component-jest-utils';
 
@@ -611,3 +611,49 @@ test.each([
     }
   }
 );
+
+test('elevation labels inherit ruler typography and backgrounds without altering authored text', () => {
+  const point = makeRuler({
+    kind: AnnotationKind.POINT,
+    label: '',
+    armLength: 40,
+    angle: 0,
+    anchorPoint: [-101.830429, 33.518337, 9000],
+    editorState: captionEditorState('', 'font-size: 32px; color: #ff0000;'),
+    labelBackground: {color: '#000000', opacity: 0.7, padding: 8},
+    elevation: {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      value: 7448.36,
+      datum: 'MSL',
+      display: 'both',
+      reference: {value: 990, unit: 'm', datum: 'MSL'}
+    }
+  });
+  const {container} = renderRulerText(point);
+  expect(screen.getByText('7.45 km above sea level')).toHaveStyle({
+    fontSize: '32px',
+    color: '#ff0000'
+  });
+  expect(screen.getByText('6.46 km above reference')).toHaveClass('lexical-text-bold');
+  expect(container.querySelector('[data-annotation-part="text"]')).toHaveStyle({
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: '8px'
+  });
+  expect(point.label).toBe('');
+  expect(point.anchorPoint[2]).toBe(9000);
+});
+
+test.each([
+  [[1, 2, 9000], '9.00 km above map zero'],
+  [[1, 2], '0.00 km above map zero']
+])('renders map height from anchor %j independently of the measured value', (anchorPoint, text) => {
+  const point = makeRuler({
+    kind: AnnotationKind.POINT,
+    label: '',
+    anchorPoint: anchorPoint as Annotation['anchorPoint'],
+    elevation: {...DEFAULT_ANNOTATION_ELEVATION, source: 'map', value: 7448.36, datum: 'MSL'}
+  });
+  renderRulerText(point);
+  expect(screen.getByText(text as string)).toBeInTheDocument();
+  expect(screen.queryByText('7.45 km above sea level')).not.toBeInTheDocument();
+});

@@ -12,7 +12,8 @@ import {
   RulerAnnotationMarker,
   getRulerDimensionOffset,
   getRulerLabelAngle,
-  isPointVisibleOnGlobe
+  isPointVisibleOnGlobe,
+  getElevationGuide
 } from './annotation-utils';
 
 const HANDLE_RADIUS = 6;
@@ -164,6 +165,11 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
   const {lineColor, lineWidth} = annotation;
   const marker = makeMarker(annotation, viewport, isGlobeEnabled);
   const {kind, x, y, tx, ty} = marker;
+  const elevation = annotation.kind === AnnotationKind.POINT ? annotation.elevation : undefined;
+  const guide =
+    annotation.kind === AnnotationKind.POINT
+      ? getElevationGuide(annotation, viewport, isGlobeEnabled)
+      : null;
   const arrW = 3 + lineWidth * 2;
   const isArm = 'armLength' in annotation;
 
@@ -229,8 +235,13 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
               fill={lineColor}
             />
           ) : null}
-          {kind === AnnotationKind.POINT ? (
-            <circle r={lineWidth * 1.5} fill={lineColor} stroke="none" />
+          {kind === AnnotationKind.POINT && elevation?.marker !== 'none' ? (
+            <circle
+              r={elevation?.marker === 'ring' ? 6 : lineWidth * 1.5}
+              fill={elevation?.marker === 'ring' ? 'none' : lineColor}
+              stroke={elevation?.marker === 'ring' ? lineColor : 'none'}
+              strokeWidth={lineWidth}
+            />
           ) : null}
           {moveHandle}
           {selectionHighlight}
@@ -304,6 +315,16 @@ const AnnotationNode: FC<AnnotationNodeProps> = ({
         pointerEvents: opacity === 0 ? 'none' : undefined
       }}
     >
+      {guide ? (
+        <path
+          data-annotation-part="elevation-guide"
+          d={`M0,0 L${guide.ex},${guide.ey}`}
+          fill="none"
+          stroke={lineColor}
+          strokeWidth={lineWidth}
+          strokeDasharray={elevation?.guide === 'dashed' ? '6 3' : undefined}
+        />
+      ) : null}
       {body}
     </g>
   );
