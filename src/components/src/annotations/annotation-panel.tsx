@@ -720,12 +720,10 @@ function AnnotationBackgroundSettings({
 
 function ElevationSettings({
   annotation,
-  datasets,
   intl,
   onChange
 }: {
   annotation: PointAnnotation;
-  datasets: VisState['datasets'];
   intl: IntlShape;
   onChange: (changes: Partial<Annotation>) => void;
 }) {
@@ -745,22 +743,10 @@ function ElevationSettings({
   };
   const label = (id: string, fallback: string) =>
     intl.formatMessage({id: `annotationManager.elevation.${id}`, defaultMessage: fallback});
-  const row = (
-    id: string,
-    fallback: string,
-    control: (name: string) => React.ReactNode,
-    description?: string
-  ) => (
+  const row = (id: string, fallback: string, control: (name: string) => React.ReactNode) => (
     <StyledConfigRow key={id}>
       <StyledConfigLabel>
         <label htmlFor={`annotation-${annotation.id}-elevation-${id}`}>{label(id, fallback)}</label>
-        {description ? (
-          <InfoHelper
-            id={`annotation-${annotation.id}-elevation-${id}-help`}
-            description={description}
-            width={240}
-          />
-        ) : null}
       </StyledConfigLabel>
       {control(label(id, fallback))}
     </StyledConfigRow>
@@ -791,21 +777,6 @@ function ElevationSettings({
     ));
   const units = ['m', 'km', 'ft'].map(unit => ({id: unit, label: unit}));
   const mapHeight = elevation.source === 'map';
-  const sourceHelp = elevation.field
-    ? intl.formatMessage(
-        {
-          id: 'annotationManager.elevation.fieldSourceHelp',
-          defaultMessage: '{dataset}: {field}. Configure this source through MCP/AI.'
-        },
-        {
-          dataset: datasets?.[elevation.field.dataId]?.label ?? elevation.field.dataId,
-          field: elevation.field.name
-        }
-      )
-    : label(
-        'manualSourceHelp',
-        'Configure the measured value and height reference through MCP/AI.'
-      );
   return (
     <AnnotationConfigGroup
       id={`annotation-${annotation.id}-elevation`}
@@ -828,18 +799,7 @@ function ElevationSettings({
               }
             />
           ))
-        : row(
-            'source',
-            'Source',
-            () => (
-              <span>
-                {elevation.field
-                  ? label('dataField', 'Data field')
-                  : label('manualValue', 'Manual value')}
-              </span>
-            ),
-            sourceHelp
-          )}
+        : null}
       {select('outputUnits', 'Label units', elevation.outputUnit, units, outputUnit =>
         patch({outputUnit: outputUnit as ElevationUnit})
       )}
@@ -1602,7 +1562,6 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                       {annotation.kind === AnnotationKind.POINT ? (
                         <ElevationSettings
                           annotation={annotation}
-                          datasets={visState.datasets}
                           intl={intl}
                           onChange={changes =>
                             visStateActions.updateAnnotation(annotation.id, changes)

@@ -95,7 +95,7 @@ The **Elevation** group keeps the map-height setup to five controls:
 
 Switching elevation off leaves these controls visible but greyed out and disabled while the group is expanded. An optional caption shares its typography and background with the elevation label. The separate **Background** group above **Elevation** remains available with elevation disabled.
 
-**Manual value** and **Data field** setup is available through MCP/AI. Existing measured callouts keep their configuration and show a read-only **Source** indicator alongside label units, decimals, guide, and marker controls. Hover over **(?)** to identify a bound dataset and field. The map-height editor is hidden for measured callouts so the drawing height cannot be confused with the measurement.
+**Manual value** and **Data field** setup is available through MCP/AI. Existing measured callouts keep their configuration and expose only label units, decimals, guide, and marker controls. The map-height editor is hidden for measured callouts so the drawing height cannot be confused with the measurement.
 
 Through MCP/AI, you can configure:
 

@@ -7,7 +7,7 @@ import React, {useContext} from 'react';
 import {Provider} from 'react-redux';
 import {createStore} from 'redux';
 import configureStore from 'redux-mock-store';
-import {fireEvent, screen, waitFor, within} from '@testing-library/react';
+import {fireEvent, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {WebMercatorViewport} from '@math.gl/web-mercator';
 
@@ -903,8 +903,6 @@ describe('Point elevation settings', () => {
     const content = document.getElementById(
       group.getAttribute('aria-controls') || ''
     ) as HTMLElement;
-    const source = within(content).getByText(elevation.field ? 'Data field' : 'Manual value');
-    expect(source).toBeVisible();
     expect(within(content).queryByRole('spinbutton')).not.toBeInTheDocument();
     expect(within(content).queryByRole('textbox')).not.toBeInTheDocument();
     expect(within(content).queryByRole('checkbox')).not.toBeInTheDocument();
@@ -928,7 +926,6 @@ describe('Point elevation settings', () => {
     expect(group).toHaveAttribute('aria-expanded', 'true');
     expect(toggle).not.toBeChecked();
     expect((store.getState().visState.annotations[0] as PointAnnotation).elevation).toBeUndefined();
-    expect(source).toBeVisible();
     for (const name of ['Label units', 'Decimals', 'Vertical guide', 'Marker style']) {
       const selector = within(screen.getByRole('group', {name})).getByRole('button');
       expect(selector).toBeVisible();
@@ -1090,35 +1087,6 @@ describe('Point elevation settings', () => {
       VisStateActions.updateAnnotation('ruler-1', {elevation: {...elevation, precision: 3}})
     ]);
   });
-  test.each([
-    ['detections', 'Detections'],
-    ['missing dataset', 'missing dataset']
-  ])(
-    'identifies the read-only field source %s in its help tooltip',
-    async (dataId, datasetLabel) => {
-      // JSDOM matches :hover on every element in an unfocused document.
-      const hasFocus = jest.spyOn(document, 'hasFocus').mockReturnValue(true);
-      try {
-        const user = userEvent.setup();
-        const store = renderPoint({
-          ...DEFAULT_ANNOTATION_ELEVATION,
-          field: {dataId, name: 'altitude'}
-        });
-        const tooltipId = 'annotation-ruler-1-elevation-source-help';
-        const tooltip = document.getElementById(tooltipId);
-        expect(tooltip).toHaveTextContent(`${datasetLabel}: altitude`);
-        expect(tooltip).not.toBeVisible();
-        const help = document.querySelector(`[data-for="${tooltipId}"]`) as HTMLElement;
-        await user.hover(help);
-        await waitFor(() => expect(tooltip).toBeVisible());
-        await user.unhover(help);
-        await waitFor(() => expect(tooltip).not.toBeVisible());
-        expect(store.getActions()).toEqual([]);
-      } finally {
-        hasFocus.mockRestore();
-      }
-    }
-  );
   test.each<{anchorPoint: Annotation['anchorPoint']}>([
     {anchorPoint: [1, 2]},
     {anchorPoint: [1, 2, 9000]}
