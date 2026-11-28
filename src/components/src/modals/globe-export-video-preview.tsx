@@ -146,7 +146,7 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
             : undefined
         }
       >
-        <DeckGL
+        <DeckGL<null>
           ref={ref => {
             this.deckRef.current = ref?.deck ?? null;
           }}
