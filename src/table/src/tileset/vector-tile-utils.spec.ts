@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {MVTSource} from '@loaders.gl/mvt';
 import {DATA_TYPES} from 'type-analyzer';
 
 import {ALL_FIELD_TYPES, FILTER_TYPES, RemoteTileFormat} from '@kepler.gl/constants';
@@ -10,6 +9,7 @@ import {
   getTileUrl,
   getMetaUrl,
   getFieldsFromTile,
+  MVTSourceLoader,
   parseVectorMetadata as parseMetadata
 } from './vector-tile-utils';
 import {
@@ -92,7 +92,7 @@ describe('getMetaUrl', () => {
   });
 });
 
-test('parseMetadata, metadata from MVTSource and Mapbox URL', () => {
+test('parseMetadata, metadata from MVTLoader and Mapbox URL', () => {
   expect(
     parseMetadata(MVT_METADATA, {tileUrl: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt'})
   ).toEqual({
@@ -517,7 +517,9 @@ test.each(['1970-01-01', '1970-01-01T00:00:00Z'])(
 
 test('getFieldsFromTile reads the fields from a tile when minZoom is 0', async () => {
   const getTileData = jest.fn().mockResolvedValue({features: [{properties: {height: 1.5}}]});
-  const source = jest.spyOn(MVTSource, 'createDataSource').mockReturnValue({getTileData} as any);
+  const source = jest
+    .spyOn(MVTSourceLoader, 'createDataSourceSync')
+    .mockReturnValue({getTileData} as any);
   const metadata = {
     metaJson: null,
     bounds: [-10, -10, 10, 10],

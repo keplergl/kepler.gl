@@ -7,7 +7,7 @@ import styled, {withTheme} from 'styled-components';
 import {Map as MapboxLegacyMap, MapRef} from 'react-map-gl/mapbox-legacy';
 import {Map as MaplibreMap} from '@vis.gl/react-maplibre';
 import {PickingInfo, MapView} from '@deck.gl/core';
-import DeckGL from '@deck.gl/react';
+import {DeckGL} from '@deck.gl/react/legacy';
 import {createSelector, Selector} from 'reselect';
 import {useDroppable} from '@dnd-kit/core';
 import debounce from 'es-toolkit/compat/debounce';
@@ -1521,7 +1521,9 @@ export default function MapContainerFactory(
         views,
         layers: finalDeckGlLayers,
         effects,
-        parameters: isGlobeMode ? {cull: true} : getLayerBlendingParameters(visState.layerBlending)
+        parameters: isGlobeMode
+          ? {cullMode: 'back'}
+          : getLayerBlendingParameters(visState.layerBlending)
       };
 
       if (typeof deckRenderCallbacks?.onDeckRender === 'function') {
@@ -1650,9 +1652,7 @@ export default function MapContainerFactory(
             }}
             onError={this._onDeckError}
             ref={comp => {
-              // @ts-ignore
-              if (comp && comp.deck && !this._deck) {
-                // @ts-ignore
+              if (comp?.deck && !this._deck) {
                 this._deck = comp.deck;
               }
             }}

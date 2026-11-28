@@ -10,8 +10,12 @@ import {Layer as DeckLayer} from '@deck.gl/core';
 import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
 import {GeoJsonLayer, PathLayer} from '@deck.gl/layers';
 import {ClipExtension, DataFilterExtension} from '@deck.gl/extensions';
-import {MVTSource, MVTTileSource} from '@loaders.gl/mvt';
-import {PMTilesSource, PMTilesTileSource} from '@loaders.gl/pmtiles';
+import {createDataSourceSync} from '@loaders.gl/core';
+import type {MVTTileSource} from '@loaders.gl/tiles/mvt';
+import {
+  PMTilesLoaderWithParser as PMTilesLoader,
+  PMTilesTileSource
+} from '@loaders.gl/tiles/pmtiles';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
@@ -31,6 +35,7 @@ import {
 } from '@kepler.gl/constants';
 import {
   getTileUrl,
+  MVTSourceLoader,
   KeplerTable as KeplerDataset,
   Datasets as KeplerDatasets,
   GpuFilter,
@@ -351,19 +356,26 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         };
 
         return tilesetDataUrl
-          ? MVTSource.createDataSource(decodeURIComponent(tilesetDataUrl), {
+          ? createDataSourceSync(decodeURIComponent(tilesetDataUrl), MVTSourceLoader, {
               mvt: {
                 metadataUrl: tilesetMetadataUrl,
-                loadOptions: {
-                  core: {fetch: transformFetch}
-                }
-              }
+                shape: 'geojson-table'
+              },
+              core: {fetch: transformFetch}
             })
           : null;
       }
       if (remoteTileFormat === RemoteTileFormat.PMTILES) {
         if (!tilesetDataUrl) return null;
-        const source = PMTilesSource.createDataSource(tilesetDataUrl, {});
+        const source = createDataSourceSync(tilesetDataUrl, PMTilesLoader, {
+          pmtiles: {shape: 'geojson-table'},
+          core: {
+            // Preserve rejection so a failed archive lookup invalidates this source.
+            onError: error => {
+              if (error.message !== 'Empty tile response') throw error;
+            }
+          }
+        });
         const invalidate = () => {
           // Failed metadata and archive-directory promises stay cached by PMTiles.
           // A late failure must not evict a replacement source.

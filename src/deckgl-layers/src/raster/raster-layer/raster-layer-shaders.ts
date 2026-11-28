@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {ShaderAssembler} from '@luma.gl/shadertools';
+import type {ShaderPlugin} from '@luma.gl/shaders';
+import {getShaderAssembler} from '@deck.gl/core';
 import type {ShaderModule as LumaShaderModule} from '../webgl/types';
 import {UNIFORM_NAME_MAP} from '../raster-processing-uniforms';
 
@@ -34,30 +35,20 @@ export const rasterUniforms = {
   }
 };
 
-/**
- * Register custom DECKGL_CREATE_COLOR and DECKGL_MUTATE_COLOR shader hooks
- * with the default ShaderAssembler. These hooks are used by the raster layer's
- * custom shader modules (rgbaImage, combineBands, colormap, etc.).
- *
- * In luma.gl 8.x these were registered via ProgramManager; in luma.gl 9.x
- * we register them with the ShaderAssembler singleton.
- *
- * NOTE: We must check the assembler's hook list every time rather than using
- * a module-level boolean guard, because deck.gl's getShaderAssembler() clears
- * _hookFunctions when a new Deck instance is created (e.g. during image export).
- */
-export function ensureRasterHooksRegistered(): void {
-  const assembler = ShaderAssembler.getDefaultShaderAssembler('glsl');
-  // @ts-expect-error _hookFunctions is private in ShaderAssembler
-  const existingHooks = assembler._hookFunctions || [];
-  const hookNames = existingHooks.map(h => (typeof h === 'string' ? h : h.hook));
+let rasterHooksRegistered = false;
 
-  if (!hookNames.some(h => h?.includes('DECKGL_CREATE_COLOR'))) {
-    assembler.addShaderHook('fs:DECKGL_CREATE_COLOR(inout vec4 image, vec2 coord)');
+/** Register the GLSL injection targets used by the raster shader plugins. */
+export function ensureRasterHooksRegistered(): void {
+  if (rasterHooksRegistered) return;
+  const assembler = getShaderAssembler('glsl');
+  for (const name of ['DECKGL_CREATE_COLOR', 'DECKGL_MUTATE_COLOR']) {
+    assembler.addShaderInjectionTarget({
+      name,
+      stage: 'fragment',
+      glsl: {parameters: 'inout vec4 image, vec2 coord'}
+    });
   }
-  if (!hookNames.some(h => h?.includes('DECKGL_MUTATE_COLOR'))) {
-    assembler.addShaderHook('fs:DECKGL_MUTATE_COLOR(inout vec4 image, vec2 coord)');
-  }
+  rasterHooksRegistered = true;
 }
 
 /**
@@ -77,7 +68,7 @@ interface LumaModuleOutput {
   deprecations?: unknown[];
 }
 
-export function prepareLumaModules(modules: LumaShaderModule[]): LumaModuleOutput[] {
+export function prepareLumaModules(modules: LumaShaderModule[]): ShaderPlugin[] {
   return modules.map(mod => {
     let fs = mod.fs2 || mod.fs || '';
     // Replace texture2D with texture for GLSL 300 es
@@ -156,7 +147,8 @@ export function prepareLumaModules(modules: LumaShaderModule[]): LumaModuleOutpu
       }
     }
 
-    return result;
+    const {inject, ...module} = result;
+    return {name: module.name, module: module as ShaderPlugin['module'], injections: inject};
   });
 }
 

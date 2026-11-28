@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {ClipSpace} from '@luma.gl/engine';
-import type {ShaderModule} from '@luma.gl/shadertools';
+import type {ShaderModule} from '@luma.gl/shaders';
 import {patchTileViewportIds, resetDepthRange} from '../tile-viewport-fix';
 
 // Rebase the inverse matrix on the CPU before its doubles become GPU floats.

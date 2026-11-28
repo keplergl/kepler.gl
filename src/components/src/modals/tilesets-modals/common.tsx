@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import type {WMSCapabilities} from '@loaders.gl/wms';
+import type {WMSCapabilities} from '@loaders.gl/ogc/wms';
 
 import type {ZarrDatasetMetadata} from '@kepler.gl/constants';
 import type {VectorTileMetadata, ZarrMetadataProgress} from '@kepler.gl/table';

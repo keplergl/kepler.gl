@@ -591,7 +591,7 @@ export default class FlowLayer extends Layer {
         onHover: layerCallbacks.onLayerHover,
         parameters: {
           ...(cleanProps.parameters || {}),
-          cull: false,
+          cullMode: 'none',
           ...blendingParameters
         }
       })

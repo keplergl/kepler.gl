@@ -6,7 +6,7 @@
 // Copyright (c) vis.gl contributors
 
 import type {BinaryAttribute, Color, PickingInfo} from '@deck.gl/core';
-import {TypedArray} from '@math.gl/types';
+import type {TypedArray} from '@math.gl/core/types';
 import * as arrow from 'apache-arrow';
 
 /**

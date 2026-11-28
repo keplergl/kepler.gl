@@ -7,8 +7,15 @@ import Console from 'global/console';
 import uniq from 'es-toolkit/compat/uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
-import {MVTSource, TileJSON} from '@loaders.gl/mvt';
-import {PMTilesSource, PMTilesMetadata} from '@loaders.gl/pmtiles';
+import {createDataSourceSync} from '@loaders.gl/core';
+import type {CoreAPI} from '@loaders.gl/core/loader-utils';
+import {
+  MVTLoader,
+  MVTTileSource,
+  type MVTSourceLoaderOptions,
+  type TileJSON
+} from '@loaders.gl/tiles/mvt';
+import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 
 import {
   analyzerTypeToFieldType,
@@ -34,6 +41,14 @@ import {
   StringFieldFilterProps,
   default as KeplerDataset
 } from '../kepler-table';
+
+/** Source factory supported by both the ESM app and CommonJS consumers. */
+export const MVTSourceLoader = {
+  ...MVTLoader,
+  preload: undefined,
+  createDataSourceSync: (url: string, options: MVTSourceLoaderOptions, coreApi?: CoreAPI) =>
+    new MVTTileSource(url, options, coreApi)
+};
 
 export function isTileDataset(dataset: KeplerDataset | {type: string}): boolean {
   return Boolean(dataset?.type === DatasetType.VECTOR_TILE);
@@ -248,7 +263,7 @@ function getMetaUrlTippecanoe(tileUrl) {
 }
 
 /**
- * Special parsing for metadata returned by MVTSource and PMTilesSource.
+ * Special parsing for metadata returned by MVTLoader and PMTilesLoader.
  * @param metadata Tileset metadata parsed by a DataSouce
  * @returns Metadata in Kepler-friendly format.
  */
@@ -287,7 +302,7 @@ function parseMetadataTippecanoeFromDataSource(
     Array.isArray(metadata.boundingBox) ? metadata.boundingBox.flat() : ''
   );
 
-  // PMTileSource has centerZoom and center [lon, lat], MVTSource - [lon, lat, zoom]
+  // PMTileSource has centerZoom and center [lon, lat], MVTLoader - [lon, lat, zoom]
   const center =
     pmTileMetadata.centerZoom !== undefined && Array.isArray(metadata.center)
       ? [...metadata.center, pmTileMetadata.centerZoom]
@@ -749,12 +764,13 @@ export const getFieldsFromTile = async ({
 
       const tileSource =
         remoteTileFormat === RemoteTileFormat.MVT
-          ? MVTSource.createDataSource(decodeURIComponent(tilesetUrl), {
+          ? createDataSourceSync(decodeURIComponent(tilesetUrl), MVTSourceLoader, {
               mvt: {
-                metadataUrl: decodeURIComponent(metadataUrl)
+                metadataUrl: decodeURIComponent(metadataUrl),
+                shape: 'geojson-table'
               }
             })
-          : PMTilesSource.createDataSource(tilesetUrl, {});
+          : createDataSourceSync(tilesetUrl, PMTilesLoader, {pmtiles: {shape: 'geojson-table'}});
       const tile = await tileSource.getTileData({index: tileIndices} as any);
       const updatedFields = tileToFields(tile).map(f => {
         return {

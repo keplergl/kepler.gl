@@ -125,13 +125,9 @@ export default defineConfig({
       'react',
       'react-dom',
       'apache-arrow',
-      '@luma.gl/constants',
       '@luma.gl/core',
-      '@luma.gl/effects',
       '@luma.gl/engine',
-      '@luma.gl/gltf',
-      '@luma.gl/shadertools',
-      '@luma.gl/webgl',
+      '@luma.gl/shaders',
       '@deck.gl/aggregation-layers',
       '@deck.gl/core',
       '@deck.gl/extensions',
@@ -142,11 +138,9 @@ export default defineConfig({
       '@deck.gl/react',
       '@deck.gl/widgets',
       '@math.gl/core',
-      '@math.gl/culling',
       '@math.gl/geospatial',
-      '@math.gl/polygon',
-      '@math.gl/sun',
-      '@math.gl/types',
+      '@math.gl/geometry',
+      '@math.gl/earth',
       '@math.gl/web-mercator',
       '@hubble.gl/core',
       '@hubble.gl/react',
@@ -155,7 +149,7 @@ export default defineConfig({
     ]
   },
   optimizeDeps: {
-    exclude: ['parquet-wasm', '@loaders.gl/parquet'],
+    exclude: ['parquet-wasm', '@loaders.gl/tables/parquet'],
     // When aliasing to monorepo sources, do not prebundle those packages.
     include: useLocalKepler
       ? ['apache-arrow', ...loadersCjsDeps, ...nodePolyfillDeps]

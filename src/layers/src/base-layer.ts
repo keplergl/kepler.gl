@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {COORDINATE_SYSTEM, Layer as DeckLayer} from '@deck.gl/core';
+import {Layer as DeckLayer} from '@deck.gl/core';
 import type {Feature as GeoJsonFeature} from 'geojson';
 import {GeoArrowTextLayer} from '@kepler.gl/deckgl-arrow-layers';
 import {EnhancedMultiIconLayer, EnhancedTextBackgroundLayer} from '@kepler.gl/deckgl-layers';
@@ -1776,12 +1776,12 @@ class Layer implements KeplerLayer {
     return {
       id: this.id,
       idx,
-      coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+      coordinateSystem: 'lnglat',
       pickable: true,
       wrapLongitude: true,
       parameters: {
-        depthTest: true,
-        depthMask: is3dView || enable3d,
+        depthCompare: 'less-equal' as const,
+        depthWriteEnabled: is3dView || enable3d,
         ...blendingParameters
       },
       hidden: this.config.hidden,
@@ -1803,7 +1803,7 @@ class Layer implements KeplerLayer {
       id: `${this.id}-hovered`,
       pickable: false,
       wrapLongitude: true,
-      coordinateSystem: COORDINATE_SYSTEM.LNGLAT
+      coordinateSystem: 'lnglat'
     };
   }
 
@@ -1880,15 +1880,13 @@ class Layer implements KeplerLayer {
               // through the planet when the parent object was on the back side.
               // Match the editor overlay: depth-test against the disk, don't write
               // depth, and keep cull off so billboard glyph quads are not discarded.
-              depthTest: true,
-              depthMask: false,
-              cull: false,
-              // Override GlobeView's cullMode; legacy cull alone loses at draw time.
+              depthCompare: 'less-equal' as const,
+              depthWriteEnabled: false,
               cullMode: 'none'
             }
           : {
               // text will always show on top of all layers
-              depthTest: false
+              depthCompare: 'always'
             };
 
         accu.push(
@@ -1977,7 +1975,7 @@ class Layer implements KeplerLayer {
                         // Flat mode leaves parent culling alone; the background quad
                         // is camera-facing and must not be discarded if a parent
                         // parameter enables cull.
-                        ...(isGlobeMode ? null : {cull: false}),
+                        ...(isGlobeMode ? null : {cullMode: 'none'}),
                         ...(mapState?.layerParameters ?? {})
                       }
                     }

@@ -3,7 +3,7 @@
 
 import * as arrow from 'apache-arrow';
 import {Feature, BBox} from 'geojson';
-import {getGeoMetadata} from '@loaders.gl/geoarrow';
+import {getGeoMetadata} from '@loaders.gl/core/geoarrow';
 
 import {GEOARROW_EXTENSIONS, GEOARROW_METADATA_KEY} from '@kepler.gl/constants';
 import {KeplerTable} from '@kepler.gl/table';
@@ -22,18 +22,18 @@ import {
   convertStructToFixedSizeList
 } from '@kepler.gl/utils';
 import {
-  getBinaryGeometriesFromArrow,
+  convertGeoArrowToBinaryFeatureCollection,
   BinaryGeometriesFromArrowOptions,
   BinaryDataFromGeoArrow
-} from '@loaders.gl/gis';
-import {updateBoundsFromGeoArrowSamples} from '@loaders.gl/geoarrow';
-import {geojsonToBinary} from '@loaders.gl/gis';
+} from '@loaders.gl/core/geoarrow';
+import {updateBoundsFromGeoArrowSamples} from '@loaders.gl/core/geoarrow';
+import {convertGeojsonToBinaryFeatureCollection} from '@loaders.gl/core/geoarrow';
 import {
   Geometry,
   BinaryPointFeature,
   BinaryLineFeature,
   BinaryPolygonFeature
-} from '@loaders.gl/schema';
+} from '@loaders.gl/core/schema';
 
 import {
   DeckGlGeoTypes,
@@ -142,11 +142,14 @@ function getBinaryGeometriesFromWKBArrow(
   // One BinaryFeatureCollection for the whole column. A collection per Arrow
   // chunk becomes one GeoJsonLayer (with fill/stroke/point sublayers) each, and
   // parquet/DuckDB files easily exceed deck.gl's 255 pickable-layer cap.
-  const geojsonToBinaryOptions = {
+  const convertGeojsonToBinaryFeatureCollectionOptions = {
     triangulate: true,
     fixRingWinding: true
   };
-  const binaryFeatures = geojsonToBinary(geojsonFeatures, geojsonToBinaryOptions);
+  const binaryFeatures = convertGeojsonToBinaryFeatureCollection(
+    geojsonFeatures,
+    convertGeojsonToBinaryFeatureCollectionOptions
+  );
 
   const featureTypesArr = ['points', 'lines', 'polygons'];
   featureTypesArr.forEach(prop => {
@@ -255,7 +258,7 @@ export function getGeojsonLayerMetaFromArrow({
     };
   }
 
-  // getBinaryGeometriesFromArrow doesn't support geoarrow.wkb
+  // convertGeoArrowToBinaryFeatureCollection doesn't support geoarrow.wkb
   if (encoding === GEOARROW_EXTENSIONS.WKB) {
     return getBinaryGeometriesFromWKBArrow(geoColumn, options);
   }
@@ -283,12 +286,13 @@ export function getGeojsonLayerMetaFromArrow({
   }
 
   // create binary data from arrow data for GeoJsonLayer
-  const {binaryGeometries, featureTypes, bounds, meanCenters} = getBinaryGeometriesFromArrow(
-    // @ts-ignore
-    geoColumn,
-    encoding,
-    options
-  );
+  const {binaryGeometries, featureTypes, bounds, meanCenters} =
+    convertGeoArrowToBinaryFeatureCollection(
+      // @ts-ignore
+      geoColumn,
+      encoding,
+      options
+    );
 
   // since there is no feature.properties.radius, we set fixedRadius to false
   const fixedRadius = false;
@@ -535,7 +539,12 @@ export function getBoundsFromArrowMetadata(
       if (fieldMetadata) {
         const boundsFromMetadata = fieldMetadata['bbox'];
         if (Array.isArray(boundsFromMetadata) && boundsFromMetadata.length === 4) {
-          return boundsFromMetadata;
+          return [
+            boundsFromMetadata[0],
+            boundsFromMetadata[1],
+            boundsFromMetadata[2],
+            boundsFromMetadata[3]
+          ];
         }
       }
     }

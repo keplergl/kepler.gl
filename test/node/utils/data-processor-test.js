@@ -6,7 +6,7 @@ import sinon from 'sinon';
 import {console as Console} from 'global/window';
 import {DATA_TYPES} from 'type-analyzer';
 import cloneDeep from 'es-toolkit/compat/cloneDeep';
-import {convertGeometryToWKB} from '@loaders.gl/gis';
+import {convertGeometryToWKB} from '@loaders.gl/core/geoarrow';
 
 import testData, {
   dataWithNulls,

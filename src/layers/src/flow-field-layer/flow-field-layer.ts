@@ -18,7 +18,7 @@ import {ClipExtension} from '@deck.gl/extensions';
 import {PathLayer, PolygonLayer} from '@deck.gl/layers';
 import {TripsLayer} from '@deck.gl/geo-layers';
 import {ScenegraphLayer} from '@deck.gl/mesh-layers';
-import {Matrix4, Quaternion} from '@math.gl/core';
+import {Matrix4, Quaternion} from '@math.gl/core/matrix';
 import {lngLatToWorld} from '@math.gl/web-mercator';
 import {bisectRight} from 'd3-array';
 import {
@@ -1472,7 +1472,7 @@ function buildDebugGridLayers(
       widthUnits: 'pixels',
       pickable: false,
       wrapLongitude: false,
-      parameters: {depthTest: false, ...blendingParameters}
+      parameters: {depthCompare: 'always', ...blendingParameters}
     }),
     new PolygonLayer({
       id: `${layerId}-debug-filled`,
@@ -1485,7 +1485,7 @@ function buildDebugGridLayers(
       filled: true,
       pickable: false,
       wrapLongitude: false,
-      parameters: {depthTest: false, ...blendingParameters}
+      parameters: {depthCompare: 'always', ...blendingParameters}
     })
   ];
 }
@@ -2104,7 +2104,10 @@ export default class FlowFieldLayer extends Layer {
         // which can throw during attribute update (reading undefined[0]).
         wrapLongitude: false,
         parameters: {
-          depthTest: Boolean(mapState.dragRotate) || (hasAltitude && elevationMultiplier > 0),
+          depthCompare:
+            Boolean(mapState.dragRotate) || (hasAltitude && elevationMultiplier > 0)
+              ? 'less-equal'
+              : 'always',
           ...blendingParameters
         },
         extensions: [clipExtension],

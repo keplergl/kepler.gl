@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {COORDINATE_SYSTEM} from '@deck.gl/core';
 import {SimpleMeshLayer} from '@deck.gl/mesh-layers';
 import {PlaneGeometry} from '@luma.gl/engine';
-import {Vector3} from '@math.gl/core';
+import {Vector3} from '@math.gl/core/matrix';
 
 import {editShader} from '../layer-utils/shader-utils';
 import type {RGBColor} from '@kepler.gl/types';
@@ -21,12 +20,8 @@ const DEPTH_DISK_PARAMETERS = {
   // Depth writes only happen with depthTest enabled. The disk is opaque-black-ish
   // and used purely to fill the depth buffer so far-side geometry (arcs/lines) is
   // occluded by the planet.
-  depthTest: true,
-  // Do not inherit a disabled depth mask from earlier rendering.
-  depthMask: true,
-  cull: false,
-  // Deck normalizes the globe's global cull:true to cullMode:'back'. Luma applies
-  // that modern parameter after cull:false, which otherwise discards this plane.
+  depthCompare: 'less-equal',
+  depthWriteEnabled: true,
   cullMode: 'none'
 };
 
@@ -150,7 +145,7 @@ export const getGlobeDepthDiskLayer = ({fillColor}: {fillColor?: RGBColor}) => {
     id: 'globe-depth-disk-layer',
     data: [[0, 0, 0]],
     coordinateOrigin: [0, 0, 0],
-    coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+    coordinateSystem: 'cartesian',
     getPosition: (d: number[]) => d,
     getColor: (fillColor ?? [0, 0, 0]) as any,
     mesh: PLANE_GEOMETRY,

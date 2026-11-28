@@ -3,11 +3,11 @@
 
 import {WebMercatorViewport, _SunLight as SunLight, shadow} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
-import {Matrix4} from '@math.gl/core';
+import {Matrix4} from '@math.gl/core/matrix';
 import CustomDeckLightingEffect, {
   alignExportShadowPass,
   patchShadowPassDepth,
-  shadowMapHoverFixModule
+  shadowMapHoverFixPlugin
 } from './custom-deck-lighting-effect';
 
 // These pass classes are exported at runtime but omitted from deck.gl's declarations.
@@ -145,7 +145,7 @@ describe('lighting effect with shadows turned on after setup', () => {
     const effect = new CustomDeckLightingEffect({
       sunLight: new SunLight({timestamp: Date.UTC(2026, 5, 21, 12), _shadow: true})
     });
-    const deck = {_addDefaultShaderModule: jest.fn(), _removeDefaultShaderModule: jest.fn()};
+    const deck = {_addDefaultShaderPlugin: jest.fn(), _removeDefaultShaderPlugin: jest.fn()};
     const context = {device, deck} as any;
     const state = effect as any;
 
@@ -154,7 +154,7 @@ describe('lighting effect with shadows turned on after setup', () => {
     state.shadow = false;
     effect.setup(context);
     expect(state.shadowPasses).toHaveLength(0);
-    expect(deck._addDefaultShaderModule).not.toHaveBeenCalled();
+    expect(deck._addDefaultShaderPlugin).not.toHaveBeenCalled();
 
     // The user enables the effect: updateEffect sets `shadow` directly.
     state.shadow = true;
@@ -165,7 +165,7 @@ describe('lighting effect with shadows turned on after setup', () => {
       } as any);
       expect(state.shadowPasses).toHaveLength(1);
       expect(state.dummyShadowMap).toBeTruthy();
-      expect(deck._addDefaultShaderModule).toHaveBeenCalledWith(
+      expect(deck._addDefaultShaderPlugin).toHaveBeenCalledWith(
         expect.objectContaining({name: shadow.name})
       );
     } finally {
@@ -174,19 +174,15 @@ describe('lighting effect with shadows turned on after setup', () => {
   });
 });
 
-describe('shadowMapHoverFixModule', () => {
+describe('shadowMapHoverFixPlugin', () => {
   test('re-encodes shadow map depth after picking highlight', () => {
-    const inject = (
-      shadowMapHoverFixModule as {
-        inject: Record<string, {order: number; injection: string}>;
-      }
-    ).inject['fs:DECKGL_FILTER_COLOR'];
+    const inject = shadowMapHoverFixPlugin.injections[0];
 
     // deck.gl picking blends highlightColor at order 99, which would overwrite
     // encoded shadow depth for the hovered object.
     expect(inject.order).toBeGreaterThan(99);
-    expect(inject.injection).toContain('shadow.drawShadowMap');
-    expect(inject.injection).toContain('shadow_filterShadowColor');
+    expect(inject.glsl).toContain('shadow.drawShadowMap');
+    expect(inject.glsl).toContain('shadow_filterShadowColor');
   });
 });
 
@@ -194,8 +190,8 @@ describe('patchShadowPassDepth', () => {
   test('forces WebGL depth writes and disables polygon offset', () => {
     const pass = {
       getLayerParameters: (_layer: unknown, _layerIndex: number, _viewport: unknown) => ({
-        depthTest: true,
-        depthMask: false,
+        depthCompare: 'less-equal',
+        depthWriteEnabled: false,
         blend: true
       })
     };
@@ -203,8 +199,8 @@ describe('patchShadowPassDepth', () => {
     patchShadowPassDepth(pass);
 
     expect(pass.getLayerParameters({}, 0, null)).toMatchObject({
-      depthTest: true,
-      depthMask: true,
+      depthCompare: 'less-equal',
+      depthWriteEnabled: true,
       polygonOffsetFill: false,
       polygonOffset: [0, 0]
     });

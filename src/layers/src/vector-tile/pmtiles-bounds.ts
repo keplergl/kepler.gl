@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {PMTilesTileSource} from '@loaders.gl/pmtiles';
+import {PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 import {tileIdToZxy, zxyToTileId} from 'pmtiles';
 import {getCenterAndZoomFromBounds} from '@kepler.gl/utils';
 

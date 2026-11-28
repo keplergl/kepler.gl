@@ -287,7 +287,7 @@ test('#HexagonLayer -> renderLayer', t => {
         const {props} = deckHexLayer;
         const labelLayer = deckLayers.find(l => l.id === 'test_layer_1-label-pointCount-collision');
         t.equal(labelLayer.props.collisionEnabled, true, 'hexagon count labels collide by default');
-        t.equal(labelLayer.props.parameters.depthTest, false, 'labels paint on top of the cells');
+        t.equal(labelLayer.props.parameters.depthCompare, 'always', 'labels paint on top of the cells');
         labelLayer.props.data.forEach(d => {
           t.equal(labelLayer.props.getPosition(d).length, 2, 'count sits at the cell base');
           t.equal(labelLayer.props.getText(d), String(d.count), 'label text is the point count');
@@ -752,7 +752,7 @@ test('#HexagonLayer -> extruded count labels stay at the cell base', t => {
         t.ok(labelLayer.props.data.length > 0, 'extruded hexagon has counts to draw');
         // GeoJSON labels sit at the polygon base and disable the depth test so
         // they draw on top of the extrusion. Count labels follow that.
-        t.equal(labelLayer.props.parameters.depthTest, false, 'labels are not buried in columns');
+        t.equal(labelLayer.props.parameters.depthCompare, 'always', 'labels are not buried in columns');
         labelLayer.props.data.forEach(d => {
           t.deepEqual(
             labelLayer.props.getPosition(d),

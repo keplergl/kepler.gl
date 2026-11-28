@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {assembleGLSLShaderPair, type ShaderModule} from '@luma.gl/shadertools';
+import {assembleGLSLShaderPair, resolveShaderPlugins, type ShaderModule} from '@luma.gl/shaders';
 import {spawnSync} from 'child_process';
 import {prepareLumaModules} from './raster-layer/raster-layer-shaders';
 import {rasterProcessingUniforms} from './raster-processing-uniforms';
@@ -23,6 +23,10 @@ const platformInfo = {
 };
 
 function assemble(enabled: boolean, combineBands = combineBandsFloat) {
+  const plugins = resolveShaderPlugins(
+    prepareLumaModules([combineBands, ...(enabled ? [rawBandThreshold] : [])]),
+    'glsl'
+  );
   return assembleGLSLShaderPair({
     platformInfo,
     vs: '#version 300 es\nvoid main() {gl_Position = vec4(0.0);}',
@@ -34,15 +38,17 @@ function assemble(enabled: boolean, combineBands = combineBandsFloat) {
         DECKGL_CREATE_COLOR(image, vec2(0.5));
         fragColor = image;
       }`,
-    modules: [
-      rasterProcessingUniforms,
-      // Assembly only consumes source and defines, not the raster uniform adapter.
-      ...(prepareLumaModules([
-        combineBands,
-        ...(enabled ? [rawBandThreshold] : [])
-      ]) as ShaderModule[])
-    ],
-    hookFunctions: ['fs:DECKGL_CREATE_COLOR(inout vec4 image, vec2 coord)']
+    modules: [rasterProcessingUniforms as ShaderModule, ...plugins.modules],
+    defines: plugins.defines,
+    pluginInjections: plugins.injections,
+    injectionTargets: [
+      ...plugins.injectionTargets,
+      {
+        name: 'DECKGL_CREATE_COLOR',
+        stage: 'fragment',
+        glsl: {parameters: 'inout vec4 image, vec2 coord'}
+      }
+    ]
   });
 }
 

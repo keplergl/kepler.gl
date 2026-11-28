@@ -12,31 +12,21 @@
  * from the live GL buffer and project with drawingBuffer / viewport CSS.
  */
 
-/**
- * Append binary fade snapping to the collision shader *module* inject.
- *
- * Do not put an `{order, injection}` object on the extension's own `inject` map.
- * deck.gl mergeShaders concatenates injects with `+`, so an object becomes
- * `[object Object]` in GLSL (`'[' : syntax error`) when another layer (globe
- * back-face cull) already injected a string at the same hook.
- */
-export function snapCollisionModuleFade(shaders: {modules?: any[]; inject?: any} = {}): {
-  modules?: any[];
+/** Append binary fade snapping after the collision plugin computes visibility. */
+export function snapCollisionModuleFade(shaders: {plugins?: any[]; inject?: any} = {}): {
+  plugins?: any[];
   inject?: any;
 } {
-  const positionHook = 'vs:DECKGL_FILTER_GL_POSITION';
-  const modules = (shaders.modules || []).map((module: any) => {
-    if (module?.name !== 'collision') {
-      return module;
+  const positionHook = 'glsl:vs:DECKGL_FILTER_GL_POSITION';
+  const plugins = shaders.plugins?.map(plugin => {
+    if (plugin.name !== 'collision' || typeof plugin.injections?.[positionHook] !== 'string') {
+      return plugin;
     }
-    const baseInject = module.inject?.[positionHook];
-    const baseInjectCode =
-      typeof baseInject === 'string' ? baseInject : baseInject?.injection || '';
     return {
-      ...module,
-      inject: {
-        ...module.inject,
-        [positionHook]: `${baseInjectCode}
+      ...plugin,
+      injections: {
+        ...plugin.injections,
+        [positionHook]: `${plugin.injections[positionHook]}
   if (collision.enabled) {
     if (collision_fade < 0.5) {
       collision_fade = 0.0;
@@ -48,7 +38,7 @@ export function snapCollisionModuleFade(shaders: {modules?: any[]; inject?: any}
       }
     };
   });
-  return {...shaders, modules};
+  return {...shaders, plugins};
 }
 
 export type CollisionFilterEffectLike = {

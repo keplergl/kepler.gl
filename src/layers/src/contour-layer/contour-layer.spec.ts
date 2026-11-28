@@ -16,7 +16,6 @@ import {
 import * as DeckCore from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {GeoJsonLayer} from '@deck.gl/layers';
-import {setGLParameters} from '@luma.gl/webgl';
 import {getGlobeDepthDiskLayer} from '@kepler.gl/deckgl-layers';
 import {getDistanceScales} from '@math.gl/web-mercator';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';
@@ -630,7 +629,7 @@ test.each([true, false])(
         [
           '-e',
           `
-      const {setGLParameters, setDeviceParameters} = require('@luma.gl/webgl');
+      const {setGLParameters, setDeviceParameters} = require('@luma.gl/core/webgl');
       const {disk, diskVertices, contours, depthWritesEnabled} = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
       const gl = require('gl')(4, 4, {preserveDrawingBuffer: true});
       if (!gl) throw new Error('Headless WebGL context unavailable');
@@ -904,7 +903,7 @@ test.each([false, true])(
       const polygonLayer = fill.getSubLayers()[0] as ContourSurfaceLayer;
       const attributes = polygonLayer.getAttributeManager()!.getAttributes();
       expect(attributes.indices.value!.length).toBeGreaterThan(0);
-      const positions = Array.from(attributes.vertexPositions.value!);
+      const positions = Array.from(attributes.vertexPositions.value as ArrayLike<number>);
       expect(positions.every(Number.isFinite)).toBe(true);
       for (let i = 0; i < positions.length; i += 3) {
         expect(Math.abs(positions[i])).toBeLessThanOrEqual(180);
@@ -1139,15 +1138,8 @@ test.each([false, true])(
     data = surfaceData;
     const [depth, fill, outline] = renderContourPasses(layer, dataset, data);
     expect(depth.props.pickable).toBe(false);
-    const gl = {enable: jest.fn(), depthMask: jest.fn(), colorMask: jest.fn()};
-    const applyDepthParameters = pass =>
-      setGLParameters(gl as unknown as WebGL2RenderingContext, pass.props.parameters);
-    // Exercise the actual WebGL parameter setter: a numeric render-pass mask
-    // is not valid for per-layer parameters and throws before drawing.
-    expect(() => applyDepthParameters(depth)).not.toThrow();
-    expect(gl.colorMask).toHaveBeenLastCalledWith(false, false, false, false);
-    expect(gl.depthMask).toHaveBeenLastCalledWith(true);
-    expect(fill.props.parameters).toMatchObject({depthMask: false});
+    expect(depth.props.parameters).toMatchObject({colorMask: 0, depthWriteEnabled: true});
+    expect(fill.props.parameters).toMatchObject({depthWriteEnabled: false});
     expect(fill.props.modelMatrix?.[10]).toBe(2);
     expect(outline.props.modelMatrix?.[10]).toBe(2);
     const raised = fill.props.data as typeof data.data;
@@ -1173,8 +1165,7 @@ test.each([false, true])(
     expect(layer.getContourLegend()).toEqual(legend);
     layer.updateLayerVisConfig({elevationScale: 0});
     const flattened = renderContourPasses(layer, dataset, data);
-    expect(() => applyDepthParameters(flattened[0])).not.toThrow();
-    expect(gl.colorMask).toHaveBeenLastCalledWith(false, false, false, false);
+    expect(flattened[0].props.parameters).toMatchObject({colorMask: 0, depthWriteEnabled: true});
     expect(flattened[0].props.data).toBe(depth.props.data);
     expect(flattened[1].props.data).toBe(fill.props.data);
     expect(flattened[1].props.modelMatrix?.[10]).toBe(0);

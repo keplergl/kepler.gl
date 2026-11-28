@@ -4,7 +4,7 @@
 import {EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field, FieldPair} from '@kepler.gl/types';
 import {DataContainerInterface} from '@kepler.gl/utils';
-import {ZipWriter} from '@loaders.gl/zip';
+import {ZipWriter} from '@loaders.gl/archives/zip';
 import type {FeatureCollection} from 'geojson';
 
 import {datasetToFeatureCollection} from './dataset-to-geojson';

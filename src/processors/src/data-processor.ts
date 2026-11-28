@@ -5,9 +5,7 @@ import * as arrow from 'apache-arrow';
 import {csvParseRows, tsvParseRows, dsvFormat} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES, RegexList} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
-import {parseSync} from '@loaders.gl/core';
-import {ArrowTable} from '@loaders.gl/schema';
-import {WKBLoader} from '@loaders.gl/wkt';
+import {convertWKBToGeometry} from '@loaders.gl/core/wkt';
 
 import {
   ALL_FIELD_TYPES,
@@ -498,7 +496,7 @@ export function processKeplerglDataset(
  * import {addDataToMap} from '@kepler.gl/actions';
  * import {processArrowTable} from '@kepler.gl/processors';
  * import {load} from '@loaders.gl/core';
- * import {GeoArrowLoader} from '@loaders.gl/arrow';
+ * import {GeoArrowLoader} from '@loaders.gl/tables/arrow';
  *
  * const arrowTable = await load(url, GeoArrowLoader, {arrow: {shape: 'arrow-table'}});
  *
@@ -509,7 +507,7 @@ export function processKeplerglDataset(
  *   }
  * }));
  */
-export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | null {
+export function processArrowTable(arrowTable: {shape?: 'arrow-table'; data: arrow.Table}): ProcessorResult | null {
   // @ts-ignore - Unknown data type causing build failures
   return processArrowBatches(arrowTable.data.batches);
 }
@@ -585,7 +583,7 @@ export function arrowSchemaToFields(
       try {
         const data = table.getChildAt(fieldIndex)?.get(0);
         if (data) {
-          const binaryGeo = parseSync(data, WKBLoader);
+          const binaryGeo = convertWKBToGeometry(data);
           if (binaryGeo) {
             type = ALL_FIELD_TYPES.geoarrow;
             analyzerType = AnalyzerDATA_TYPES.GEOMETRY;

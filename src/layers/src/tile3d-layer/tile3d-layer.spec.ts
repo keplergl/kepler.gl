@@ -2,9 +2,9 @@
 // Copyright contributors to the kepler.gl project
 
 import Tile3DLayer, {tile3dLoadErrorKind} from './tile3d-layer';
-import {LightingEffect, COORDINATE_SYSTEM} from '@deck.gl/core';
+import {LightingEffect} from '@deck.gl/core';
 import {UniformStore} from '@luma.gl/core';
-import type {Device} from '@luma.gl/core/dist/adapter/device';
+import type {Device} from '@luma.gl/core';
 
 const URL = 'https://assets.ion.cesium.com/57588/tileset.json';
 
@@ -106,6 +106,8 @@ describe('3D tile camera updates', () => {
 
     next.initializeState();
     next.context = {};
+    // Initialize deck.gl’s color format before simulating an existing tile cache.
+    next.updateState({props: next.props, oldProps: previous.props, changeFlags: flags});
     const cached = {layer: {}, needsUpdate: false};
     next.state.layerMap = {tile: cached};
     next.updateState({props: next.props, oldProps: previous.props, changeFlags: flags});
@@ -376,8 +378,10 @@ describe('3D tile loading error classification', () => {
 // Exercise the custom deck lifecycle without network requests or a GPU. The
 // superclass loader is the external boundary; Kepler's race/error guards run.
 describe('3D tile asynchronous lifecycle', () => {
+  const tilesetData = {tile3dUrl: 'https://example.com/tileset.json'};
+
   function deckLayer() {
-    const layer: any = render(new Tile3DLayer({dataId: 'tiles'}));
+    const layer: any = render(new Tile3DLayer({dataId: 'tiles'}), '', {data: tilesetData});
     layer.initializeState();
     layer.context = {timeline: {}};
     return layer;
@@ -403,7 +407,10 @@ describe('3D tile asynchronous lifecycle', () => {
   test('failed loads stop the spinner, report the error, and clear cached tiles', async () => {
     const owner = new Tile3DLayer({dataId: 'tiles'});
     const onTilesetLoadError = jest.fn();
-    const layer: any = render(owner, 'token-A', {layerCallbacks: {onTilesetLoadError}});
+    const layer: any = render(owner, '', {
+      data: tilesetData,
+      layerCallbacks: {onTilesetLoadError}
+    });
     layer.initializeState();
     layer.state.layerMap = {old: {layer: {}}};
     const error = new Error('Unauthorized');
@@ -411,7 +418,7 @@ describe('3D tile asynchronous lifecycle', () => {
       throw error;
     });
     const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    await layer._loadTileset(URL);
+    await layer._loadTileset(tilesetData.tile3dUrl);
     await Promise.resolve();
     expect(layer.isLoaded).toBe(true);
     expect(layer.state.tileset3d).toBeNull();
@@ -428,7 +435,7 @@ describe('3D tile asynchronous lifecycle', () => {
     layer.state.layerMap = {old: {layer: {}}};
     const pending = deferred();
     mockLoad(layer, () => pending.promise);
-    const request = layer._loadTileset(URL);
+    const request = layer._loadTileset(tilesetData.tile3dUrl);
     expect(old.destroy).toHaveBeenCalledTimes(1);
     expect(layer.state.tileset3d).toBeNull();
     expect(layer.state.layerMap).toEqual({});
@@ -638,19 +645,19 @@ describe('3D tile export and lighting transitions', () => {
   test('normalizes legacy I3S coordinate systems before rendering and preserves modern values', () => {
     const layer = initialized();
     const parent = Object.getPrototypeOf(Object.getPrototypeOf(layer));
-    const systems = [-1, 0, 1, 2, 3, 999, COORDINATE_SYSTEM.LNGLAT];
+    const systems = [-1, 0, 1, 2, 3, 999, 'lnglat'];
     const tiles = systems.map(coordinateSystem => ({content: {coordinateSystem}}));
     layer.state.tileset3d = {tiles: [...tiles, {}]};
     const renderBase = jest.spyOn(parent, 'renderLayers').mockReturnValue([]);
     expect(layer.renderLayers()).toEqual([]);
     expect(tiles.map(tile => tile.content.coordinateSystem)).toEqual([
-      COORDINATE_SYSTEM.DEFAULT,
-      COORDINATE_SYSTEM.CARTESIAN,
-      COORDINATE_SYSTEM.LNGLAT,
-      COORDINATE_SYSTEM.METER_OFFSETS,
-      COORDINATE_SYSTEM.LNGLAT_OFFSETS,
-      COORDINATE_SYSTEM.METER_OFFSETS,
-      COORDINATE_SYSTEM.LNGLAT
+      'default',
+      'cartesian',
+      'lnglat',
+      'meter-offsets',
+      'lnglat-offsets',
+      'meter-offsets',
+      'lnglat'
     ]);
     expect(renderBase).toHaveBeenCalledTimes(1);
   });

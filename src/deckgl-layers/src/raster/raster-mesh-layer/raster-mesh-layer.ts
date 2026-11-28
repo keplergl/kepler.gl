@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
+import type {WebGLDevice} from '@luma.gl/core/webgl';
 import {UpdateParameters} from '@deck.gl/core';
 import {SimpleMeshLayer, SimpleMeshLayerProps} from '@deck.gl/mesh-layers';
 import {Geometry} from '@luma.gl/engine';
@@ -104,7 +105,8 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       ...parentShaders,
       vs: buildRasterMeshVertexShader(),
       fs: buildRasterMeshFragmentShader(),
-      modules: [...parentModules, rasterMeshUniforms, rasterProcessingUniforms, ...lumaModules]
+      modules: [...parentModules, rasterMeshUniforms, rasterProcessingUniforms],
+      plugins: [...(parentShaders.plugins || []), ...lumaModules]
     };
   }
 
@@ -155,7 +157,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
   }): void {
     const {images} = this.state;
     const device = this.context.device;
-    const gl = device?.gl || this.context.gl;
+    const gl = (device as WebGLDevice)?.gl || this.context.gl;
 
     const {images: newImages, hasPendingUploads} = loadImages({
       gl,
@@ -188,7 +190,7 @@ export default class RasterMeshLayer extends SimpleMeshLayer<any, RasterLayerAdd
       const retry = this._pendingImageRetry;
       this._pendingImageRetry = null;
       const {images: newImages, hasPendingUploads} = loadImages({
-        gl: this.context.device?.gl || this.context.gl,
+        gl: (this.context.device as WebGLDevice)?.gl || this.context.gl,
         device: this.context.device,
         images: this.state.images,
         imagesData: retry,

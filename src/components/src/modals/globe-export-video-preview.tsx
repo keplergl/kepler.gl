@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Component, RefObject} from 'react';
-import DeckGL from '@deck.gl/react';
+import {DeckGL} from '@deck.gl/react/legacy';
 import type {Deck, DeckProps, MapViewState} from '@deck.gl/core';
 import styled from 'styled-components';
 
@@ -146,9 +146,9 @@ export class GlobeExportVideoPreview extends Component<GlobeExportVideoPreviewPr
             : undefined
         }
       >
-        <DeckGL
+        <DeckGL<null>
           ref={ref => {
-            this.deckRef.current = (ref?.deck as any) || null;
+            this.deckRef.current = ref?.deck ?? null;
           }}
           deviceProps={EXPORT_DECK_DEVICE_PROPS}
           {...adapterProps}

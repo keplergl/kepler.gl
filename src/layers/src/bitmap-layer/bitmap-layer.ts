@@ -10,7 +10,7 @@ import {
 } from '@deck.gl/layers';
 import {EditableGeoJsonLayer} from '@deck.gl-community/editable-layers';
 import {WebMercatorViewport} from '@deck.gl/core';
-import {Matrix4} from '@math.gl/core';
+import {Matrix4} from '@math.gl/core/matrix';
 import {lngLatToWorld, worldToLngLat} from '@math.gl/web-mercator';
 
 import Layer from '../base-layer';

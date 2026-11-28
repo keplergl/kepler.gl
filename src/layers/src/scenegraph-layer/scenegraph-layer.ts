@@ -4,7 +4,7 @@
 import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {ScenegraphLayer as DeckScenegraphLayer} from '@deck.gl/mesh-layers';
 import {load} from '@loaders.gl/core';
-import {GLTFLoader, postProcessGLTF} from '@loaders.gl/gltf';
+import {GLTFLoader} from '@loaders.gl/scene/gltf';
 
 import Layer, {LayerBaseConfig} from '../base-layer';
 import {getFilterDataFunc} from '../aggregation-layer';
@@ -162,9 +162,7 @@ function fetchModel(url: string, init?: RequestInit): Promise<Response> {
 export function fetchGltf(url, {propName, layer}: {propName?: string; layer?: any} = {}) {
   if (propName === 'scenegraph') {
     const loadOptions = layer.getLoadOptions() || {};
-    return load(url, GLTFLoader, {...loadOptions, fetch: fetchModel}).then(gltfWithBuffers =>
-      postProcessGLTF(gltfWithBuffers)
-    );
+    return load(url, GLTFLoader, {...loadOptions, fetch: fetchModel});
   }
 
   return fetch(toCorsSafeGcsUrl(url)).then(response => response.json());
@@ -622,7 +620,11 @@ export default class ScenegraphLayer extends Layer {
         _lighting: 'pbr',
         _animations: DEFAULT_ANIMATIONS,
         // parameters
-        parameters: {depthTest: true, blend: false, ...(mapState?.layerParameters ?? {})},
+        parameters: {
+          depthCompare: 'less-equal',
+          blend: false,
+          ...(mapState?.layerParameters ?? {})
+        },
         // update triggers
         updateTriggers: {
           getOrientation: orientation.join(','),

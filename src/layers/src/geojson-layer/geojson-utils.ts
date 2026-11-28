@@ -8,10 +8,9 @@ import {bbox} from '@turf/bbox';
 import {ascending} from 'd3-array';
 import {center} from '@turf/center';
 import {AllGeoJSON} from '@turf/helpers';
-import {parseSync} from '@loaders.gl/core';
-import {WKTLoader} from '@loaders.gl/wkt';
-import {convertWKBToGeometry, convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/gis';
-import {BinaryFeatureCollection} from '@loaders.gl/schema';
+import {convertWKTToGeometry} from '@loaders.gl/core/wkt';
+import {convertWKBToGeometry, convertGeoArrowGeometryToGeoJSON} from '@loaders.gl/core/geoarrow';
+import {BinaryFeatureCollection} from '@loaders.gl/core/schema';
 import {DataContainerInterface, getSampleData, timeToUnixMilli} from '@kepler.gl/utils';
 import {containValidTime} from '@kepler.gl/common-utils';
 import {ALL_FIELD_TYPES} from '@kepler.gl/constants';
@@ -568,7 +567,7 @@ function parseGeometryFromString(geoString: string): Feature | null {
   if (WKT_PREFIX_RE.test(geoString)) {
     // WKT: starts with a geometry keyword (POINT, POLYGON, …)
     try {
-      parsedGeo = parseSync(geoString, WKTLoader);
+      parsedGeo = convertWKTToGeometry(geoString);
     } catch (e) {
       return null;
     }
@@ -723,8 +722,7 @@ export function groupColumnsAsGeoJson(
   // Match Trip's timestamp parser: prefer a trip that can identify the time format.
   const sampleTrip =
     sortByColumn === 'timestamp' &&
-    (groups.find(items => items.some(item => item[3] !== 0)) ||
-      groups.find(items => items.length));
+    (groups.find(items => items.some(item => item[3] !== 0)) || groups.find(items => items.length));
   // Zero is valid in both Unix units but cannot identify either format for the analyzer.
   const sampleTimes = sampleTrip ? sampleTrip.map(item => item[3]).filter(time => time !== 0) : [];
   const timeFormat = sampleTimes.length
@@ -739,7 +737,9 @@ export function groupColumnsAsGeoJson(
         // Numeric timestamps already sort chronologically, without parsing or a sort cache.
         items.sort((a, b) => ascending(a[3] as any, b[3] as any));
         if (timeFormat && dataToTimeStamp) {
-          dataToTimeStamp[index] = items.map(item => timeToUnixMilli(item[3] as number, timeFormat)!);
+          dataToTimeStamp[index] = items.map(
+            item => timeToUnixMilli(item[3] as number, timeFormat)!
+          );
         }
       } else {
         // Parse once, then retain the sorted timestamps for Trip animation.

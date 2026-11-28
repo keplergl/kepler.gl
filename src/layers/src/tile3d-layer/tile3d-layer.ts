@@ -3,12 +3,12 @@
 
 import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
-import {COORDINATE_SYSTEM, LightingEffect as DeckLightingEffect} from '@deck.gl/core';
+import {LightingEffect as DeckLightingEffect} from '@deck.gl/core';
 import type {Layer as DeckLayer, LayersList} from '@deck.gl/core';
-import {Tiles3DLoader, CesiumIonLoader} from '@loaders.gl/3d-tiles';
-import {I3SLoader} from '@loaders.gl/i3s';
-import {Tileset3D, Tile3D} from '@loaders.gl/tiles';
-import {parsePBRMaterial} from '@luma.gl/gltf';
+import {Tiles3DLoader, resolveCesiumIonTileset} from '@loaders.gl/tiles-3d/3d-tiles';
+import {I3SLoader} from '@loaders.gl/tiles-3d/i3s';
+import {Tileset3D, Tile3D} from '@loaders.gl/tiles-3d';
+import {parsePBRMaterial} from '@luma.gl/engine/gltf';
 
 import Layer from '../base-layer';
 import Tile3DLayerIcon from './tile3d-layer-icon';
@@ -30,11 +30,11 @@ import {VisConfigNumber, BindedLayerCallbacks} from '@kepler.gl/types';
  * those legacy numeric values to the string constants deck.gl expects.
  */
 const LEGACY_COORDINATE_SYSTEM_MAP: Record<number, string> = {
-  [-1]: COORDINATE_SYSTEM.DEFAULT,
-  [0]: COORDINATE_SYSTEM.CARTESIAN,
-  [1]: COORDINATE_SYSTEM.LNGLAT,
-  [2]: COORDINATE_SYSTEM.METER_OFFSETS,
-  [3]: COORDINATE_SYSTEM.LNGLAT_OFFSETS
+  [-1]: 'default',
+  [0]: 'cartesian',
+  [1]: 'lnglat',
+  [2]: 'meter-offsets',
+  [3]: 'lnglat-offsets'
 };
 
 // Lazily created patched sublayer classes (see getSubLayerClass below).
@@ -148,8 +148,31 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
         }
         this.setState({tileset3d: null, layerMap: {}});
       }
-      // @ts-expect-error _loadTileset is private in DeckTile3DLayer
-      await super._loadTileset(tilesetUrl);
+      const props = this.props;
+      const loadOptions = props.loadOptions;
+      const ion = loadOptions?.['cesium-ion'];
+      if (ion) {
+        const assetId = new URL(tilesetUrl).pathname.match(/\/(\d+)\/tileset\.json$/)?.[1];
+        const endpoint = await resolveCesiumIonTileset(ion.accessToken, assetId);
+        if (loadId !== this._tilesetLoadId) return;
+        // Deck reads the options synchronously when constructing the tileset source.
+        this.props = {
+          ...props,
+          loadOptions: {
+            ...loadOptions,
+            core: {...loadOptions.core, credentials: endpoint.credentials}
+          }
+        };
+        tilesetUrl = endpoint.url;
+      }
+      let load: Promise<void>;
+      try {
+        // @ts-expect-error _loadTileset is private in DeckTile3DLayer
+        load = super._loadTileset(tilesetUrl);
+      } finally {
+        this.props = props;
+      }
+      await load;
       const installed = (this.state as any)?.tileset3d;
       if (loadId !== this._tilesetLoadId) {
         // A newer token retry started. Drop this tileset so the old key
@@ -365,8 +388,7 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
       for (const tile of tileset3d.tiles as Tile3D[]) {
         if (tile.content && typeof tile.content.coordinateSystem === 'number') {
           tile.content.coordinateSystem =
-            LEGACY_COORDINATE_SYSTEM_MAP[tile.content.coordinateSystem] ??
-            COORDINATE_SYSTEM.METER_OFFSETS;
+            LEGACY_COORDINATE_SYSTEM_MAP[tile.content.coordinateSystem] ?? 'meter-offsets';
         }
       }
     }
@@ -477,7 +499,7 @@ export const tile3DVisConfigs = {
 };
 
 const EMPTY_EXTENSIONS: any[] = [];
-const DEPTH_TEST_PARAMS = {depthTest: true};
+const DEPTH_TEST_PARAMS = {depthCompare: 'less-equal'} as const;
 
 function getTile3DProviderFromUrl(url = ''): (typeof TILE3D_PROVIDERS)[string] | null {
   for (const key of Object.keys(TILE3D_PROVIDERS)) {
@@ -629,7 +651,7 @@ export default class Tile3DLayer extends Layer {
     } else if (provider === TILE3D_PROVIDERS.cesium) {
       result = {
         data: tileUrl,
-        loader: CesiumIonLoader,
+        loader: Tiles3DLoader,
         loadOptions: {
           'cesium-ion': {accessToken}
         }
@@ -790,8 +812,7 @@ export default class Tile3DLayer extends Layer {
         loadOptions,
         onTilesetLoad: this._onTilesetLoad,
         // Deck forwards this prop; _loadTileset reads it when the tileset request fails.
-        // @ts-expect-error onTilesetError is not part of deck.gl Tile3DLayer props
-        onTilesetError: this._onTilesetError,
+        ...{onTilesetError: this._onTilesetError},
         onTileLoad: this._onTileLoad,
         onTileUnload: this._onTileUnload,
         getPointColor: pointColor,

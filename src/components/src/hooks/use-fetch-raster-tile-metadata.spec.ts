@@ -3,13 +3,13 @@
 
 import {act, renderHook, waitFor} from '@testing-library/react';
 import {fetch} from 'global';
-import {PMTilesSource} from '@loaders.gl/pmtiles';
+import {PMTilesLoaderWithParser as PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
 import {RasterTileType} from '@kepler.gl/constants';
 import useFetchJson, {FetchJsonProps} from './use-fetch-raster-tile-metadata';
 
 jest.mock('global', () => ({fetch: jest.fn()}));
-jest.mock('@loaders.gl/pmtiles', () => ({
-  PMTilesSource: {createDataSource: jest.fn()}
+jest.mock('@loaders.gl/tiles/pmtiles', () => ({
+  PMTilesLoader: {createDataSourceSync: jest.fn()}
 }));
 
 const URL = 'https://example.com/metadata.json';
@@ -23,7 +23,7 @@ const metadata = {
   fields: []
 };
 const fetchMock = fetch as jest.MockedFunction<typeof fetch>;
-const createSourceMock = PMTilesSource.createDataSource as jest.Mock;
+const createSourceMock = PMTilesLoader.createDataSourceSync as jest.Mock;
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

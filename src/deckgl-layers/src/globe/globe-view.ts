@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import * as DeckCore from '@deck.gl/core';
-import {clamp, vec4} from '@math.gl/core';
+import {clamp, vec4} from '@math.gl/core/matrix';
 import {GLOBE_MAX_LATITUDE} from '@kepler.gl/constants';
 import {GLOBE_COMMON_RADIUS} from './globe-depth-disk-layer';
 

@@ -1720,7 +1720,7 @@ test('flat path overlays meshes while globe path preserves depth occlusion', () 
   const globeLayers = getCameraTourPathLayers(tour, undefined, true);
   expect(globeLayers[0].props.parameters?.depthCompare).toBeUndefined();
   expect(globeLayers[1].props.parameters?.depthCompare).toBeUndefined();
-  expect(globeLayers[2].props.parameters).toEqual({cull: false});
+  expect(globeLayers[2].props.parameters).toEqual({cullMode: 'none'});
 });
 
 test('plays a tour in the primary independent globe pane without clamping to flat zoom', () => {

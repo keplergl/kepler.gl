@@ -487,7 +487,7 @@ test('#TripLayer -> renderLayer', t => {
           jointRounded: true,
           widthScale: 128,
           currentTime: 0,
-          parameters: {depthTest: false, depthMask: false},
+          parameters: {depthCompare: 'always', depthWriteEnabled: false},
           filterRange: [
             [3, 11],
             [0, 0],

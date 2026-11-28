@@ -3929,6 +3929,61 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@loaders.gl/compression@npm:5.0.0-rc.2":
+  version: 5.0.0-rc.2
+  resolution: "@loaders.gl/compression@npm:5.0.0-rc.2"
+  dependencies:
+    compress-utils: "npm:^0.12.0"
+  peerDependencies:
+    "@loaders.gl/core": ~5.0.0-alpha.0
+    brotli: ^1.3.2
+    fzstd: 0.1.1
+    hysnappy: ^1.1.1
+    lz4js: ^0.2.0
+    pako: ^2.1.0
+    snappyjs: ^0.6.1
+    zstd-codec: ^0.1
+  peerDependenciesMeta:
+    brotli:
+      optional: true
+    fzstd:
+      optional: true
+    hysnappy:
+      optional: true
+    lz4js:
+      optional: true
+    pako:
+      optional: true
+    snappyjs:
+      optional: true
+    zstd-codec:
+      optional: true
+  checksum: 10c0/fd2fe4c9cdee904fecff0b9591e364b54c65f847029b7d2d22558664ab4c990dfbab3d5f45fd4095b79c52427386d86a440b82ba3a3e2e288e7fd6471d5a8da5
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/core@npm:5.0.0-rc.2":
+  version: 5.0.0-rc.2
+  resolution: "@loaders.gl/core@npm:5.0.0-rc.2"
+  dependencies:
+    "@math.gl/core": "npm:^5.0.0"
+    "@math.gl/geometry": "npm:^5.0.0"
+    "@math.gl/geospatial": "npm:^5.0.0"
+    "@math.gl/sql": "npm:^5.0.0"
+    "@math.gl/tasks": "npm:^5.0.0"
+    "@types/geojson": "npm:^7946.0.7"
+    apache-arrow: "npm:>= 17.0.0"
+    probe.gl: "npm:^5.0.0"
+    zod: "npm:^4.1.12"
+  peerDependencies:
+    sharp: ^0.35.5
+  peerDependenciesMeta:
+    sharp:
+      optional: true
+  checksum: 10c0/40290930513ac0276967864afb71ae70d6de34b7f0bd2a8eef1b6e7b5c22283758d02b9c9e834dbd60dc23aba3cb169da9df6ec11b4225fe04c754f3f82cfd3b
+  languageName: node
+  linkType: hard
+
 "@loaders.gl/core@npm:^3.4.13":
   version: 3.4.15
   resolution: "@loaders.gl/core@npm:3.4.15"
@@ -4066,6 +4121,15 @@ __metadata:
   peerDependencies:
     "@loaders.gl/core": ~4.5.0
   checksum: 10c0/6a91211b2c30ee9cbbdea8ef30207a911b58c9f0c622c0884cbf9973a5001ef855d1495d8d07344eaa5d3632a545f8a961a8291aed2affa9881bfa9d8470f9a2
+  languageName: node
+  linkType: hard
+
+"@loaders.gl/documents@npm:5.0.0-rc.2":
+  version: 5.0.0-rc.2
+  resolution: "@loaders.gl/documents@npm:5.0.0-rc.2"
+  peerDependencies:
+    "@loaders.gl/core": ~5.0.0-alpha.0
+  checksum: 10c0/dfc7578fee3e334c279a9c39ac40a6bd41c469e8664ce1eca9fcb4bf3ba463d6eb8e5d8160ba1bef41b804ffa1a1e07e3acef790f597d948857bdf28e6205769
   languageName: node
   linkType: hard
 
@@ -4842,6 +4906,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@loaders.gl/tables@npm:5.0.0-rc.2":
+  version: 5.0.0-rc.2
+  resolution: "@loaders.gl/tables@npm:5.0.0-rc.2"
+  dependencies:
+    "@loaders.gl/compression": "npm:5.0.0-rc.2"
+    "@loaders.gl/documents": "npm:5.0.0-rc.2"
+    "@math.gl/core": "npm:^5.0.0"
+    "@math.gl/geospatial": "npm:^5.0.0"
+    apache-arrow: "npm:>= 17.0.0"
+    probe.gl: "npm:^5.0.0"
+  peerDependencies:
+    "@loaders.gl/core": ~5.0.0-alpha.0
+  checksum: 10c0/23ccd2b05eca83a88603390c1a698cfe1a0cbc0acf80be1543bab8507f0de2477ff51c8da73cd29befecfc1ed4d67409384710a46fefa5027481453fe63013fc
+  languageName: node
+  linkType: hard
+
 "@loaders.gl/terrain@npm:^3.4.13":
   version: 3.4.15
   resolution: "@loaders.gl/terrain@npm:3.4.15"
@@ -5529,7 +5609,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mapbox/martini@npm:^0.2.0":
+"@mapbox/martini@npm:0.2.0, @mapbox/martini@npm:^0.2.0":
   version: 0.2.0
   resolution: "@mapbox/martini@npm:0.2.0"
   checksum: 10c0/6d74edcdb9bc2d5243a0f3a42b6e92dce5a6f9c92481d3478246ca1aabe61adf8bfbd965b32271d81493e2ce49bab9671e19c9fd9e23d8f6f98ffd437f212b6c
@@ -5706,6 +5786,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@math.gl/core@npm:5.0.4, @math.gl/core@npm:^5.0.0":
+  version: 5.0.4
+  resolution: "@math.gl/core@npm:5.0.4"
+  dependencies:
+    "@math.gl/tasks": "npm:5.0.4"
+  peerDependencies:
+    apache-arrow: ">=17.0.0"
+  peerDependenciesMeta:
+    apache-arrow:
+      optional: true
+  checksum: 10c0/a492a91068a490d1fb9f525bfec75ac582a3e220955c9cfea9e48b153b14dd4b12b9371fa5f24c5be365beb138763d21bc7f9d4a8a392691f33582cafdbea97c
+  languageName: node
+  linkType: hard
+
 "@math.gl/culling@npm:^3.5.1, @math.gl/culling@npm:^3.6.2":
   version: 3.6.3
   resolution: "@math.gl/culling@npm:3.6.3"
@@ -5727,6 +5821,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@math.gl/geometry@npm:5.0.4, @math.gl/geometry@npm:^5.0.0":
+  version: 5.0.4
+  resolution: "@math.gl/geometry@npm:5.0.4"
+  dependencies:
+    "@math.gl/core": "npm:5.0.4"
+    cdt2d: "npm:1.0.0"
+    robust-predicates: "npm:^3.0.2"
+    splaytree: "npm:^3.1.0"
+  peerDependencies:
+    apache-arrow: ">=17.0.0"
+  peerDependenciesMeta:
+    apache-arrow:
+      optional: true
+  checksum: 10c0/94862905c0865bc4eb1f3b5a1387f728bf9ed9af9e9f6f569e8ab3f4fd6568688413f4dc07bbb76a004b524be64d08c7ec69f7cf7862244eab91eeb295325aab
+  languageName: node
+  linkType: hard
+
 "@math.gl/geospatial@npm:^3.5.1":
   version: 3.6.3
   resolution: "@math.gl/geospatial@npm:3.6.3"
@@ -5745,6 +5856,26 @@ __metadata:
     "@math.gl/core": "npm:4.1.0"
     "@math.gl/types": "npm:4.1.0"
   checksum: 10c0/fb7c24dc82dbc32e9982782cda256b242e1a42eb8db69f28fff5653e459d068b44af5dc5eab1da45e43f3502ee4cd741033b656b2adbc7dfc687702a25db7ec2
+  languageName: node
+  linkType: hard
+
+"@math.gl/geospatial@npm:^5.0.0":
+  version: 5.0.4
+  resolution: "@math.gl/geospatial@npm:5.0.4"
+  dependencies:
+    "@mapbox/martini": "npm:0.2.0"
+    "@math.gl/core": "npm:5.0.4"
+    "@math.gl/geometry": "npm:5.0.4"
+    "@math.gl/sql": "npm:5.0.4"
+    "@math.gl/tasks": "npm:5.0.4"
+    cdt2d: "npm:1.0.0"
+    robust-predicates: "npm:^3.0.2"
+  peerDependencies:
+    apache-arrow: ">=17.0.0"
+  peerDependenciesMeta:
+    apache-arrow:
+      optional: true
+  checksum: 10c0/933103f6a21a430b23caf45468b0c2591dff7ba8c5092f270ed38d4b27b173e117a145c38280885549c72f7d9fe67b5b3293be2e956a38b994c5af342ff72753
   languageName: node
   linkType: hard
 
@@ -5786,6 +5917,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@math.gl/sql@npm:5.0.4, @math.gl/sql@npm:^5.0.0":
+  version: 5.0.4
+  resolution: "@math.gl/sql@npm:5.0.4"
+  dependencies:
+    "@math.gl/core": "npm:5.0.4"
+    "@math.gl/geometry": "npm:5.0.4"
+    "@math.gl/tasks": "npm:5.0.4"
+  peerDependencies:
+    apache-arrow: ">=17.0.0"
+  peerDependenciesMeta:
+    apache-arrow:
+      optional: true
+  checksum: 10c0/d9e8ec14ca6044feb5cd7b84bfe089bdfca83fb88225c8fd9b30b5c9d1435319fb0566f2b2f9820e1f330235cefda4bbace98bedb33d7d8baaa0f6f16a8533d2
+  languageName: node
+  linkType: hard
+
 "@math.gl/sun@npm:^3.6.2":
   version: 3.6.3
   resolution: "@math.gl/sun@npm:3.6.3"
@@ -5799,6 +5946,13 @@ __metadata:
   version: 4.1.0
   resolution: "@math.gl/sun@npm:4.1.0"
   checksum: 10c0/baf813f3134124a1701c5f64cc8725fdb1d8d4c9e47c7fbd0d2e960d823f776d35312f82c62a09dcb140ea31d42b3945aa781066495291df190566ae17b5857b
+  languageName: node
+  linkType: hard
+
+"@math.gl/tasks@npm:5.0.4, @math.gl/tasks@npm:^5.0.0":
+  version: 5.0.4
+  resolution: "@math.gl/tasks@npm:5.0.4"
+  checksum: 10c0/fb71f3564e838b4a575fb0dfde55ad3a1113724ef9bd27c662083ebaab3e9031e51dbb85a2cdab873358b7b4a68b00e5f2c6cefadbcabfe0679b0cb277a45696
   languageName: node
   linkType: hard
 
@@ -10239,6 +10393,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"binary-search-bounds@npm:^2.0.3":
+  version: 2.0.5
+  resolution: "binary-search-bounds@npm:2.0.5"
+  checksum: 10c0/d433db5fba086d1585e268c0b0b7ae6ec359df60b9135112d1fd4dcf2f8a8820caab7e2523bbbca0a9cae0725486f67a6663a87b5637f0e58f4201985e6e5b0b
+  languageName: node
+  linkType: hard
+
 "brace-expansion@npm:2.1.7":
   version: 2.1.7
   resolution: "brace-expansion@npm:2.1.7"
@@ -10458,6 +10619,17 @@ __metadata:
   version: 2.0.1
   resolution: "ccount@npm:2.0.1"
   checksum: 10c0/3939b1664390174484322bc3f45b798462e6c07ee6384cb3d645e0aa2f318502d174845198c1561930e1d431087f74cf1fe291ae9a4722821a9f4ba67e574350
+  languageName: node
+  linkType: hard
+
+"cdt2d@npm:1.0.0":
+  version: 1.0.0
+  resolution: "cdt2d@npm:1.0.0"
+  dependencies:
+    binary-search-bounds: "npm:^2.0.3"
+    robust-in-sphere: "npm:^1.1.3"
+    robust-orientation: "npm:^1.1.3"
+  checksum: 10c0/0fc0cae68703be88619c3fc8d9940a1665b2619821433c84b2699e551845f513c71b118de788b641a0e22ac3402a660b7b62707e53a8b16f3307f37dac54afd2
   languageName: node
   linkType: hard
 
@@ -10741,6 +10913,13 @@ __metadata:
   version: 7.2.0
   resolution: "commander@npm:7.2.0"
   checksum: 10c0/8d690ff13b0356df7e0ebbe6c59b4712f754f4b724d4f473d3cc5b3fdcf978e3a5dc3078717858a2ceb50b0f84d0660a7f22a96cdc50fb877d0c9bb31593d23a
+  languageName: node
+  linkType: hard
+
+"compress-utils@npm:^0.12.0":
+  version: 0.12.2
+  resolution: "compress-utils@npm:0.12.2"
+  checksum: 10c0/cc364ffcf7fcdbee25c7fe37caa14a2104f95754803343433036a04d43acccab6c253bef528c2e3c0aadfeff46c41fca6dc6d2d3c4f30995dd46f788e669adfd
   languageName: node
   linkType: hard
 
@@ -13821,11 +14000,8 @@ __metadata:
     "@lexical/react": "npm:^0.48.0"
     "@lexical/selection": "npm:^0.48.0"
     "@lexical/utils": "npm:^0.48.0"
-    "@loaders.gl/arrow": "npm:^4.3.2"
-    "@loaders.gl/core": "npm:^4.3.2"
-    "@loaders.gl/csv": "npm:^4.3.2"
-    "@loaders.gl/json": "npm:^4.3.2"
-    "@loaders.gl/parquet": "npm:^4.3.2"
+    "@loaders.gl/core": "npm:5.0.0-rc.2"
+    "@loaders.gl/tables": "npm:5.0.0-rc.2"
     "@openassistant/kepler-assistant": "npm:0.0.18"
     "@sqlrooms/ai": "npm:0.29.0"
     "@sqlrooms/ai-core": "npm:0.29.0"
@@ -15910,6 +16086,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"probe.gl@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "probe.gl@npm:5.0.0"
+  checksum: 10c0/d8105c5cee0ce595cddbf33323f308b9d511610b4689b061a1bd4055e9db3e027a541733dfc48f1c790c4b13fb13c22bfa2e732c95641af92bff2070e67672d8
+  languageName: node
+  linkType: hard
+
 "proc-log@npm:^5.0.0":
   version: 5.0.0
   resolution: "proc-log@npm:5.0.0"
@@ -17258,6 +17441,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"robust-in-sphere@npm:^1.1.3":
+  version: 1.2.1
+  resolution: "robust-in-sphere@npm:1.2.1"
+  dependencies:
+    robust-scale: "npm:^1.0.0"
+    robust-subtract: "npm:^1.0.0"
+    robust-sum: "npm:^1.0.0"
+    two-product: "npm:^1.0.0"
+  checksum: 10c0/c17df95470a6226add219a34f929443ed15a9f1bdef8e7532554996ce4d1191802dc86a1257196cac98820f9bd537f01eb1a27d5dd98ba389d2edc58b4009376
+  languageName: node
+  linkType: hard
+
+"robust-orientation@npm:^1.1.3":
+  version: 1.2.1
+  resolution: "robust-orientation@npm:1.2.1"
+  dependencies:
+    robust-scale: "npm:^1.0.2"
+    robust-subtract: "npm:^1.0.0"
+    robust-sum: "npm:^1.0.0"
+    two-product: "npm:^1.0.2"
+  checksum: 10c0/9c6cd48185ba2b3de633271ffd1e5ef6cd94cfd3b5e66a6a29327a0223b6f67c660bcf3677d9f91aecf15e16d4db231d361c35830de245c3a440a406b7335422
+  languageName: node
+  linkType: hard
+
 "robust-predicates@npm:^2.0.4":
   version: 2.0.4
   resolution: "robust-predicates@npm:2.0.4"
@@ -17269,6 +17476,30 @@ __metadata:
   version: 3.0.3
   resolution: "robust-predicates@npm:3.0.3"
   checksum: 10c0/ae23a0318be809545f091a076818747848f144495491e24e6df5d767f2bad0a1501bbeac34e78b74681d1437ecff0585f593ebfe6c8d49a50e79c5053b962693
+  languageName: node
+  linkType: hard
+
+"robust-scale@npm:^1.0.0, robust-scale@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "robust-scale@npm:1.0.2"
+  dependencies:
+    two-product: "npm:^1.0.2"
+    two-sum: "npm:^1.0.0"
+  checksum: 10c0/18d047f3833793a96b3959633c34ca307a678e5fd68bb1d6b1fdaea5c039340b95b8cfa6a9cd64840a29ae856f927958341deb71870b5fdf4f22768f3de98988
+  languageName: node
+  linkType: hard
+
+"robust-subtract@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "robust-subtract@npm:1.0.0"
+  checksum: 10c0/dc96643abaa0b26b0c0468449f91c7178e835cd913ee0ad8a4f6b5025ebea832ccd0084aa86d82d2b36f2f550f68069289b5775f2ef52d5e383777c58bb28509
+  languageName: node
+  linkType: hard
+
+"robust-sum@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "robust-sum@npm:1.0.0"
+  checksum: 10c0/ca0273b895f275a7c404bb05ef873b99f030bcc6c26fe8232cfeec33fc7ef2c1d0192ee20d5a7d41e1cfa3b211b854db24b6222f53949301d60a5ea827c6c24a
   languageName: node
   linkType: hard
 
@@ -17613,6 +17844,13 @@ __metadata:
   version: 1.0.2
   resolution: "splaytree-ts@npm:1.0.2"
   checksum: 10c0/4c34573891a749055ffe22381ea841ae03dbf7b55a3ea4a1d7df5013bfbe128e79f6c468579358ec573734cdbdf5f77a97ae7185f155248eb8be58151428c85e
+  languageName: node
+  linkType: hard
+
+"splaytree@npm:^3.1.0":
+  version: 3.2.4
+  resolution: "splaytree@npm:3.2.4"
+  checksum: 10c0/948598b45a723b95f372ec131b4105e4b16f5e86cefbcb1d47eae652d14892bf5f426d41b7ae008771a0e718482c37e5cfe51f2edc5155191eca72d9ca19de03
   languageName: node
   linkType: hard
 
@@ -18166,6 +18404,20 @@ __metadata:
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62
+  languageName: node
+  linkType: hard
+
+"two-product@npm:^1.0.0, two-product@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "two-product@npm:1.0.2"
+  checksum: 10c0/da6749a7aeef789c71735acd31987b821452e81120028f85cb2d0ee0342cee077b9ed0067f1693ad99cb565a71400271ff726189f7946e1e006944db95056abf
+  languageName: node
+  linkType: hard
+
+"two-sum@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "two-sum@npm:1.0.0"
+  checksum: 10c0/8c5f1f62fb029e5f5538a4efac52a81be26942cf3b050969f0f9d21a7d45fb48dc710ba130794fd639a31b5f3491fd2c7c7e7506571eb07c1aeac409f950f44a
   languageName: node
   linkType: hard
 

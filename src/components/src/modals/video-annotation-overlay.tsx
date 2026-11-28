@@ -48,8 +48,8 @@ export function VideoAnnotationOverlay({
     'project' | 'unproject' | 'projectPosition' | 'cameraPosition'
   >;
   const viewport = {
-    project: (position: ReadonlyArray<number>) => projectedViewport.project(position),
-    unproject: (position: ReadonlyArray<number>) => projectedViewport.unproject(position),
+    project: (position: number[]) => projectedViewport.project(position),
+    unproject: (position: number[]) => projectedViewport.unproject(position),
     cameraPosition: projectedViewport.cameraPosition,
     projectPosition: projectedViewport.projectPosition?.bind(projectedViewport),
     longitude: mapState.longitude,
