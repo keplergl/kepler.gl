@@ -679,6 +679,7 @@ function ElevationSettings({
 }) {
   const elevation = annotation.elevation;
   const [advancedOpen, setAdvancedOpen] = React.useState(false);
+  const [elevationAppearanceOpen, setElevationAppearanceOpen] = React.useState(false);
   const [appearanceOpen, setAppearanceOpen] = React.useState(false);
   const patch = (changes: Partial<AnnotationElevation>) =>
     onChange({elevation: {...DEFAULT_ANNOTATION_ELEVATION, ...elevation, ...changes}});
@@ -829,12 +830,7 @@ function ElevationSettings({
               }
             }
           )}
-          {mapHeight ? (
-            help(
-              'mapHeightHelp',
-              'Shows the picked marker height above map zero. Drag the anchor to update it; this is not a terrain measurement.'
-            )
-          ) : (
+          {!mapHeight ? (
             <>
               {elevation.field ? (
                 <>
@@ -920,7 +916,7 @@ function ElevationSettings({
                 </>
               ) : null}
             </>
-          )}
+          ) : null}
           {select('outputUnits', 'Label units', elevation.outputUnit, units, outputUnit =>
             patch({outputUnit: outputUnit as ElevationUnit})
           )}
@@ -983,15 +979,11 @@ function ElevationSettings({
               ) : null}
             </>
           )}
-        </>
-      ) : null}
-      {disclosure(
-        'appearance',
-        'Appearance',
-        appearanceOpen,
-        setAppearanceOpen,
-        <>
-          {elevation ? (
+          {disclosure(
+            'elevationAppearance',
+            'Elevation appearance',
+            elevationAppearanceOpen,
+            setElevationAppearanceOpen,
             <>
               {select(
                 'precision',
@@ -1015,9 +1007,15 @@ function ElevationSettings({
                 marker => patch({marker: marker as AnnotationElevation['marker']})
               )}
             </>
-          ) : null}
-          <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
+          )}
         </>
+      ) : null}
+      {disclosure(
+        'appearance',
+        'Appearance',
+        appearanceOpen,
+        setAppearanceOpen,
+        <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
       )}
     </>
   );
@@ -1736,8 +1734,8 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           </StyledConfigRow>
                         </>
                       )}
-                      {annotation.kind === AnnotationKind.POINT ? (
-                        <ElevationSettings
+                      {annotation.kind !== AnnotationKind.TEXT ? (
+                        <CaptionSettings
                           annotation={annotation}
                           datasets={visState.datasets}
                           intl={intl}
@@ -1746,8 +1744,8 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                           }
                         />
                       ) : null}
-                      {annotation.kind !== AnnotationKind.TEXT ? (
-                        <CaptionSettings
+                      {annotation.kind === AnnotationKind.POINT ? (
+                        <ElevationSettings
                           annotation={annotation}
                           datasets={visState.datasets}
                           intl={intl}

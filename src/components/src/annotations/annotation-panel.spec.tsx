@@ -561,7 +561,7 @@ describe('AnnotationManager selectors', () => {
         expect(screen.getByText(label).parentElement).toHaveStyle({
           minHeight: theme.inputBoxHeightSmall,
           alignItems: 'center',
-          marginBottom: index === labels.length - 1 ? '0' : '8px'
+          marginBottom: kind === AnnotationKind.RULER && index === labels.length - 1 ? '0' : '8px'
         });
       });
     }
@@ -763,6 +763,9 @@ describe('Point elevation settings', () => {
   }
   test('starts with map height and a preview, and reveals advanced and appearance controls on demand', async () => {
     const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION});
+    expect(
+      screen.getByText('Content').compareDocumentPosition(screen.getByLabelText('Show elevation'))
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.getByText('Map height')).toBeInTheDocument();
     expect(screen.getByRole('status', {name: 'Label preview'})).toHaveTextContent(
       '7448.36 m above map zero'
@@ -780,10 +783,20 @@ describe('Point elevation settings', () => {
     await userEvent.keyboard(' ');
     expect(advanced).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByLabelText('Marker height (m)')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', {name: 'Appearance'}));
+    const elevationAppearance = screen.getByRole('button', {name: 'Elevation appearance'});
+    fireEvent.click(elevationAppearance);
     expect(
       within(screen.getByRole('group', {name: 'Decimals'})).getByRole('button', {name: '2'})
     ).toBeInTheDocument();
+    expect(screen.getByRole('group', {name: 'Vertical guide'})).toBeInTheDocument();
+    expect(screen.getByRole('group', {name: 'Marker style'})).toBeInTheDocument();
+    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
+    fireEvent.click(elevationAppearance);
+    fireEvent.click(screen.getByRole('button', {name: 'Appearance'}));
+    expect(screen.getByLabelText('Label background')).toBeInTheDocument();
+    expect(screen.queryByRole('group', {name: 'Decimals'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', {name: 'Vertical guide'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', {name: 'Marker style'})).not.toBeInTheDocument();
     expect(advanced).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(advanced);
     expect(screen.getByLabelText('Marker height (m)')).toHaveValue(7448.36);
@@ -837,6 +850,7 @@ describe('Point elevation settings', () => {
       labelBackground: {color: '#000000', opacity: 0.7, padding: 8}
     });
     expect(screen.getByLabelText('Show elevation')).not.toBeChecked();
+    expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', {name: 'Appearance'}));
     expect(screen.getByLabelText('Label background')).toBeChecked();
     fireEvent.click(screen.getByLabelText('Label background'));
