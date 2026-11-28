@@ -79,13 +79,13 @@ Use a kepler.gl version that supports ruler annotations when loading or sharing 
 
 ## Annotation backgrounds
 
-Text, Point, Arrow, Circle, and Ruler annotations all have a collapsible **Background** group. Its inline header switch enables the label background; color, opacity, and padding controls appear inside. Enabling the background and expanding the group are independent actions.
+Text, Point, Arrow, Circle, and Ruler annotations all have a collapsible **Background** group. Its inline header switch enables the label background; color, opacity, and padding controls appear inside. Enabling the background and expanding the group are independent actions. When switched off, an expanded group keeps its controls visible but greyed out and disabled.
 
 ## Point elevation callouts
 
 Select a **Point** annotation and enable the inline switch in the **Elevation** group header. Expand the group to configure the callout. New callouts show **Map height**: the picked marker height in metres above the map's zero plane. Drag the anchor to update the height. A two-coordinate anchor is at map zero. This is a drawing height, not an automatically measured altitude or height above terrain; shifted or exaggerated layers also shift this value.
 
-All elevation controls appear directly inside the collapsible **Elevation** group, including **Value to display**, **Label units**, marker height, height references, and label/guide/marker styling. An optional caption shares its typography and background with the elevation label. Hover over the **(?)** icons beside the controls for guidance on measurements, height references, ground comparisons, and captured values.
+All elevation controls appear directly inside the collapsible **Elevation** group, including **Value to display**, **Label units**, marker height, height references, and label/guide/marker styling. Switching elevation off leaves these controls visible but greyed out and disabled while the group is expanded. An optional caption shares its typography and background with the elevation label. Hover over the **(?)** icons beside the controls for guidance on measurements, height references, ground comparisons, and captured values.
 
 - **Map height** follows the anchor and draws its vertical guide to map zero. It needs no source value, datum, or ground elevation.
 - **Manual value** lets you enter a measured elevation and its units. The measurement stays independent of the marker's drawing height; switching from Map height never invents a measurement from it.

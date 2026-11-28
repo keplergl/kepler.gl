@@ -101,7 +101,7 @@ export const StyledConfigGroupHeader = styled.div.withConfig({shouldForwardProp}
   }
 `;
 
-const ConfigGroupContent = styled.div`
+export const ConfigGroupContent = styled.div`
   &.disabled {
     opacity: 0.3;
     pointer-events: none;

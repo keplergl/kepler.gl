@@ -61,6 +61,7 @@ import InfoHelperFactory from '../common/info-helper';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
 import {
   ConfigGroupCollapsibleContent,
+  ConfigGroupContent,
   LayerConfigGroupLabelFactory,
   StyledConfigGroupHeader,
   StyledLayerConfigGroup,
@@ -634,9 +635,16 @@ function AnnotationConfigGroup({
           <VertThreeDots height="18px" />
         </StyledLayerConfigGroupAction>
       </StyledConfigGroupHeader>
-      <div className="layer-config-group__content" id={`${id}-content`}>
+      <ConfigGroupContent
+        as="fieldset"
+        className={classnames('layer-config-group__content', {disabled: !checked})}
+        id={`${id}-content`}
+        disabled={!checked}
+        aria-disabled={!checked}
+        style={{border: 0, margin: 0, padding: 0, minWidth: 0}}
+      >
         {open ? <ConfigGroupCollapsibleContent>{children}</ConfigGroupCollapsibleContent> : null}
-      </div>
+      </ConfigGroupContent>
     </StyledLayerConfigGroup>
   );
 }
@@ -650,7 +658,20 @@ function AnnotationBackgroundSettings({
   intl: IntlShape;
   onChange: (changes: Partial<Annotation>) => void;
 }) {
-  const background = annotation.labelBackground;
+  const enabled = Boolean(annotation.labelBackground);
+  const [lastBackground, setLastBackground] = React.useState(
+    annotation.labelBackground ?? {color: '#000000', opacity: 0.7, padding: 8}
+  );
+  React.useEffect(() => {
+    if (annotation.labelBackground) setLastBackground(annotation.labelBackground);
+  }, [annotation.labelBackground]);
+  const background = annotation.labelBackground ?? lastBackground;
+  const patch = (changes: Partial<typeof background>) => {
+    if (!enabled) return;
+    const next = {...background, ...changes};
+    setLastBackground(next);
+    onChange({labelBackground: next});
+  };
   const row = (id: string, fallback: string, control: (name: string) => React.ReactNode) => (
     <StyledConfigRow key={id}>
       <StyledConfigLabel as="label" htmlFor={`annotation-${annotation.id}-${id}`}>
@@ -663,40 +684,37 @@ function AnnotationBackgroundSettings({
     <AnnotationConfigGroup
       id={`annotation-${annotation.id}-background`}
       label={intl.formatMessage({id: 'annotationManager.background', defaultMessage: 'Background'})}
-      checked={Boolean(background)}
+      checked={enabled}
       onToggle={enabled =>
         onChange({
-          labelBackground: enabled ? {color: '#000000', opacity: 0.7, padding: 8} : undefined
+          labelBackground: enabled ? {...background} : undefined
         })
       }
     >
-      {background ? (
-        <>
-          {row('backgroundColor', 'Background color', () => (
-            <InlineColorPicker
-              color={hexToRgb(background.color)}
-              onSetColor={rgb => onChange({labelBackground: {...background, color: rgbToHex(rgb)}})}
-            />
-          ))}
-          {row('backgroundOpacity', 'Background opacity', name => (
-            <CaptionMarginInput
-              label={name}
-              value={background.opacity}
-              max={1}
-              step={0.1}
-              onChange={opacity => onChange({labelBackground: {...background, opacity}})}
-            />
-          ))}
-          {row('labelPadding', 'Padding (px)', name => (
-            <CaptionMarginInput
-              label={name}
-              value={background.padding}
-              max={100}
-              onChange={padding => onChange({labelBackground: {...background, padding}})}
-            />
-          ))}
-        </>
-      ) : null}
+      {row('backgroundColor', 'Background color', () => (
+        <InlineColorPicker
+          color={hexToRgb(background.color)}
+          disabled={!enabled}
+          onSetColor={rgb => patch({color: rgbToHex(rgb)})}
+        />
+      ))}
+      {row('backgroundOpacity', 'Background opacity', name => (
+        <CaptionMarginInput
+          label={name}
+          value={background.opacity}
+          max={1}
+          step={0.1}
+          onChange={opacity => patch({opacity})}
+        />
+      ))}
+      {row('labelPadding', 'Padding (px)', name => (
+        <CaptionMarginInput
+          label={name}
+          value={background.padding}
+          max={100}
+          onChange={padding => patch({padding})}
+        />
+      ))}
     </AnnotationConfigGroup>
   );
 }
@@ -742,9 +760,20 @@ function ElevationSettings({
   intl: IntlShape;
   onChange: (changes: Partial<Annotation>) => void;
 }) {
-  const elevation = annotation.elevation;
-  const patch = (changes: Partial<AnnotationElevation>) =>
-    onChange({elevation: {...DEFAULT_ANNOTATION_ELEVATION, ...elevation, ...changes}});
+  const enabled = Boolean(annotation.elevation);
+  const [lastElevation, setLastElevation] = React.useState(
+    annotation.elevation ?? {...DEFAULT_MAP_HEIGHT_ELEVATION}
+  );
+  React.useEffect(() => {
+    if (annotation.elevation) setLastElevation(annotation.elevation);
+  }, [annotation.elevation]);
+  const elevation = annotation.elevation ?? lastElevation;
+  const patch = (changes: Partial<AnnotationElevation>) => {
+    if (!enabled) return;
+    const next = {...DEFAULT_ANNOTATION_ELEVATION, ...elevation, ...changes};
+    setLastElevation(next);
+    onChange({elevation: next});
+  };
   const label = (id: string, fallback: string) =>
     intl.formatMessage({id: `annotationManager.elevation.${id}`, defaultMessage: fallback});
   const row = (
@@ -777,6 +806,8 @@ function ElevationSettings({
     row(id, fallback, name => (
       <div role="group" aria-label={name}>
         <StyledSelect
+          key={enabled ? 'enabled' : 'disabled'}
+          disabled={!enabled}
           options={options}
           selectedItems={options.find(option => option.id === value) ?? {id: value, label: value}}
           displayOption="label"
@@ -784,7 +815,7 @@ function ElevationSettings({
           multiSelect={false}
           searchable={false}
           onChange={value => {
-            if (typeof value === 'string') change(value);
+            if (enabled && typeof value === 'string') change(value);
           }}
         />
       </div>
@@ -831,205 +862,194 @@ function ElevationSettings({
     <AnnotationConfigGroup
       id={`annotation-${annotation.id}-elevation`}
       label={label('elevation', 'Elevation')}
-      checked={Boolean(elevation)}
-      onToggle={enabled =>
-        onChange({elevation: enabled ? {...DEFAULT_MAP_HEIGHT_ELEVATION} : undefined})
-      }
+      checked={enabled}
+      onToggle={enabled => onChange({elevation: enabled ? {...elevation} : undefined})}
     >
-      {elevation ? (
+      {select(
+        'valueSource',
+        'Value to display',
+        mapHeight ? 'map' : elevation.field ? 'field' : 'manual',
+        [
+          {id: 'map', label: label('mapHeight', 'Map height')},
+          {id: 'manual', label: label('manualValue', 'Manual value')},
+          ...(datasetOptions.length || elevation.field
+            ? [{id: 'field', label: label('dataField', 'Data field')}]
+            : [])
+        ],
+        source => {
+          if (source === 'map') patch({source: 'map'});
+          else if (source === 'manual') patch({source: 'measurement', field: undefined});
+          else if (elevation.field) patch({source: 'measurement'});
+          else if (datasetOptions.length) {
+            const dataset = datasetOptions[0];
+            const field = dataset.fields.find(field => ['integer', 'real'].includes(field.type))!;
+            patch({
+              source: 'measurement',
+              field: {dataId: dataset.id, name: field.name},
+              value: null
+            });
+          }
+        }
+      )}
+      {!mapHeight ? (
         <>
-          {select(
-            'valueSource',
-            'Value to display',
-            mapHeight ? 'map' : elevation.field ? 'field' : 'manual',
-            [
-              {id: 'map', label: label('mapHeight', 'Map height')},
-              {id: 'manual', label: label('manualValue', 'Manual value')},
-              ...(datasetOptions.length || elevation.field
-                ? [{id: 'field', label: label('dataField', 'Data field')}]
-                : [])
-            ],
-            source => {
-              if (source === 'map') patch({source: 'map'});
-              else if (source === 'manual') patch({source: 'measurement', field: undefined});
-              else if (elevation.field) patch({source: 'measurement'});
-              else if (datasetOptions.length) {
-                const dataset = datasetOptions[0];
-                const field = dataset.fields.find(field =>
-                  ['integer', 'real'].includes(field.type)
-                )!;
-                patch({
-                  source: 'measurement',
-                  field: {dataId: dataset.id, name: field.name},
-                  value: null
-                });
-              }
-            }
-          )}
-          {!mapHeight ? (
+          {elevation.field ? (
             <>
-              {elevation.field ? (
-                <>
-                  {select(
-                    'dataset',
-                    'Dataset',
-                    elevation.field.dataId,
-                    datasetOptions.map(table => ({id: table.id, label: table.label})),
-                    dataId => {
-                      const table = datasetOptions.find(table => table.id === dataId)!;
-                      patch({
-                        field: {
-                          dataId,
-                          name: table.fields.find(field =>
-                            ['integer', 'real'].includes(field.type)
-                          )!.name
-                        },
-                        value: null
-                      });
-                    }
-                  )}
-                  {select(
-                    'fieldName',
-                    'Field',
-                    elevation.field.name,
-                    fields.map(field => ({id: field.name, label: field.name})),
-                    name => patch({field: {...elevation.field!, name}, value: null})
-                  )}
-                  {row(
-                    'captured',
-                    'Captured value',
-                    () => (
-                      <span>{elevation.value ?? '—'}</span>
-                    ),
-                    label(
-                      'fieldCaptureHelp',
-                      'Drag the anchor onto a feature to capture its value. A missed pick clears the value.'
-                    )
-                  )}
-                </>
-              ) : (
-                numericInput('value', 'Measured elevation', elevation.value, value =>
-                  patch({value})
-                )
+              {select(
+                'dataset',
+                'Dataset',
+                elevation.field.dataId,
+                datasetOptions.map(table => ({id: table.id, label: table.label})),
+                dataId => {
+                  const table = datasetOptions.find(table => table.id === dataId)!;
+                  patch({
+                    field: {
+                      dataId,
+                      name: table.fields.find(field => ['integer', 'real'].includes(field.type))!
+                        .name
+                    },
+                    value: null
+                  });
+                }
               )}
-              {select('measurementUnits', 'Measurement units', elevation.unit, units, unit =>
-                patch({unit: unit as ElevationUnit})
+              {select(
+                'fieldName',
+                'Field',
+                elevation.field.name,
+                fields.map(field => ({id: field.name, label: field.name})),
+                name => patch({field: {...elevation.field!, name}, value: null})
               )}
               {row(
-                'compareGround',
-                'Compare with ground',
-                name => (
-                  <StyledRulerSwitch
-                    id={`annotation-${annotation.id}-elevation-compareGround`}
-                    aria-label={name}
-                    checked={Boolean(reference)}
-                    onChange={event =>
-                      patch({
-                        reference: event.target.checked
-                          ? {value: 0, unit: elevation.unit, datum: elevation.datum}
-                          : null,
-                        display: event.target.checked ? 'both' : 'altitude'
-                      })
-                    }
-                  />
+                'captured',
+                'Captured value',
+                () => (
+                  <span>{elevation.value ?? '—'}</span>
                 ),
                 label(
-                  'groundHelp',
-                  'Enter a known ground elevation. Set matching height references; ground is not detected automatically.'
+                  'fieldCaptureHelp',
+                  'Drag the anchor onto a feature to capture its value. A missed pick clears the value.'
                 )
               )}
-              {reference ? (
-                <>
-                  {numericInput('groundElevation', 'Ground elevation', reference.value, value =>
-                    patch({reference: {...reference, value}})
-                  )}
-                  {select('groundUnits', 'Ground units', reference.unit, units, unit =>
-                    patch({reference: {...reference, unit: unit as ElevationUnit}})
-                  )}
-                  {select(
-                    'display',
-                    'Show',
-                    elevation.display,
-                    [
-                      {id: 'altitude', label: label('altitude', 'Elevation')},
-                      {id: 'relative', label: label('relative', 'Above ground')},
-                      {id: 'both', label: label('both', 'Both')}
-                    ],
-                    display => patch({display: display as AnnotationElevation['display']})
-                  )}
-                </>
-              ) : null}
             </>
-          ) : null}
-          {select('outputUnits', 'Label units', elevation.outputUnit, units, outputUnit =>
-            patch({outputUnit: outputUnit as ElevationUnit})
+          ) : (
+            numericInput('value', 'Measured elevation', elevation.value, value => patch({value}))
+          )}
+          {select('measurementUnits', 'Measurement units', elevation.unit, units, unit =>
+            patch({unit: unit as ElevationUnit})
           )}
           {row(
-            'anchorHeight',
-            'Marker height (m)',
+            'compareGround',
+            'Compare with ground',
             name => (
-              <CaptionMarginInput
-                label={name}
-                value={annotation.anchorPoint[2] ?? 0}
-                min={-Infinity}
-                step={0.001}
-                precision={3}
-                onChange={z =>
-                  onChange({
-                    anchorPoint: [annotation.anchorPoint[0], annotation.anchorPoint[1], z]
+              <StyledRulerSwitch
+                id={`annotation-${annotation.id}-elevation-compareGround`}
+                aria-label={name}
+                checked={Boolean(reference)}
+                onChange={event =>
+                  patch({
+                    reference: event.target.checked
+                      ? {value: 0, unit: elevation.unit, datum: elevation.datum}
+                      : null,
+                    display: event.target.checked ? 'both' : 'altitude'
                   })
                 }
               />
             ),
-            !mapHeight
-              ? label(
-                  'measurementHelp',
-                  'Marker height controls drawing only. Measured elevation stays independent, even when the layer height is exaggerated.'
-                )
-              : undefined
+            label(
+              'groundHelp',
+              'Enter a known ground elevation. Set matching height references; ground is not detected automatically.'
+            )
           )}
-          {!mapHeight ? (
+          {reference ? (
             <>
-              {datumInput('datum', 'Measured from', elevation.datum, datum => patch({datum}))}
-              {reference ? (
-                <>
-                  {datumInput('referenceDatum', 'Ground measured from', reference.datum, datum =>
-                    patch({reference: {...reference, datum}})
-                  )}
-                  {numericInput(
-                    'referenceHeight',
-                    'Ground draw height (m)',
-                    reference.displayZ ?? reference.value * ELEVATION_UNIT_METERS[reference.unit],
-                    displayZ => patch({reference: {...reference, displayZ}})
-                  )}
-                </>
-              ) : null}
+              {numericInput('groundElevation', 'Ground elevation', reference.value, value =>
+                patch({reference: {...reference, value}})
+              )}
+              {select('groundUnits', 'Ground units', reference.unit, units, unit =>
+                patch({reference: {...reference, unit: unit as ElevationUnit}})
+              )}
+              {select(
+                'display',
+                'Show',
+                elevation.display,
+                [
+                  {id: 'altitude', label: label('altitude', 'Elevation')},
+                  {id: 'relative', label: label('relative', 'Above ground')},
+                  {id: 'both', label: label('both', 'Both')}
+                ],
+                display => patch({display: display as AnnotationElevation['display']})
+              )}
             </>
           ) : null}
-
-          {select(
-            'precision',
-            'Decimals',
-            String(elevation.precision),
-            Array.from({length: 4}, (_, i) => ({id: String(i), label: String(i)})),
-            value => patch({precision: Number(value)})
-          )}
-          {select(
-            'guide',
-            'Vertical guide',
-            elevation.guide,
-            ['none', 'solid', 'dashed'].map(id => ({id, label: label(id, id)})),
-            guide => patch({guide: guide as AnnotationElevation['guide']})
-          )}
-          {select(
-            'marker',
-            'Marker style',
-            elevation.marker,
-            ['none', 'dot', 'ring'].map(id => ({id, label: label(id, id)})),
-            marker => patch({marker: marker as AnnotationElevation['marker']})
-          )}
         </>
       ) : null}
+      {select('outputUnits', 'Label units', elevation.outputUnit, units, outputUnit =>
+        patch({outputUnit: outputUnit as ElevationUnit})
+      )}
+      {row(
+        'anchorHeight',
+        'Marker height (m)',
+        name => (
+          <CaptionMarginInput
+            label={name}
+            value={annotation.anchorPoint[2] ?? 0}
+            min={-Infinity}
+            step={0.001}
+            precision={3}
+            onChange={z =>
+              onChange({
+                anchorPoint: [annotation.anchorPoint[0], annotation.anchorPoint[1], z]
+              })
+            }
+          />
+        ),
+        !mapHeight
+          ? label(
+              'measurementHelp',
+              'Marker height controls drawing only. Measured elevation stays independent, even when the layer height is exaggerated.'
+            )
+          : undefined
+      )}
+      {!mapHeight ? (
+        <>
+          {datumInput('datum', 'Measured from', elevation.datum, datum => patch({datum}))}
+          {reference ? (
+            <>
+              {datumInput('referenceDatum', 'Ground measured from', reference.datum, datum =>
+                patch({reference: {...reference, datum}})
+              )}
+              {numericInput(
+                'referenceHeight',
+                'Ground draw height (m)',
+                reference.displayZ ?? reference.value * ELEVATION_UNIT_METERS[reference.unit],
+                displayZ => patch({reference: {...reference, displayZ}})
+              )}
+            </>
+          ) : null}
+        </>
+      ) : null}
+
+      {select(
+        'precision',
+        'Decimals',
+        String(elevation.precision),
+        Array.from({length: 4}, (_, i) => ({id: String(i), label: String(i)})),
+        value => patch({precision: Number(value)})
+      )}
+      {select(
+        'guide',
+        'Vertical guide',
+        elevation.guide,
+        ['none', 'solid', 'dashed'].map(id => ({id, label: label(id, id)})),
+        guide => patch({guide: guide as AnnotationElevation['guide']})
+      )}
+      {select(
+        'marker',
+        'Marker style',
+        elevation.marker,
+        ['none', 'dot', 'ring'].map(id => ({id, label: label(id, id)})),
+        marker => patch({marker: marker as AnnotationElevation['marker']})
+      )}
     </AnnotationConfigGroup>
   );
 }
@@ -1259,7 +1279,8 @@ const StyledColorDropdown = styled.div`
 const InlineColorPicker: React.FC<{
   color: [number, number, number];
   onSetColor: (value: [number, number, number]) => void;
-}> = ({color, onSetColor}) => {
+  disabled?: boolean;
+}> = ({color, onSetColor, disabled = false}) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const hexColor = React.useMemo(() => rgbToHex(color), [color]);
   const colorBlockStyle = React.useMemo(
@@ -1275,11 +1296,11 @@ const InlineColorPicker: React.FC<{
 
   return (
     <StyledColorButtonWrapper>
-      <Button onClick={() => setIsOpen(!isOpen)}>
+      <Button disabled={disabled} onClick={() => setIsOpen(!isOpen)}>
         <div style={colorBlockStyle} />
         <ArrowDownSmall />
       </Button>
-      <Portaled top={0} left={0} isOpened={isOpen} onClose={() => setIsOpen(false)}>
+      <Portaled top={0} left={0} isOpened={isOpen && !disabled} onClose={() => setIsOpen(false)}>
         <StyledColorDropdown>
           <SingleColorPalette selectedColor={hexColor} onSelectColor={handleSelectColor} />
         </StyledColorDropdown>

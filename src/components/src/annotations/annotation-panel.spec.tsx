@@ -5,6 +5,7 @@ import {DEFAULT_ANNOTATION_ELEVATION, DEFAULT_MAP_HEIGHT_ELEVATION} from '@keple
 
 import React, {useContext} from 'react';
 import {Provider} from 'react-redux';
+import {createStore} from 'redux';
 import configureStore from 'redux-mock-store';
 import {fireEvent, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -12,9 +13,9 @@ import {WebMercatorViewport} from '@math.gl/web-mercator';
 
 import {AnnotationKind} from '@kepler.gl/constants';
 import {DEFAULT_RULER_STYLE} from '@kepler.gl/utils';
-import {Annotation, AnnotationElevation} from '@kepler.gl/types';
+import {Annotation, AnnotationElevation, PointAnnotation} from '@kepler.gl/types';
 import {VisStateActions} from '@kepler.gl/actions';
-import {INITIAL_MAP_STATE, INITIAL_VIS_STATE} from '@kepler.gl/reducers';
+import {INITIAL_MAP_STATE, INITIAL_VIS_STATE, visStateReducer} from '@kepler.gl/reducers';
 import {theme} from '@kepler.gl/styles';
 import {IntlWrapper, renderWithTheme} from 'test/helpers/component-jest-utils';
 
@@ -551,6 +552,13 @@ describe('AnnotationManager selectors', () => {
     expect(screen.queryAllByRole('button', {name: 'Elevation'})).toHaveLength(
       kind === AnnotationKind.POINT ? 1 : 0
     );
+    fireEvent.click(group);
+    expect(screen.getByLabelText('Background opacity')).toHaveValue(0.7);
+    expect(screen.getByLabelText('Background opacity')).toBeDisabled();
+    expect(screen.getByLabelText('Padding (px)')).toHaveValue(8);
+    expect(screen.getByLabelText('Padding (px)')).toBeDisabled();
+    expect(screen.getByText('Background color')).toBeVisible();
+    fireEvent.click(group);
     fireEvent.click(toggle);
     expect(group).toHaveAttribute('aria-expanded', 'false');
     expect(store.getActions()).toEqual([
@@ -790,6 +798,154 @@ describe('AnnotationManager selectors', () => {
 });
 
 describe('Point elevation settings', () => {
+  function renderLivePoint(changes: Partial<Annotation>) {
+    const seed = makeState(true, true);
+    const initialState: {
+      visState: ReturnType<typeof visStateReducer>;
+      mapState: typeof INITIAL_MAP_STATE;
+    } = {
+      visState: {
+        ...INITIAL_VIS_STATE,
+        ...seed.visState,
+        annotations: [
+          {
+            ...seed.visState.annotations[0],
+            kind: AnnotationKind.POINT,
+            anchorPoint: [1, 2, 7448.36],
+            armLength: 40,
+            angle: 0,
+            ...changes
+          } as Annotation
+        ]
+      },
+      mapState: INITIAL_MAP_STATE
+    };
+    const store = createStore(
+      (
+        state: typeof initialState = initialState,
+        action: Parameters<typeof visStateReducer>[1]
+      ): typeof initialState => ({
+        ...state,
+        visState: visStateReducer(state.visState, action)
+      })
+    );
+    renderWithTheme(
+      <IntlWrapper>
+        <Provider store={store}>
+          <AnnotationManager />
+        </Provider>
+      </IntlWrapper>
+    );
+    return store;
+  }
+
+  test('keeps background controls visible and disabled and restores their last values', async () => {
+    const labelBackground = {color: '#123456', opacity: 0.4, padding: 12};
+    const store = renderLivePoint({labelBackground});
+    const group = screen.getByRole('button', {name: 'Background'});
+    const toggle = within(group).getByRole('checkbox', {name: 'Background'});
+    fireEvent.click(group);
+    const opacity = screen.getByLabelText('Background opacity');
+    fireEvent.change(opacity, {target: {value: '0.55'}});
+    fireEvent.blur(opacity);
+    fireEvent.click(toggle);
+    expect(group).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).not.toBeChecked();
+    expect(store.getState().visState.annotations[0].labelBackground).toBeUndefined();
+    expect(opacity).toBeVisible();
+    expect(opacity).toHaveValue(0.55);
+    expect(opacity).toBeDisabled();
+    expect(screen.getByLabelText('Padding (px)')).toHaveValue(12);
+    expect(screen.getByLabelText('Padding (px)')).toBeDisabled();
+    const content = document.getElementById(
+      group.getAttribute('aria-controls') || ''
+    ) as HTMLElement;
+    expect(within(content).getByRole('button')).toBeDisabled();
+    toggle.focus();
+    await userEvent.tab();
+    expect(screen.getByRole('button', {name: 'Elevation'})).toHaveFocus();
+    fireEvent.click(toggle);
+    expect(opacity).not.toBeDisabled();
+    expect(store.getState().visState.annotations[0].labelBackground).toEqual({
+      ...labelBackground,
+      opacity: 0.55
+    });
+  });
+
+  test('keeps measured elevation fields visible and disabled while the callout is off', async () => {
+    const elevation: AnnotationElevation = {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      value: 100,
+      datum: 'MSL',
+      reference: {value: 42, unit: 'm', datum: 'MSL'},
+      display: 'both'
+    };
+    const store = renderLivePoint({elevation});
+    const group = screen.getByRole('button', {name: 'Elevation'});
+    const toggle = within(group).getByRole('checkbox', {name: 'Elevation'});
+    fireEvent.click(group);
+    const measured = screen.getByLabelText('Measured elevation');
+    fireEvent.change(measured, {target: {value: '321.987'}});
+    fireEvent.blur(measured);
+    fireEvent.click(toggle);
+    expect(group).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).not.toBeChecked();
+    expect((store.getState().visState.annotations[0] as PointAnnotation).elevation).toBeUndefined();
+    expect(measured).toBeVisible();
+    expect(measured).toHaveValue(321.987);
+    for (const name of [
+      'Measured elevation',
+      'Marker height (m)',
+      'Ground elevation',
+      'Measured from',
+      'Ground measured from',
+      'Ground draw height (m)'
+    ]) {
+      expect(screen.getByLabelText(name)).toBeVisible();
+      expect(screen.getByLabelText(name)).toBeDisabled();
+    }
+    expect(screen.getByLabelText('Compare with ground')).toBeDisabled();
+    expect(screen.getByText('Compare with ground')).toBeVisible();
+    const selector = within(screen.getByRole('group', {name: 'Value to display'})).getByRole(
+      'button',
+      {name: 'Manual value'}
+    );
+    expect(selector).toHaveAttribute('aria-disabled', 'true');
+    expect(selector).not.toHaveAttribute('tabindex');
+    fireEvent.keyDown(selector, {key: 'Enter'});
+    expect(screen.queryByText('Map height')).not.toBeInTheDocument();
+    measured.focus();
+    expect(measured).not.toHaveFocus();
+    await userEvent.keyboard('9');
+    expect(measured).toHaveValue(321.987);
+    fireEvent.click(toggle);
+    expect(measured).not.toBeDisabled();
+    expect(store.getState().visState.annotations[0]).toHaveProperty('elevation', {
+      ...elevation,
+      value: 321.987
+    });
+  });
+
+  test('shows disabled default elevation controls before elevation has been enabled', () => {
+    renderLivePoint({});
+    fireEvent.click(screen.getByRole('button', {name: 'Elevation'}));
+    expect(screen.getByRole('checkbox', {name: 'Elevation'})).not.toBeChecked();
+    expect(screen.getByLabelText('Marker height (m)')).toBeDisabled();
+    for (const name of [
+      'Value to display',
+      'Label units',
+      'Decimals',
+      'Vertical guide',
+      'Marker style'
+    ]) {
+      expect(within(screen.getByRole('group', {name})).getByRole('button')).toHaveAttribute(
+        'aria-disabled',
+        'true'
+      );
+    }
+    expect(screen.getByText('Map height')).toBeVisible();
+  });
+
   function renderPoint(
     elevation?: AnnotationElevation,
     overrides: Partial<Annotation> = {},
