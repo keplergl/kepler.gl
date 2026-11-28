@@ -854,7 +854,6 @@ describe('Point elevation settings', () => {
         expect(screen.queryByRole('group', {name})).not.toBeInTheDocument();
       }
       expect(screen.queryByLabelText('Marker height (m)')).not.toBeInTheDocument();
-      expect(screen.queryByRole('status', {name: 'Label preview'})).not.toBeInTheDocument();
     };
     expectCollapsed();
     group.focus();
@@ -867,9 +866,7 @@ describe('Point elevation settings', () => {
       expect(within(content).getByRole('group', {name})).toBeInTheDocument();
     }
     expect(within(content).getByLabelText('Marker height (m)')).toHaveValue(7448.36);
-    expect(within(content).getByRole('status', {name: 'Label preview'})).toHaveTextContent(
-      '7448.36 m above map zero'
-    );
+    expect(within(content).queryByRole('status', {name: 'Label preview'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Advanced'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Measured elevation')).not.toBeInTheDocument();

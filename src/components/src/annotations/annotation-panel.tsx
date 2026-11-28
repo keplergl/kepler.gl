@@ -73,7 +73,6 @@ import {
   DEFAULT_RULER_STYLE,
   DEFAULT_ANNOTATION_ELEVATION,
   DEFAULT_MAP_HEIGHT_ELEVATION,
-  getAnnotationElevationLabels,
   ELEVATION_UNIT_METERS
 } from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -965,20 +964,6 @@ function ElevationSettings({
           {select('outputUnits', 'Label units', elevation.outputUnit, units, outputUnit =>
             patch({outputUnit: outputUnit as ElevationUnit})
           )}
-          <StyledConfigRow>
-            <StyledConfigLabel
-              role="status"
-              aria-label={label('preview', 'Label preview')}
-              style={{textTransform: 'none'}}
-            >
-              <div>{label('preview', 'Label preview')}</div>
-              {getAnnotationElevationLabels(elevation, annotation.anchorPoint[2] ?? 0).map(
-                (text, i) => (
-                  <div key={i}>{text}</div>
-                )
-              )}
-            </StyledConfigLabel>
-          </StyledConfigRow>
           {row(
             'anchorHeight',
             'Marker height (m)',

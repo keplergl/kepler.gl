@@ -85,7 +85,7 @@ Text, Point, Arrow, Circle, and Ruler annotations all have a collapsible **Backg
 
 Select a **Point** annotation and enable the inline switch in the **Elevation** group header. Expand the group to configure the callout. New callouts show **Map height**: the picked marker height in metres above the map's zero plane. Drag the anchor to update the height. A two-coordinate anchor is at map zero. This is a drawing height, not an automatically measured altitude or height above terrain; shifted or exaggerated layers also shift this value.
 
-All elevation controls appear directly inside the collapsible **Elevation** group, including **Value to display**, **Label units**, a live **Label preview**, marker height, height references, and label/guide/marker styling. An optional caption shares its typography and background with the elevation label. Hover over the **(?)** icons beside the controls for guidance on measurements, height references, ground comparisons, and captured values.
+All elevation controls appear directly inside the collapsible **Elevation** group, including **Value to display**, **Label units**, marker height, height references, and label/guide/marker styling. An optional caption shares its typography and background with the elevation label. Hover over the **(?)** icons beside the controls for guidance on measurements, height references, ground comparisons, and captured values.
 
 - **Map height** follows the anchor and draws its vertical guide to map zero. It needs no source value, datum, or ground elevation.
 - **Manual value** lets you enter a measured elevation and its units. The measurement stays independent of the marker's drawing height; switching from Map height never invents a measurement from it.
