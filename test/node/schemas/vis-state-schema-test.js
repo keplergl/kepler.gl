@@ -824,6 +824,53 @@ test('#visStateSchema -> v1 -> explicit shadow map resolution round trips', t =>
   t.end();
 });
 
+test('#visStateSchema -> v1 -> ripple modifier round trips and preserves legacy appearance', t => {
+  const state = cloneDeep(StateWEffects);
+  const effect = createEffect({
+    id: 'water-modifier',
+    type: 'surfaceFog',
+    parameters: {pattern: true, rippleSpeed: 2}
+  });
+  state.visState.effects = [effect];
+  state.visState.effectOrder = [effect.id];
+  const saved = SchemaManager.getConfigToSave(state);
+  for (const [rippleModifier, expected] of [
+    [0, 0],
+    [0.5, 0.5],
+    [1, 1],
+    [undefined, 1],
+    [null, 1],
+    [-1, 0],
+    [2, 1]
+  ]) {
+    if (rippleModifier === undefined) {
+      delete saved.config.visState.effects[0].parameters.rippleModifier;
+    } else {
+      saved.config.visState.effects[0].parameters.rippleModifier = rippleModifier;
+    }
+    const restored = createEffect(SchemaManager.parseSavedConfig(saved).visState.effects[0]);
+    t.equal(restored.parameters.rippleModifier, expected, 'loads or defaults the modifier');
+    t.equal(
+      restored.deckEffect.props.rippleModifier,
+      expected,
+      'supplies the modifier to the renderer'
+    );
+    t.equal(
+      restored.clone().deckEffect.props.rippleModifier,
+      expected,
+      'preview clones keep the modifier'
+    );
+    t.equal(restored.parameters.rippleSpeed, 2, 'preserves ripple speed independently');
+    state.visState.effects = [restored];
+    t.equal(
+      SchemaManager.getConfigToSave(state).config.visState.effects[0].parameters.rippleModifier,
+      expected,
+      'saves the modifier, including explicit zero'
+    );
+  }
+  t.end();
+});
+
 test('#visStateSchema -> v1 -> surface water ripple speed round trips', t => {
   const state = cloneDeep(StateWEffects);
   for (const rippleSpeed of [0, 0.5, 2, 5]) {

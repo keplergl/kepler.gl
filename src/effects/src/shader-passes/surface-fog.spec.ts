@@ -83,7 +83,8 @@ describe('surface fog rendering', () => {
       waveOrigin: [0, 0],
       waveTime: 0,
       cameraHeight: 1000,
-      pattern: 1
+      pattern: 1,
+      rippleModifier: 1
     };
     for (const [name, value] of Object.entries({...defaults, ...uniforms})) {
       uniform(name, value);
@@ -143,7 +144,7 @@ describe('surface fog rendering', () => {
       pixelUnprojectionMatrix: number[];
       distanceScales: {unitsPerMeter: number[]};
     },
-    props: {rippleSpeed?: number; animationTimeMs?: number} = {}
+    props: {rippleSpeed?: number; rippleModifier?: number; animationTimeMs?: number} = {}
   ): Record<string, number | number[]> {
     const setProps = jest.fn();
     const device = {beginRenderPass: () => ({end: jest.fn()})};
@@ -443,6 +444,39 @@ describe('surface fog rendering', () => {
     expect(maxPixelDifference(later, nextFrame)).toBeLessThanOrEqual(2);
     expect(render({uniforms: {...view, waveTime: 4}})).toEqual(later);
     expect(render({uniforms: {...view, waveTime: 0}})).toEqual(start);
+  });
+
+  test('ripple modifier scales the wave field from flat water to the current ripples', () => {
+    const size = 64;
+    const viewport = croppedViewport({zoom: 20, pitch: 65, cropSize: size});
+    const uniformsAt = (
+      rippleModifier?: number,
+      animationTimeMs = 2000
+    ): Record<string, number | number[]> => ({
+      ...viewportUniforms(viewport, {rippleModifier, animationTimeMs}),
+      fogHeight: 0,
+      fogThickness: 0
+    });
+    const flat = render({depth: 1, uniforms: uniformsAt(0), size});
+    const half = render({depth: 1, uniforms: uniformsAt(0.5), size});
+    const full = render({depth: 1, uniforms: uniformsAt(1), size});
+    expect(render({depth: 1, uniforms: uniformsAt(), size})).toEqual(full);
+    expect(render({depth: 1, uniforms: uniformsAt(0, 8000), size})).toEqual(flat);
+    const smooth = uniformsAt(1);
+    expect(
+      render({
+        depth: 1,
+        uniforms: {
+          ...smooth,
+          waveUnitsPerMeter: (smooth.waveUnitsPerMeter as number) / 1024
+        },
+        size
+      })
+    ).toEqual(flat);
+    const contrast = (pixels: number[]) =>
+      pixels.reduce((sum, value, index) => sum + Math.abs(value - flat[index]), 0);
+    expect(contrast(half)).toBeGreaterThan(0);
+    expect(contrast(half)).toBeLessThan(contrast(full));
   });
 
   test.each([0, 0.5, 2, 5])(

@@ -195,6 +195,29 @@ describe('fog reconstruction uniforms', () => {
     }
   });
 
+  test.each([
+    [undefined, 1],
+    [NaN, 1],
+    [Infinity, 1],
+    [-1, 0],
+    [0, 0],
+    [0.5, 0.5],
+    [1, 1],
+    [2, 1]
+  ])('normalizes ripple modifier %s without changing the clock', (rippleModifier, expected) => {
+    const effect = new DeckSurfaceFogEffect({pattern: true, rippleSpeed: 2});
+    const {device, model} = createRenderer();
+    effect.setup({device});
+    effect.setProps({animationTimeMs: 2000, rippleModifier});
+    effect.setProps({height: 120});
+    effect.postRender(createBuffers());
+    expect(model.shaderInputs.setProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        surfaceFog: expect.objectContaining({rippleModifier: expected, waveTime: 4})
+      })
+    );
+  });
+
   test('applies ripple speed edits without resetting the playback clock', () => {
     const effect = new DeckSurfaceFogEffect({pattern: true});
     const {device, model} = createRenderer();

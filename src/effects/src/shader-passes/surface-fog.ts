@@ -20,6 +20,8 @@ export type SurfaceFogProps = {
   fogColor: [number, number, number];
   /** When true, render a reflective water surface instead of plain fog. */
   pattern: boolean;
+  /** Ripple strength: 0 gives flat water, 1 preserves the full wave field. */
+  rippleModifier?: number;
   /** Playback speed multiplier: 0 freezes ripples, 1 preserves their normal speed. */
   rippleSpeed?: number;
 };
@@ -47,6 +49,7 @@ uniform surfaceFogUniforms {
   float waveTime;
   float cameraHeight;
   float pattern;
+  float rippleModifier;
 } surfaceFog;
 `;
 
@@ -130,7 +133,7 @@ vec2 waveSlope(vec2 meters, float cellSize, mat2 frame, float strength, float fo
 vec3 waveNormal(vec2 meters, float footprint) {
   float warpedFootprint = footprint * 1.5;
   // If even the largest ripples are unresolved, skip the bend noise as well.
-  if (waveWeight(16.0, warpedFootprint) <= 0.0) {
+  if (surfaceFog.rippleModifier <= 0.0 || waveWeight(16.0, warpedFootprint) <= 0.0) {
     return vec3(0.0, 0.0, 1.0);
   }
   // Broad noise bends the ripple field without contributing a large surface
@@ -152,7 +155,7 @@ vec3 waveNormal(vec2 meters, float footprint) {
   slope += waveSlope(p,  2.0, mat2(1.0, -0.25, 0.5, 0.5), 0.080, warpedFootprint, vec2(0.35, -0.15));
   slope += waveSlope(p,  1.0, mat2(0.5, -0.5, 0.25, 1.0), 0.090, warpedFootprint, vec2(0.18, 0.09));
   slope += waveSlope(p,  0.5, mat2(1.0, -0.25, 0.5, 0.5), 0.055, warpedFootprint, vec2(0.10, -0.04));
-  return normalize(vec3(-slope, 1.0));
+  return normalize(vec3(-slope * surfaceFog.rippleModifier, 1.0));
 }
 
 vec3 skyReflection(vec3 direction) {
@@ -339,7 +342,8 @@ const surfaceFogModule = {
     waveOrigin: 'vec2<f32>',
     waveTime: 'f32',
     cameraHeight: 'f32',
-    pattern: 'f32'
+    pattern: 'f32',
+    rippleModifier: 'f32'
   },
   defaultUniforms: {
     density: 0.6,
@@ -358,12 +362,14 @@ const surfaceFogModule = {
     waveOrigin: [0, 0],
     waveTime: 0,
     cameraHeight: 0,
-    pattern: 0
+    pattern: 0,
+    rippleModifier: 1
   },
   propTypes: {
     density: {value: 0.6, min: 0, max: 1},
     fogColor: {value: [230, 235, 242]},
     pattern: {value: 0, min: 0, max: 1},
+    rippleModifier: {value: 1, min: 0, max: 1},
     fogHeight: {value: 0, private: true},
     fogThickness: {value: 0, private: true},
     invCol0: {value: [1, 0, 0, 0], private: true},
@@ -406,6 +412,7 @@ export class DeckSurfaceFogEffect {
       thickness: 50,
       fogColor: [230, 235, 242],
       pattern: false,
+      rippleModifier: 1,
       rippleSpeed: 1,
       animationTimeMs: 0,
       ...props
@@ -557,7 +564,10 @@ export class DeckSurfaceFogEffect {
           ? (Math.max(0, this.props.animationTimeMs!) / 1000) * rippleSpeed
           : 0,
         cameraHeight,
-        pattern: this.props.pattern ? 1.0 : 0.0
+        pattern: this.props.pattern ? 1.0 : 0.0,
+        rippleModifier: Number.isFinite(this.props.rippleModifier)
+          ? Math.max(0, Math.min(1, this.props.rippleModifier!))
+          : 1
       }
     });
 

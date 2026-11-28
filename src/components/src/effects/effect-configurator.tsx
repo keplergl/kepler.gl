@@ -473,7 +473,7 @@ export default function EffectConfiguratorFactory(
       return flatParameterDescriptions.map(desc => {
         if (
           effect.type === SURFACE_FOG_TYPE &&
-          desc.name === 'rippleSpeed' &&
+          (desc.name === 'rippleModifier' || desc.name === 'rippleSpeed') &&
           !parameters.pattern
         ) {
           return null;
