@@ -2,11 +2,6 @@
 // Copyright contributors to the kepler.gl project
 
 import {DrawCircleFromCenterMode} from '@deck.gl-community/editable-layers';
-import type {
-  FeatureCollection,
-  GuideFeatureCollection,
-  ModeProps
-} from '@deck.gl-community/editable-layers';
 
 import {formatCircleRadiusLabel} from './editor-measure-labels';
 
@@ -22,7 +17,7 @@ import {formatCircleRadiusLabel} from './editor-measure-labels';
  * While the circle is being sized, a radius label is shown at the rim.
  */
 export class DrawCircleModeExtended extends DrawCircleFromCenterMode {
-  getGuides(props: ModeProps<FeatureCollection>): GuideFeatureCollection {
+  override getGuides(props: Parameters<DrawCircleFromCenterMode['getGuides']>[0]) {
     const center = this.getClickSequence()[0];
     const rim = props.lastPointerMoveEvent?.mapCoords;
 

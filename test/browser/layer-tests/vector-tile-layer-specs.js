@@ -10,8 +10,8 @@ import {
 } from '../../../src/layers/src/vector-tile/pmtiles-bounds';
 import sinon from 'sinon';
 import {createDataSourceSync} from '@loaders.gl/core';
-import {MVTSourceLoader} from '@loaders.gl/tiles/mvt';
-import {PMTilesSourceLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
+import {MVTLoader} from '@loaders.gl/tiles/mvt';
+import {PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 import {zxyToTileId} from 'pmtiles';
 import {LayerManager, MapView, WebMercatorViewport, _GlobeView} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
@@ -1518,7 +1518,7 @@ for (const path of ['header', 'directory']) {
 }
 
 test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs', async t => {
-  const seed = createDataSourceSync('https://example.com/seed', MVTSourceLoader, {
+  const seed = createDataSourceSync('https://example.com/seed', MVTLoader, {
     mvt: {metadataUrl: null},
     core: {
       fetch: async () => ({
@@ -1534,8 +1534,8 @@ test('#VectorTileLayer -> reuse sources and archive caches for unchanged inputs'
   const pmMetadata = sinon
     .stub(PMTilesTileSource.prototype, 'getMetadata')
     .callsFake(async () => ({}));
-  const mvtConstruct = sinon.spy(MVTSourceLoader, 'createDataSourceSync');
-  const pmConstruct = sinon.spy(PMTilesSourceLoader, 'createDataSourceSync');
+  const mvtConstruct = sinon.spy(MVTLoader, 'createDataSourceSync');
+  const pmConstruct = sinon.spy(PMTilesLoader, 'createDataSourceSync');
   try {
     for (const format of [RemoteTileFormat.MVT, RemoteTileFormat.PMTILES]) {
       const {layer, table} = categoricalFilterFixture();
@@ -1884,7 +1884,7 @@ test('#VectorTileLayer -> new PMTiles layers default bounds only below stored zo
     maxZoom: 15
   };
   const datasets = {[table.id]: table};
-  const construct = sinon.stub(PMTilesSourceLoader, 'createDataSourceSync');
+  const construct = sinon.stub(PMTilesLoader, 'createDataSourceSync');
   const create = (source, manual = false, initialize = true) => {
     const tileFetch = source.getTileData;
     source.metadata = Promise.resolve({});

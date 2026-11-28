@@ -14,7 +14,7 @@ import {
 } from '@deck.gl/core';
 import {BitmapLayer} from '@deck.gl/layers';
 import {createDataSourceSync} from '@loaders.gl/core';
-import {ImageSource, WMSSourceLoader} from '@loaders.gl/ogc/wms';
+import {ImageSource, WMSLoader} from '@loaders.gl/ogc/wms';
 
 import type {ImageSourceMetadata} from '@loaders.gl/core/loader-utils';
 import type {ImageType} from '@loaders.gl/ogc/wms';
@@ -191,7 +191,7 @@ export default class WMSLayer extends CompositeLayer<Required<_WMSLayerProps>> {
     }
 
     if (typeof props.data === 'string') {
-      return createDataSourceSync(props.data, WMSSourceLoader, props.loadOptions);
+      return createDataSourceSync(props.data, WMSLoader, props.loadOptions);
     }
 
     throw new Error('invalid image source in props.data');

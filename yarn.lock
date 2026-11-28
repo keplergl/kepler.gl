@@ -4070,8 +4070,8 @@ __metadata:
     "@geoarrow/geoarrow-js": "npm:^0.3.0"
     "@kepler.gl/constants": "npm:3.3.0-alpha.29"
     "@kepler.gl/utils": "npm:3.3.0-alpha.29"
-    "@math.gl/core": "npm:5.0.0"
-    "@math.gl/geometry": "npm:5.0.0"
+    "@math.gl/core": "npm:5.0.4"
+    "@math.gl/geometry": "npm:5.0.4"
     apache-arrow: "npm:>=17.0.0"
     threads: "npm:^1.7.0"
   peerDependencies:
@@ -4101,8 +4101,8 @@ __metadata:
     "@luma.gl/shaders": "npm:10.0.0-beta.3"
     "@mapbox/geo-viewport": "npm:^0.4.1"
     "@mapbox/vector-tile": "npm:^1.3.1"
-    "@math.gl/core": "npm:5.0.0"
-    "@math.gl/earth": "npm:5.0.0"
+    "@math.gl/core": "npm:5.0.4"
+    "@math.gl/earth": "npm:5.0.4"
     "@math.gl/web-mercator": "npm:5.0.0-beta.8"
     "@types/d3-array": "npm:^2.8.0"
     "@types/geojson": "npm:^7946.0.8"
@@ -4188,8 +4188,8 @@ __metadata:
     "@luma.gl/engine": "npm:^9.4.2"
     "@luma.gl/shadertools": "npm:^9.4.2"
     "@mapbox/geojson-normalize": "npm:0.0.1"
-    "@math.gl/core": "npm:5.0.0"
-    "@math.gl/geometry": "npm:5.0.0"
+    "@math.gl/core": "npm:5.0.4"
+    "@math.gl/geometry": "npm:5.0.4"
     "@math.gl/web-mercator": "npm:5.0.0-beta.8"
     "@turf/bbox": "npm:^7.2.0"
     "@turf/boolean-within": "npm:^7.2.0"
@@ -5685,20 +5685,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@math.gl/core@npm:5.0.0":
-  version: 5.0.0
-  resolution: "@math.gl/core@npm:5.0.0"
-  dependencies:
-    "@math.gl/tasks": "npm:5.0.0"
-  peerDependencies:
-    apache-arrow: ">=17.0.0"
-  peerDependenciesMeta:
-    apache-arrow:
-      optional: true
-  checksum: 10c0/ee14723dad2d534020d5566c0f1283f9beb2bdf80189a77dd9477826ef2d7811310967cae00fe1822957f8d56de58feb339a4c0dfb54a74736198011b0b3d169
-  languageName: node
-  linkType: hard
-
 "@math.gl/core@npm:5.0.0-beta.8":
   version: 5.0.0-beta.8
   resolution: "@math.gl/core@npm:5.0.0-beta.8"
@@ -5753,37 +5739,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@math.gl/earth@npm:5.0.0":
-  version: 5.0.0
-  resolution: "@math.gl/earth@npm:5.0.0"
-  dependencies:
-    "@math.gl/core": "npm:5.0.0"
-    astronomy-engine: "npm:2.1.19"
-  checksum: 10c0/02f1f575a40a86f88f72823e79d0e0387e492de186ca1fde6f81227090974c2b9459f8f10d5142ef7b2285c3935aefc9a8a48dcd6be3f674e3da0f2fdbc23281
-  languageName: node
-  linkType: hard
-
-"@math.gl/earth@npm:^5.0.0":
+"@math.gl/earth@npm:5.0.4, @math.gl/earth@npm:^5.0.0":
   version: 5.0.4
   resolution: "@math.gl/earth@npm:5.0.4"
   dependencies:
     "@math.gl/core": "npm:5.0.4"
     astronomy-engine: "npm:2.1.19"
   checksum: 10c0/3ebbf517c226a61cd9b87a68ccf6231d6891a4fd03fcf74c513884eab4cd30151411a0155cd181b16badfb3fbb843fee64306f5d0c458c271de8a02da9763757
-  languageName: node
-  linkType: hard
-
-"@math.gl/geometry@npm:5.0.0":
-  version: 5.0.0
-  resolution: "@math.gl/geometry@npm:5.0.0"
-  dependencies:
-    "@math.gl/core": "npm:5.0.0"
-  peerDependencies:
-    apache-arrow: ">=17.0.0"
-  peerDependenciesMeta:
-    apache-arrow:
-      optional: true
-  checksum: 10c0/fab42cc8b629cf0a31f753d0f5f270af325132304cfcaf4a5b8b2872aed62769d838db68ae1251832311c708b21fd102c1988e76e125e3b1f3c34ab32d139244
   languageName: node
   linkType: hard
 
@@ -5846,13 +5808,6 @@ __metadata:
     apache-arrow:
       optional: true
   checksum: 10c0/d9e8ec14ca6044feb5cd7b84bfe089bdfca83fb88225c8fd9b30b5c9d1435319fb0566f2b2f9820e1f330235cefda4bbace98bedb33d7d8baaa0f6f16a8533d2
-  languageName: node
-  linkType: hard
-
-"@math.gl/tasks@npm:5.0.0":
-  version: 5.0.0
-  resolution: "@math.gl/tasks@npm:5.0.0"
-  checksum: 10c0/dacf0ff5b4cd88b51c7f85fec7235eebf8389deab83baca9110569a96522445ddddaa8800ce8330ec0e6c26c3b2071a662ac8d7306c0dee1ebff4e9ff623dc09
   languageName: node
   linkType: hard
 
@@ -21976,7 +21931,7 @@ __metadata:
     "@kepler.gl/components": "npm:3.3.0-alpha.29"
     "@loaders.gl/core": "npm:5.0.0-rc.2"
     "@luma.gl/core": "npm:10.0.0-beta.3"
-    "@math.gl/tasks": "npm:5.0.0"
+    "@math.gl/tasks": "npm:5.0.4"
     "@math.gl/web-mercator": "npm:5.0.0-beta.8"
     "@open-wc/webpack-import-meta-loader": "npm:0.4.7"
     "@probe.gl/test-utils": "npm:^4.1.1"

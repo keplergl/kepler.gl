@@ -8,8 +8,8 @@ import {TileJSONLoader, TileJSON} from '@loaders.gl/tiles/mvt';
 type TileJSONWithAttributions = TileJSON & {attributions?: string[]};
 
 /**
- * MVTSourceLoader in current loaders ignores attribution
- * TODO: remove once MVTSourceLoader is ready
+ * MVTLoader in current loaders ignores attribution
+ * TODO: remove once MVTLoader is ready
  */
 export async function getMVTMetadata(metadataURL: string | null): Promise<TileJSON | null> {
   if (!metadataURL) return null;

@@ -25,8 +25,8 @@ import {
 } from '@kepler.gl/utils';
 
 import {load} from '@loaders.gl/core';
-import {/* MVTSourceLoader,*/ TileJSON} from '@loaders.gl/tiles/mvt';
-import {PMTilesSourceLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
+import {/* MVTLoader,*/ TileJSON} from '@loaders.gl/tiles/mvt';
+import {PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 import {WMSCapabilities, WMSCapabilitiesLoader} from '@loaders.gl/ogc/wms';
 
 import {getMVTMetadata} from './tileset/tileset-utils';
@@ -200,7 +200,7 @@ async function refreshVectorTileMetadata(
     if (remoteTileFormat === RemoteTileFormat.MVT) {
       rawMetadata = await getMVTMetadata(tilesetMetadataUrl);
     } else {
-      const tileSource = PMTilesSourceLoader.createDataSourceSync(tilesetMetadataUrl, {});
+      const tileSource = PMTilesLoader.createDataSourceSync(tilesetMetadataUrl, {});
       rawMetadata = await tileSource.metadata;
     }
 
@@ -231,7 +231,7 @@ async function refreshRasterTileMetadata(datasetInfo: CreateTableProps): Promise
 
   try {
     if (pmtilesType === PMTilesType.RASTER) {
-      const tileSource = PMTilesSourceLoader.createDataSourceSync(metadataUrl, {});
+      const tileSource = PMTilesLoader.createDataSourceSync(metadataUrl, {});
       const rawMetadata: PMTilesMetadata = await tileSource.metadata;
 
       if (rawMetadata) {

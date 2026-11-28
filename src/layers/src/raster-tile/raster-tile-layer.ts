@@ -4,7 +4,7 @@
 import {Layer as DeckLayer} from '@deck.gl/core';
 import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers';
 import {createDataSourceSync} from '@loaders.gl/core';
-import {PMTilesSourceLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 import type {TypedArray} from '@loaders.gl/core/loader-utils';
 import type {TextureProps} from '@luma.gl/core';
 type Texture2DProps = Partial<TextureProps> & Record<string, any>;
@@ -650,7 +650,7 @@ export default class RasterTileLayer extends KeplerLayer {
       if (oldDataset === dataset && oldTileSource?.data === metadataUrl) {
         tileSource = oldLayerData.tileSource;
       } else {
-        tileSource = metadataUrl ? createDataSourceSync(metadataUrl, PMTilesSourceLoader) : null;
+        tileSource = metadataUrl ? createDataSourceSync(metadataUrl, PMTilesLoader) : null;
       }
     }
 

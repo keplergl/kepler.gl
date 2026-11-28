@@ -6,7 +6,7 @@
 import {convertGeometryToWKB, convertWKBToGeometry} from '@loaders.gl/core/geoarrow';
 import {convertArrowToSchema} from '@loaders.gl/core/schema-utils';
 import {parse} from '@loaders.gl/core';
-import {DBFLoaderWithParser as DBFLoader} from '@loaders.gl/geospatial/dbf-loader';
+import {DBFLoaderWithParser as DBFLoader} from '@loaders.gl/geospatial/dbf/bundled';
 import {ALL_FIELD_TYPES, EXPORT_DATA_TYPE} from '@kepler.gl/constants';
 import {Field} from '@kepler.gl/types';
 import {createDataContainer, validateInputData} from '@kepler.gl/utils';

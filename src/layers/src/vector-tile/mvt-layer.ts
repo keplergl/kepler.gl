@@ -13,7 +13,7 @@ import {
 import {incrementVectorTileLoading, decrementVectorTileLoading} from './loading-counter';
 
 /*
-  Custom MVT layer that works with MVTSourceLoader and PMTileSource.
+  Custom MVT layer that works with MVTLoader and PMTileSource.
   Changes:
     - getTileData: handles props.getTileData.
     - renderSubLayers: removed coordinates logic present in original MVTLayer:renderSubLayers.

@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Component, RefObject, forwardRef, ForwardedRef} from 'react';
-import DeckGL from '@deck.gl/react';
+import {DeckGL} from '@deck.gl/react';
 import ReactMapGL, {type MapRef, useControl} from 'react-map-gl/maplibre';
 // @ts-ignore module resolution mismatch with moduleResolution:"node"
 import {MapboxOverlay} from '@deck.gl/mapbox';

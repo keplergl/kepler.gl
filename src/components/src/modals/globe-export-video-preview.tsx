@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import React, {Component, RefObject} from 'react';
-import DeckGL from '@deck.gl/react';
+import {DeckGL} from '@deck.gl/react';
 import type {Deck, DeckProps, MapViewState} from '@deck.gl/core';
 import styled from 'styled-components';
 

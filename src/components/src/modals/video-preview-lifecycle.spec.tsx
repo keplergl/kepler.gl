@@ -18,7 +18,7 @@ const mockMaps = [];
 const mockOverlays = [];
 jest.mock('@deck.gl/react', () => {
   const React = require('react');
-  return React.forwardRef((props, ref) => {
+  const DeckGL = React.forwardRef((props, ref) => {
     const record = React.useRef();
     if (!record.current) {
       const canvas = globalThis.document.createElement('canvas');
@@ -30,6 +30,7 @@ jest.mock('@deck.gl/react', () => {
     React.useImperativeHandle(ref, () => ({deck: record.current.deck}));
     return null;
   });
+  return {DeckGL};
 });
 jest.mock('react-map-gl/maplibre', () => {
   const React = require('react');

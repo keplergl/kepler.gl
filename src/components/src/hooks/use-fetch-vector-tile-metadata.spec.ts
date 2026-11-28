@@ -2,13 +2,13 @@
 // Copyright contributors to the kepler.gl project
 
 import {act, renderHook, waitFor} from '@testing-library/react';
-import {PMTilesSourceLoader} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
 import {RemoteTileFormat} from '@kepler.gl/constants';
 import {getMVTMetadata, getFieldsFromTile} from '@kepler.gl/table';
 import useFetchVectorTileMetadata from './use-fetch-vector-tile-metadata';
 
 jest.mock('@loaders.gl/tiles/pmtiles', () => ({
-  PMTilesSourceLoader: {createDataSourceSync: jest.fn()}
+  PMTilesLoader: {createDataSourceSync: jest.fn()}
 }));
 jest.mock('@kepler.gl/table', () => ({
   getMVTMetadata: jest.fn(),
@@ -30,7 +30,7 @@ const metadata = {
   ...rawMetadata
 };
 const mvtMock = getMVTMetadata as jest.Mock;
-const sourceMock = PMTilesSourceLoader.createDataSourceSync as jest.Mock;
+const sourceMock = PMTilesLoader.createDataSourceSync as jest.Mock;
 const fieldsMock = getFieldsFromTile as jest.Mock;
 
 function deferred<T>() {

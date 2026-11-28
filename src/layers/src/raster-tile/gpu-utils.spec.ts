@@ -3,7 +3,7 @@
 
 import {FetchError, fetchFile, load, parse} from '@loaders.gl/core';
 import {ImageLoader} from '@loaders.gl/images';
-import {NPYLoader} from '@loaders.gl/textures';
+import {NPYLoader} from '@loaders.gl/scientific/npy';
 // @ts-ignore GL resolution depends on moduleResolution setting
 import {GL} from '@luma.gl/constants';
 import {getModules, loadImage, loadNpyArray} from './gpu-utils';

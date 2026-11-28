@@ -60,6 +60,9 @@ describe('ThreeDBuildingLayer', () => {
     const getElevation = subLayer?.props.getElevation;
     expect(typeof getElevation).toBe('function');
     expect(typeof getElevation === 'function' && getElevation(data[0], {} as any)).toBe(25);
-    expect(subLayer?.props.getPolygon(data[0], {} as any)).toBe(data[0].coordinates);
+    const getPolygon = subLayer?.props.getPolygon;
+    expect(typeof getPolygon === 'function' && getPolygon(data[0], {} as any)).toBe(
+      data[0].coordinates
+    );
   });
 });

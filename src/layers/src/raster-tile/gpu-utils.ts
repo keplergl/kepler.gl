@@ -7,7 +7,7 @@
 
 import {parse, fetchFile, load, FetchError, Loader} from '@loaders.gl/core';
 import {ImageLoader} from '@loaders.gl/images';
-import {NPYLoader} from '@loaders.gl/scientific/npy-loader-types';
+import {NPYLoader} from '@loaders.gl/scientific/npy';
 // @ts-ignore GL resolution depends on moduleResolution setting
 import {GL} from '@luma.gl/core/webgl-constants';
 

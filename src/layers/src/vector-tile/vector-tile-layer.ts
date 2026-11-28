@@ -11,8 +11,8 @@ import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
 import {GeoJsonLayer, PathLayer} from '@deck.gl/layers';
 import {ClipExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {createDataSourceSync} from '@loaders.gl/core';
-import {MVTSourceLoader, MVTTileSource} from '@loaders.gl/tiles/mvt';
-import {PMTilesSourceLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
+import {MVTLoader, MVTTileSource} from '@loaders.gl/tiles/mvt';
+import {PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {
@@ -352,7 +352,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
         };
 
         return tilesetDataUrl
-          ? createDataSourceSync(decodeURIComponent(tilesetDataUrl), MVTSourceLoader, {
+          ? createDataSourceSync(decodeURIComponent(tilesetDataUrl), MVTLoader, {
               mvt: {
                 metadataUrl: tilesetMetadataUrl,
                 shape: 'geojson-table'
@@ -363,7 +363,7 @@ export default class VectorTileLayer extends AbstractTileLayer<VectorTile, Featu
       }
       if (remoteTileFormat === RemoteTileFormat.PMTILES) {
         if (!tilesetDataUrl) return null;
-        const source = createDataSourceSync(tilesetDataUrl, PMTilesSourceLoader, {
+        const source = createDataSourceSync(tilesetDataUrl, PMTilesLoader, {
           pmtiles: {shape: 'geojson-table'},
           core: {
             // Preserve rejection so a failed archive lookup invalidates this source.

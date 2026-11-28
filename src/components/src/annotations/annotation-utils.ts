@@ -21,9 +21,9 @@ import {
 export type LngLatAltitude = [number, number] | [number, number, number];
 
 export type MapViewport = {
-  project: (lngLat: ReadonlyArray<number>) => number[];
-  unproject: (xy: ReadonlyArray<number>) => number[];
-  projectPosition?: (lngLat: ReadonlyArray<number>) => number[];
+  project: (lngLat: number[]) => number[];
+  unproject: (xy: number[]) => number[];
+  projectPosition?: (lngLat: number[]) => number[];
   cameraPosition?: ReadonlyArray<number>;
   longitude: number;
   latitude: number;
@@ -445,7 +445,7 @@ export function isPointVisibleOnGlobe(
   point: ReadonlyArray<number>,
   viewport: MapViewport
 ): boolean {
-  const projected = viewport.project(point);
+  const projected = viewport.project([...point]);
   if (!projected || !Number.isFinite(projected[0]) || !Number.isFinite(projected[1])) {
     return false;
   }
@@ -454,7 +454,7 @@ export function isPointVisibleOnGlobe(
     // Perspective projection can return finite screen coordinates behind the eye.
     if (projected[2] > 1) return false;
     const [cx, cy, cz] = viewport.cameraPosition;
-    const [x, y, z] = viewport.projectPosition(point);
+    const [x, y, z] = viewport.projectPosition([...point]);
     const [sx, sy, sz] = viewport.projectPosition([longitude, latitude]);
     const radiusSquared = sx * sx + sy * sy + sz * sz;
     const dx = x - cx;

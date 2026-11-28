@@ -71,13 +71,13 @@ const DEFAULT_LOADER_ENTRIES: KeplerLoaderEntry[] = [
     id: 'gpx',
     extensions: ['gpx'],
     mimeTypes: ['application/gpx+xml'],
-    load: async () => (await import('@loaders.gl/geospatial/kml')).GPXLoader
+    load: async () => (await import('@loaders.gl/geospatial/gpx')).GPXLoader
   },
   {
     id: 'tcx',
     extensions: ['tcx'],
     mimeTypes: ['application/vnd.garmin.tcx+xml'],
-    load: async () => (await import('@loaders.gl/geospatial/kml')).TCXLoader
+    load: async () => (await import('@loaders.gl/geospatial/tcx')).TCXLoader
   },
   {
     id: 'arrow',

@@ -16,7 +16,6 @@ import {
 import * as DeckCore from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
 import {GeoJsonLayer} from '@deck.gl/layers';
-import {setGLParameters} from '@luma.gl/core/webgl';
 import {getGlobeDepthDiskLayer} from '@kepler.gl/deckgl-layers';
 import {getDistanceScales} from '@math.gl/web-mercator';
 import {Int64, Uint64, Table, vectorFromArray} from 'apache-arrow';

@@ -149,7 +149,7 @@
     "@deck.gl/test-utils": "10.0.0-alpha.2",
     "@loaders.gl/core": "5.0.0-rc.2",
     "@luma.gl/core": "10.0.0-beta.3",
-    "@math.gl/tasks": "5.0.0",
+    "@math.gl/tasks": "5.0.4",
     "@math.gl/web-mercator": "5.0.0-beta.8",
     "@open-wc/webpack-import-meta-loader": "0.4.7",
     "@probe.gl/test-utils": "^4.1.1",

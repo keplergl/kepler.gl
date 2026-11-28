@@ -7,7 +7,6 @@ import {injectIntl, IntlProvider} from 'react-intl';
 import {ThemeProvider} from 'styled-components';
 import {KeplerGlLayers, Layer, LayerClasses} from '@kepler.gl/layers';
 import {Layer as DeckLayer, WebMercatorViewport} from '@deck.gl/core';
-// @ts-expect-error Experimental export is missing from the repository's deck.gl type augmentation.
 import {_GlobeViewport as GlobeViewport} from '@deck.gl/core';
 import {S2Layer} from '@deck.gl/geo-layers';
 import {ScatterplotLayer} from '@deck.gl/layers';

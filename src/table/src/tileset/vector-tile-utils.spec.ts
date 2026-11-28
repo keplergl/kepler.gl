@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {MVTSource} from '@loaders.gl/mvt';
+import {MVTSource} from '@loaders.gl/tiles/mvt';
 import {DATA_TYPES} from 'type-analyzer';
 
 import {ALL_FIELD_TYPES, FILTER_TYPES, RemoteTileFormat} from '@kepler.gl/constants';
@@ -92,7 +92,7 @@ describe('getMetaUrl', () => {
   });
 });
 
-test('parseMetadata, metadata from MVTSourceLoader and Mapbox URL', () => {
+test('parseMetadata, metadata from MVTLoader and Mapbox URL', () => {
   expect(
     parseMetadata(MVT_METADATA, {tileUrl: 'https://api.mapbox.com/v4/spam/{z}/{x}/{y}.mvt'})
   ).toEqual({

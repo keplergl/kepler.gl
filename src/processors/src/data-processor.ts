@@ -6,7 +6,6 @@ import {csvParseRows, tsvParseRows, dsvFormat} from 'd3-dsv';
 import {DATA_TYPES as AnalyzerDATA_TYPES, RegexList} from 'type-analyzer';
 import normalize from '@mapbox/geojson-normalize';
 import {convertWKBToGeometry} from '@loaders.gl/core/wkt';
-import {ArrowTable} from '@loaders.gl/core/schema';
 
 import {
   ALL_FIELD_TYPES,
@@ -508,7 +507,7 @@ export function processKeplerglDataset(
  *   }
  * }));
  */
-export function processArrowTable(arrowTable: ArrowTable): ProcessorResult | null {
+export function processArrowTable(arrowTable: {data: arrow.Table}): ProcessorResult | null {
   // @ts-ignore - Unknown data type causing build failures
   return processArrowBatches(arrowTable.data.batches);
 }

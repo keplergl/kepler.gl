@@ -5,7 +5,7 @@ import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {Tile3DLayer as DeckTile3DLayer} from '@deck.gl/geo-layers';
 import {LightingEffect as DeckLightingEffect} from '@deck.gl/core';
 import type {Layer as DeckLayer, LayersList} from '@deck.gl/core';
-import {Tiles3DLoader, CesiumIonLoader} from '@loaders.gl/tiles-3d/3d-tiles';
+import {Tiles3DLoader, resolveCesiumIonTileset} from '@loaders.gl/tiles-3d/3d-tiles';
 import {I3SLoader} from '@loaders.gl/tiles-3d/i3s';
 import {Tileset3D, Tile3D} from '@loaders.gl/tiles-3d';
 import {parsePBRMaterial} from '@luma.gl/engine/gltf';
@@ -148,8 +148,31 @@ class KeplerTile3DLayer extends DeckTile3DLayer {
         }
         this.setState({tileset3d: null, layerMap: {}});
       }
-      // @ts-expect-error _loadTileset is private in DeckTile3DLayer
-      await super._loadTileset(tilesetUrl);
+      const props = this.props;
+      const loadOptions = props.loadOptions;
+      const ion = loadOptions?.['cesium-ion'];
+      if (ion) {
+        const assetId = new URL(tilesetUrl).pathname.match(/\/(\d+)\/tileset\.json$/)?.[1];
+        const endpoint = await resolveCesiumIonTileset(ion.accessToken, assetId);
+        if (loadId !== this._tilesetLoadId) return;
+        // Deck reads the options synchronously when constructing the tileset source.
+        this.props = {
+          ...props,
+          loadOptions: {
+            ...loadOptions,
+            core: {...loadOptions.core, credentials: endpoint.credentials}
+          }
+        };
+        tilesetUrl = endpoint.url;
+      }
+      let load: Promise<void>;
+      try {
+        // @ts-expect-error _loadTileset is private in DeckTile3DLayer
+        load = super._loadTileset(tilesetUrl);
+      } finally {
+        this.props = props;
+      }
+      await load;
       const installed = (this.state as any)?.tileset3d;
       if (loadId !== this._tilesetLoadId) {
         // A newer token retry started. Drop this tileset so the old key
@@ -628,7 +651,7 @@ export default class Tile3DLayer extends Layer {
     } else if (provider === TILE3D_PROVIDERS.cesium) {
       result = {
         data: tileUrl,
-        loader: CesiumIonLoader,
+        loader: Tiles3DLoader,
         loadOptions: {
           'cesium-ion': {accessToken}
         }
