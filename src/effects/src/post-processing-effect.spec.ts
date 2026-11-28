@@ -724,6 +724,16 @@ describe('post-processing effect parameters', () => {
           easing: 'linear'
         }
       ],
+      rippleModifier: [
+        {
+          id: 'rippleModifier-1',
+          startValue: 0,
+          startTimeMs: 0,
+          endTimeMs: 10000,
+          endValue: 0,
+          easing: 'linear'
+        }
+      ],
       timestamp: [
         {
           id: 'timestamp-1',
@@ -774,6 +784,7 @@ describe('post-processing effect parameters', () => {
       'height',
       'thickness',
       'fogColor',
+      'rippleModifier',
       'timestamp',
       'shadowIntensity',
       'sunLightIntensity',

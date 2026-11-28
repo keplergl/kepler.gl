@@ -154,6 +154,86 @@ describe('fog reconstruction uniforms', () => {
     invCol3: [13, 14, 15, 16]
   };
 
+  test.each([undefined, NaN, Infinity, -100, 0, 1250])(
+    'surface water uses a finite playback clock (%s ms) and keeps it across parameter updates',
+    animationTimeMs => {
+      const effect = new DeckSurfaceFogEffect({pattern: true});
+      const {device, model} = createRenderer();
+      effect.setup({device});
+      effect.setProps({animationTimeMs});
+      effect.setProps({height: 120});
+      effect.postRender(createBuffers());
+      expect(model.shaderInputs.setProps.mock.calls[0][0].surfaceFog.waveTime).toBe(
+        animationTimeMs === 1250 ? 1.25 : 0
+      );
+    }
+  );
+
+  test.each([
+    [undefined, 1],
+    [NaN, 1],
+    [Infinity, 1],
+    [-1, 0],
+    [0, 0],
+    [0.5, 0.5],
+    [1, 1],
+    [2, 2],
+    [8, 5]
+  ])('scales the water clock with ripple speed %s', (rippleSpeed, multiplier) => {
+    const effect = new DeckSurfaceFogEffect({pattern: true, rippleSpeed});
+    const {device, model} = createRenderer();
+    effect.setup({device});
+    for (const animationTimeMs of [4000, 1000, 0, 4000]) {
+      effect.setProps({animationTimeMs});
+      effect.setProps({height: 120});
+      effect.postRender(createBuffers());
+      expect(model.shaderInputs.setProps).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          surfaceFog: expect.objectContaining({waveTime: (animationTimeMs / 1000) * multiplier!})
+        })
+      );
+    }
+  });
+
+  test.each([
+    [undefined, 0.3],
+    [NaN, 0.3],
+    [Infinity, 0.3],
+    [-1, 0],
+    [0, 0],
+    [0.5, 0.5],
+    [1, 1],
+    [2, 1]
+  ])('normalizes ripple modifier %s without changing the clock', (rippleModifier, expected) => {
+    const effect = new DeckSurfaceFogEffect({pattern: true, rippleSpeed: 2});
+    const {device, model} = createRenderer();
+    effect.setup({device});
+    effect.setProps({animationTimeMs: 2000, rippleModifier});
+    effect.setProps({height: 120});
+    effect.postRender(createBuffers());
+    expect(model.shaderInputs.setProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        surfaceFog: expect.objectContaining({rippleModifier: expected, waveTime: 4})
+      })
+    );
+  });
+
+  test('applies ripple speed edits without resetting the playback clock', () => {
+    const effect = new DeckSurfaceFogEffect({pattern: true});
+    const {device, model} = createRenderer();
+    effect.setup({device});
+    effect.setProps({animationTimeMs: 2500});
+    for (const rippleSpeed of [2, 0, 0.5]) {
+      effect.setProps({rippleSpeed});
+      effect.postRender(createBuffers());
+      expect(model.shaderInputs.setProps).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          surfaceFog: expect.objectContaining({waveTime: 2.5 * rippleSpeed})
+        })
+      );
+    }
+  });
+
   test('surface fog converts meter heights using the vertical scale and keeps partial prop updates', () => {
     const effect = new DeckSurfaceFogEffect({height: 100, thickness: 20, density: 0});
     const {device, model} = createRenderer();
@@ -181,7 +261,8 @@ describe('fog reconstruction uniforms', () => {
       pattern: 1,
       fogColor: [10, 20, 30],
       viewportWidth: 320,
-      viewportHeight: 240
+      viewportHeight: 240,
+      pixelRatio: 2
     });
     effect.setProps({pattern: false});
     effect.postRender({...createBuffers(), viewports: [{distanceScales: {unitsPerMeter: 2}}]});

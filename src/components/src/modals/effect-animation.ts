@@ -3,7 +3,11 @@
 
 import {useCallback, useEffect, useMemo} from 'react';
 import type {RefObject} from 'react';
-import {LIGHT_AND_SHADOW_EFFECT, LIGHT_AND_SHADOW_EFFECT_TIME_MODES} from '@kepler.gl/constants';
+import {
+  LIGHT_AND_SHADOW_EFFECT,
+  LIGHT_AND_SHADOW_EFFECT_TIME_MODES,
+  SURFACE_FOG_TYPE
+} from '@kepler.gl/constants';
 import {validateEffectAnimation} from '@kepler.gl/effects';
 import type {Effect} from '@kepler.gl/types';
 
@@ -65,6 +69,15 @@ export function setAnimatedParameters(effect: Effect, parameters: Effect['parame
       sunLight.timestamp = timestamp;
     }
     if (effect.deckEffect.outputUniformShadow) sunLight.intensity = 0;
+  }
+}
+
+/** Keep procedural water on the same clock even without any parameter tracks. */
+export function setSurfaceWaterAnimationTime(effects: Effect[], elapsedMs: number): void {
+  for (const effect of effects) {
+    if (effect.type === SURFACE_FOG_TYPE) {
+      effect.deckEffect?.setProps?.({animationTimeMs: elapsedMs});
+    }
   }
 }
 
@@ -155,6 +168,7 @@ export function useEffectAnimation(
   const tracks = useMemo(() => getEffectAnimationTracks(videoEffects), [videoEffects]);
 
   const restore = useCallback(() => {
+    setSurfaceWaterAnimationTime(videoEffects, 0);
     let restoredTimestamp = false;
     for (const track of tracks) {
       if (!track.modified) continue;
@@ -166,7 +180,7 @@ export function useEffectAnimation(
       track.modified = false;
     }
     if (restoredTimestamp) onLightingTimeChange?.();
-  }, [tracks, onLightingTimeChange]);
+  }, [tracks, videoEffects, onLightingTimeChange]);
 
   useEffect(() => restore, [restore]);
 
@@ -177,6 +191,7 @@ export function useEffectAnimation(
       return;
     }
     applyEffectAnimation(tracks, time);
+    setSurfaceWaterAnimationTime(videoEffects, time);
     if (tracks.some(track => track.animatesTimestamp)) onLightingTimeChange?.();
-  }, [containerRef, restore, tracks, onLightingTimeChange]);
+  }, [containerRef, restore, tracks, videoEffects, onLightingTimeChange]);
 }

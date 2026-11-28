@@ -77,11 +77,14 @@ describe('surface fog rendering', () => {
       invCol3: [240, 140, 0, 1],
       viewportWidth: SIZE,
       viewportHeight: SIZE,
+      pixelRatio: 1,
       unitsPerMeter: 1,
       waveUnitsPerMeter: 1,
       waveOrigin: [0, 0],
+      waveTime: 0,
       cameraHeight: 1000,
-      pattern: 1
+      pattern: 1,
+      rippleModifier: 1
     };
     for (const [name, value] of Object.entries({...defaults, ...uniforms})) {
       uniform(name, value);
@@ -131,24 +134,39 @@ describe('surface fog rendering', () => {
     return pixels.slice(offset, offset + 4);
   }
 
-  function viewportUniforms(viewport: {
-    width: number;
-    height: number;
-    center: number[];
-    cameraPosition: number[];
-    latitude?: number;
-    pixelUnprojectionMatrix: number[];
-    distanceScales: {unitsPerMeter: number[]};
-  }): Record<string, number | number[]> {
+  function viewportUniforms(
+    viewport: {
+      width: number;
+      height: number;
+      center: number[];
+      cameraPosition: number[];
+      latitude?: number;
+      pixelUnprojectionMatrix: number[];
+      distanceScales: {unitsPerMeter: number[]};
+    },
+    props: {rippleSpeed?: number; rippleModifier?: number; animationTimeMs?: number} = {}
+  ): Record<string, number | number[]> {
     const setProps = jest.fn();
     const device = {beginRenderPass: () => ({end: jest.fn()})};
     (ClipSpace as jest.MockedClass<typeof ClipSpace>).mockImplementationOnce(
       () => ({device, shaderInputs: {setProps}, draw: jest.fn()} as unknown as ClipSpace)
     );
-    const effect = new DeckSurfaceFogEffect({pattern: true, density: 1, fogColor: [40, 120, 190]});
+    // Exercise full-strength detail in rendering regressions; test the default separately.
+    const effect = new DeckSurfaceFogEffect({
+      pattern: true,
+      density: 1,
+      fogColor: [40, 120, 190],
+      rippleModifier: 1
+    });
+    effect.setProps(props);
     effect.setup({device});
     effect.postRender({
-      inputBuffer: {width: SIZE, height: SIZE, colorAttachments: [{}], depthStencilAttachment: {}},
+      inputBuffer: {
+        width: viewport.width,
+        height: viewport.height,
+        colorAttachments: [{}],
+        depthStencilAttachment: {}
+      },
       swapBuffer: {},
       viewports: [viewport]
     });
@@ -163,7 +181,8 @@ describe('surface fog rendering', () => {
     longitude = 30.52,
     latitude = 50.45,
     bearing = 35,
-    nearZMultiplier = 0.1
+    nearZMultiplier = 0.1,
+    cropSize = SIZE
   } = {}) {
     const viewport = new WebMercatorViewport({
       width: 1024,
@@ -178,11 +197,12 @@ describe('surface fog rendering', () => {
     // Render a small crop at native resolution, not a downscaled whole map.
     const matrix = [...viewport.pixelUnprojectionMatrix];
     for (let row = 0; row < 4; row++) {
-      matrix[12 + row] += matrix[row] * (512 - SIZE / 2) + matrix[4 + row] * (384 - SIZE / 2);
+      matrix[12 + row] +=
+        matrix[row] * (512 - cropSize / 2) + matrix[4 + row] * (384 - cropSize / 2);
     }
     return {
-      width: SIZE,
-      height: SIZE,
+      width: cropSize,
+      height: cropSize,
       center: [...viewport.center],
       cameraPosition: [...viewport.cameraPosition],
       latitude: viewport.latitude,
@@ -421,6 +441,85 @@ describe('surface fog rendering', () => {
     expect(tilted).not.toEqual(overhead);
   });
 
+  test('evolves ripples smoothly with playback time and reproduces a sought frame', () => {
+    const view = {invCol2: [1000, 0, -1000, 0], invCol3: [290, 140, 0, 1]};
+    const start = render({uniforms: {...view, waveTime: 0}});
+    const later = render({uniforms: {...view, waveTime: 4}});
+    expect(maxPixelDifference(start, later)).toBeGreaterThan(1);
+    const nextFrame = render({uniforms: {...view, waveTime: 4 + 1 / 60}});
+    expect(maxPixelDifference(later, nextFrame)).toBeLessThanOrEqual(2);
+    expect(render({uniforms: {...view, waveTime: 4}})).toEqual(later);
+    expect(render({uniforms: {...view, waveTime: 0}})).toEqual(start);
+  });
+
+  test('ripple modifier scales the wave field from flat water to the current ripples', () => {
+    const size = 64;
+    const viewport = croppedViewport({zoom: 20, pitch: 65, cropSize: size});
+    const uniformsAt = (
+      rippleModifier?: number,
+      animationTimeMs = 2000
+    ): Record<string, number | number[]> => ({
+      ...viewportUniforms(viewport, {rippleModifier, animationTimeMs}),
+      fogHeight: 0,
+      fogThickness: 0
+    });
+    const flat = render({depth: 1, uniforms: uniformsAt(0), size});
+    const half = render({depth: 1, uniforms: uniformsAt(0.5), size});
+    const full = render({depth: 1, uniforms: uniformsAt(1), size});
+    expect(render({depth: 1, uniforms: uniformsAt(), size})).toEqual(
+      render({depth: 1, uniforms: uniformsAt(0.3), size})
+    );
+    expect(render({depth: 1, uniforms: uniformsAt(0, 8000), size})).toEqual(flat);
+    const smooth = uniformsAt(1);
+    expect(
+      render({
+        depth: 1,
+        uniforms: {
+          ...smooth,
+          waveUnitsPerMeter: (smooth.waveUnitsPerMeter as number) / 1024
+        },
+        size
+      })
+    ).toEqual(flat);
+    const contrast = (pixels: number[]) =>
+      pixels.reduce((sum, value, index) => sum + Math.abs(value - flat[index]), 0);
+    expect(contrast(half)).toBeGreaterThan(0);
+    expect(contrast(half)).toBeLessThan(contrast(full));
+  });
+
+  test.each([0, 0.5, 2, 5])(
+    'ripple speed %s renders the corresponding playback frame',
+    rippleSpeed => {
+      const viewport = croppedViewport({zoom: 20, pitch: 65});
+      const pixelsAt = (animationTimeMs: number, speed = 1) =>
+        render({
+          depth: 1,
+          uniforms: {
+            ...viewportUniforms(viewport, {rippleSpeed: speed, animationTimeMs}),
+            fogHeight: 0,
+            fogThickness: 0
+          }
+        });
+      const pixels = pixelsAt(4000, rippleSpeed);
+      expect(pixels).toEqual(pixelsAt(4000 * rippleSpeed));
+      if (rippleSpeed === 0) {
+        expect(pixelsAt(12000, 0)).toEqual(pixels);
+      } else {
+        expect(pixels).not.toEqual(pixelsAt(0));
+      }
+    }
+  );
+
+  test.each<Record<string, number | number[]>>([
+    {pattern: 0},
+    {cameraHeight: -1},
+    {density: 0},
+    {fogHeight: -500},
+    {invCol0: [1000, 0, 0, 0], invCol1: [0, 1000, 0, 0]}
+  ])('playback leaves non-surface or unresolved water unchanged: %j', uniforms => {
+    expect(render({uniforms: {...uniforms, waveTime: 10}})).toEqual(render({uniforms}));
+  });
+
   test('retains more of the scene in shallow water', () => {
     const dark = [0, 0, 0, 255];
     const light = [255, 255, 255, 255];
@@ -444,30 +543,28 @@ describe('surface fog rendering', () => {
   });
 
   test.each([
+    [10, 55],
     [12, 0],
     [12, 55],
     [13, 0],
     [13, 55]
-  ])(
-    'filters unresolved ripples at city zoom %s and pitch %s instead of showing large swells',
-    (zoom, pitch) => {
-      const uniforms = viewportUniforms(croppedViewport({zoom, pitch}));
-      uniforms.fogHeight = 0;
-      uniforms.fogThickness = 0;
-      const pixels = render({depth: 1, uniforms});
-      // Keep the same view and lighting, but make all wavelengths subpixel to
-      // obtain the smooth-water limit. City views must not invent large waves
-      // just to keep the texture visible when ordinary ripples cannot resolve.
-      const smooth = render({
-        depth: 1,
-        uniforms: {
-          ...uniforms,
-          waveUnitsPerMeter: (uniforms.waveUnitsPerMeter as number) / 1024
-        }
-      });
-      expect(maxPixelDifference(pixels, smooth)).toBeLessThanOrEqual(1);
-    }
-  );
+  ])('keeps distant water free of broad patterns at city zoom %s and pitch %s', (zoom, pitch) => {
+    const uniforms = viewportUniforms(croppedViewport({zoom, pitch}));
+    uniforms.fogHeight = 0;
+    uniforms.fogThickness = 0;
+    const pixels = render({depth: 1, uniforms});
+    // Fine ripples are unresolved here. Changing location and playback time
+    // must not introduce broad patches into the smooth water surface.
+    const shifted = render({
+      depth: 1,
+      uniforms: {
+        ...uniforms,
+        waveOrigin: (uniforms.waveOrigin as number[]).map(value => value + 1),
+        waveTime: 3
+      }
+    });
+    expect(shifted).toEqual(pixels);
+  });
 
   test('retains resolved ripples in a neighborhood view', () => {
     const uniforms = viewportUniforms(croppedViewport({zoom: 18, pitch: 65}));
@@ -484,14 +581,47 @@ describe('surface fog rendering', () => {
     expect(pixels).not.toEqual(smooth);
   });
 
-  test.each([14, 16, 18])(
+  test.each(
+    [19, 20, 21].flatMap(zoom => [
+      {zoom, name: 'blue', fogColor: [40, 120, 190]},
+      {zoom, name: 'default', fogColor: [230, 235, 242]}
+    ])
+  )('resolves fine ripple detail at zoom $zoom with $name water', ({zoom, fogColor}) => {
+    const size = 64;
+    const uniforms = {
+      ...viewportUniforms(croppedViewport({zoom, pitch: 65, cropSize: size})),
+      fogHeight: 0,
+      fogThickness: 0,
+      fogColor,
+      density: 0.6
+    };
+    const pixels = render({depth: 1, uniforms, size});
+    // Local curvature isolates small crests from broad lighting gradients.
+    let detail = 0;
+    for (let y = 2; y < size - 2; y++) {
+      for (let x = 2; x < size - 2; x++) {
+        for (let channel = 0; channel < 3; channel++) {
+          const at = (dx: number, dy: number) => pixels[((y + dy) * size + x + dx) * 4 + channel];
+          detail += Math.abs(at(0, 0) - (at(-2, 0) + at(2, 0) + at(0, -2) + at(0, 2)) / 4);
+        }
+      }
+    }
+    const meanDetail = detail / ((size - 4) * (size - 4) * 3);
+    expect(meanDetail).toBeGreaterThan(0.5);
+    const later = render({depth: 1, uniforms: {...uniforms, waveTime: 2}, size});
+    const nextFrame = render({depth: 1, uniforms: {...uniforms, waveTime: 2 + 1 / 60}, size});
+    expect(later).not.toEqual(pixels);
+    expect(maxPixelDifference(later, nextFrame)).toBeLessThanOrEqual(2);
+  });
+
+  test.each([14, 16, 18, 20, 22])(
     'keeps water sampling stable between 1x and 2x resolution at zoom %s',
     zoom => {
       const uniforms = viewportUniforms(croppedViewport({zoom, pitch: 55}));
       uniforms.fogHeight = 0;
       uniforms.fogThickness = 0;
       const native = render({depth: 1, uniforms});
-      const retina = render({depth: 1, uniforms, size: SIZE * 2});
+      const retina = render({depth: 1, uniforms: {...uniforms, pixelRatio: 2}, size: SIZE * 2});
       let totalError = 0;
       let maxError = 0;
       for (let y = 0; y < SIZE; y++) {
@@ -522,58 +652,61 @@ describe('surface fog rendering', () => {
     [3, 7]
   ])('does not repeat ripples after a 4km tile offset (%s, %s)', (x, y) => {
     const original = render();
-    const shifted = render({uniforms: {waveOrigin: [x, y]}});
+    const shifted = render({uniforms: {waveOrigin: [x * 8, y * 8]}});
     expect(shifted).not.toEqual(original);
   });
 
-  test('keeps water shading consistent when rendering an image in tiles', () => {
-    const viewport = croppedViewport({zoom: 18, pitch: 65});
-    const surface = {fogHeight: 0, fogThickness: 0};
-    const full = render({depth: 1, uniforms: {...viewportUniforms(viewport), ...surface}});
-    const tileSize = SIZE / 2;
-    let maxError = 0;
-    for (const y of [0, tileSize]) {
-      for (const x of [0, tileSize]) {
-        const matrix = [...viewport.pixelUnprojectionMatrix];
-        for (let row = 0; row < 4; row++) {
-          matrix[12 + row] += matrix[row] * x + matrix[4 + row] * y;
-        }
-        const tile = render({
-          depth: 1,
-          size: tileSize,
-          uniforms: {
-            ...viewportUniforms({
-              ...viewport,
-              width: tileSize,
-              height: tileSize,
-              pixelUnprojectionMatrix: matrix
-            }),
-            ...surface
+  test.each([18, 20, 22].flatMap(zoom => [0, 4.25].map(waveTime => ({zoom, waveTime}))))(
+    'keeps water shading consistent across tiles at zoom $zoom and time $waveTime',
+    ({zoom, waveTime}) => {
+      const viewport = croppedViewport({zoom, pitch: 65});
+      const surface = {fogHeight: 0, fogThickness: 0, waveTime};
+      const full = render({depth: 1, uniforms: {...viewportUniforms(viewport), ...surface}});
+      const tileSize = SIZE / 2;
+      let maxError = 0;
+      for (const y of [0, tileSize]) {
+        for (const x of [0, tileSize]) {
+          const matrix = [...viewport.pixelUnprojectionMatrix];
+          for (let row = 0; row < 4; row++) {
+            matrix[12 + row] += matrix[row] * x + matrix[4 + row] * y;
           }
-        });
-        // Projection Y is top-down; readPixels returns rows bottom-up.
-        for (let row = 0; row < tileSize; row++) {
-          for (let col = 0; col < tileSize; col++) {
-            const fullOffset = ((SIZE - y - tileSize + row) * SIZE + x + col) * 4;
-            const tileOffset = (row * tileSize + col) * 4;
-            for (let channel = 0; channel < 4; channel++) {
-              maxError = Math.max(
-                maxError,
-                Math.abs(full[fullOffset + channel] - tile[tileOffset + channel])
-              );
+          const tile = render({
+            depth: 1,
+            size: tileSize,
+            uniforms: {
+              ...viewportUniforms({
+                ...viewport,
+                width: tileSize,
+                height: tileSize,
+                pixelUnprojectionMatrix: matrix
+              }),
+              ...surface
+            }
+          });
+          // Projection Y is top-down; readPixels returns rows bottom-up.
+          for (let row = 0; row < tileSize; row++) {
+            for (let col = 0; col < tileSize; col++) {
+              const fullOffset = ((SIZE - y - tileSize + row) * SIZE + x + col) * 4;
+              const tileOffset = (row * tileSize + col) * 4;
+              for (let channel = 0; channel < 4; channel++) {
+                maxError = Math.max(
+                  maxError,
+                  Math.abs(full[fullOffset + channel] - tile[tileOffset + channel])
+                );
+              }
             }
           }
         }
       }
+      expect(maxError).toBeLessThanOrEqual(1);
     }
-    expect(maxError).toBeLessThanOrEqual(1);
-  });
+  );
 
   test('retains close-up wave detail at global Mercator coordinates', () => {
     const global = croppedViewport();
     const globalUniforms = viewportUniforms(global);
     const units = globalUniforms.waveUnitsPerMeter as number;
-    const tile = 4096 * units;
+    const tile = 512 * units;
     const offset = global.center.map(value => Math.floor(value / tile) * tile);
     const localMatrix = [...global.pixelUnprojectionMatrix];
     for (let column = 0; column < 4; column++) {
@@ -606,7 +739,8 @@ describe('surface fog rendering', () => {
   ])('keeps waves continuous across a local origin at $longitude, $latitude', location => {
     const viewport = croppedViewport(location);
     const uniforms = viewportUniforms(viewport);
-    const tile = 4096 * (uniforms.waveUnitsPerMeter as number);
+    uniforms.waveTime = 7.5;
+    const tile = 512 * (uniforms.waveUnitsPerMeter as number);
     const originalMatrix = [...viewport.pixelUnprojectionMatrix];
     const current = render({depth: 1, uniforms: {...uniforms, fogHeight: 0, fogThickness: 0}});
     const nextOrigin = render({
@@ -616,6 +750,7 @@ describe('surface fog rendering', () => {
           ...viewport,
           center: [viewport.center[0] + tile, viewport.center[1] + tile, viewport.center[2]]
         }),
+        waveTime: uniforms.waveTime,
         fogHeight: 0,
         fogThickness: 0
       }
@@ -662,23 +797,62 @@ describe('surface fog rendering', () => {
     }
   );
 
-  test('shows contact highlights only for resolved geometry at the water surface', () => {
-    const uniforms = {fogHeight: 0, fogThickness: 20};
-    const geometry = render({depth: 0.5, uniforms});
-    const basemap = render({depth: 1, uniforms});
-    expect(maxPixelDifference(geometry, basemap)).toBeGreaterThan(1);
+  const contactFrames = [0, 3, 9].flatMap(waveTime =>
+    [
+      [0, 0],
+      [7, 13],
+      [-71, 28]
+    ].map(waveOrigin => ({waveTime, waveOrigin}))
+  );
 
-    const distant = {
-      ...uniforms,
-      invCol0: [1000, 0, 0, 0],
-      invCol1: [0, 1000, 0, 0]
-    };
-    expect(render({depth: 0.5, uniforms: distant})).toEqual(render({depth: 1, uniforms: distant}));
-    const underwater = {...uniforms, cameraHeight: -1};
-    expect(render({depth: 0.5, uniforms: underwater})).toEqual(
-      render({depth: 1, uniforms: underwater})
-    );
+  test.each(
+    contactFrames.flatMap(frame =>
+      [
+        [180, 140, 110, 255],
+        [55, 85, 40, 255],
+        [25, 30, 35, 255]
+      ].map(source => ({...frame, source}))
+    )
+  )('darkens shallow contacts for $source at $waveOrigin, time $waveTime', ({source, ...frame}) => {
+    for (const depth of [0.5, 0.500125]) {
+      const contact = center(
+        render({depth, source, uniforms: {fogHeight: 0, fogThickness: 20, ...frame}})
+      );
+      for (let channel = 0; channel < 3; channel++) {
+        expect(contact[channel]).toBeLessThan(source[channel]);
+        expect(contact[channel]).toBeGreaterThan(source[channel] * 0.7);
+      }
+      expect(contact[3]).toBe(source[3]);
+    }
   });
+
+  test.each(
+    contactFrames.flatMap(frame =>
+      [SOURCE, [245, 240, 230, 255]].map(source => ({...frame, source}))
+    )
+  )(
+    'darkens resolved contacts for $source at $waveOrigin, time $waveTime',
+    ({source, ...frame}) => {
+      const uniforms = {fogHeight: 0, fogThickness: 20, ...frame};
+      const geometry = render({depth: 0.5, source, uniforms});
+      const basemap = render({depth: 1, source, uniforms});
+      expect(maxPixelDifference(geometry, basemap)).toBeGreaterThan(1);
+      expect(geometry.every((value, index) => value <= basemap[index])).toBe(true);
+
+      const distant = {
+        ...uniforms,
+        invCol0: [1000, 0, 0, 0],
+        invCol1: [0, 1000, 0, 0]
+      };
+      expect(render({depth: 0.5, source, uniforms: distant})).toEqual(
+        render({depth: 1, source, uniforms: distant})
+      );
+      const underwater = {...uniforms, cameraHeight: -1};
+      expect(render({depth: 0.5, source, uniforms: underwater})).toEqual(
+        render({depth: 1, source, uniforms: underwater})
+      );
+    }
+  );
 
   test('keeps reflections when an above-water camera has a near plane crossing the water', () => {
     const viewport = croppedViewport({zoom: 18, pitch: 65});

@@ -278,6 +278,50 @@ function animatedAnnotation(): Annotation {
   } as unknown as Annotation;
 }
 
+describe('surface water playback', () => {
+  test('follows camera-only playback, pause, seek and reset without changing saved parameters', () => {
+    const water = createEffect({id: 'water', type: 'surfaceFog', parameters: {pattern: true}});
+    const saved = structuredClone(water.parameters);
+    const view = setup([water], true, {cameraDuration: 10000, managerOpen: false});
+    const time = () => view.getPreviewEffects()![0].deckEffect.props.animationTimeMs;
+    act(() => view.playback().run());
+    expect(time()).toBe(0);
+    advanceFrame(2500);
+    expect(time()).toBe(2500);
+    act(() => view.playback().pause());
+    advanceFrame(4000);
+    expect(time()).toBe(2500);
+    act(() => view.playback().seek(7500));
+    expect(time()).toBe(7500);
+    act(() => view.playback().seek(2500));
+    expect(time()).toBe(2500);
+    act(() => view.playback().run());
+    advanceFrame(4500);
+    expect(time()).toBe(3000);
+    act(() => view.playback().reset());
+    expect(time()).toBe(0);
+
+    act(() => view.playback().seek(6000));
+    // Simulate deck.gl retaining the original instance and copying clone props.
+    water.deckEffect.setProps(view.getPreviewEffects()![0].deckEffect.props);
+    expect(water.deckEffect.props.animationTimeMs).toBe(6000);
+    act(() => view.playback().stop());
+    expect(water.deckEffect.props.animationTimeMs).toBe(0);
+    expect(water.parameters).toEqual(saved);
+    expect(water.parameters).not.toHaveProperty('animationTimeMs');
+    expect(water.clone().deckEffect.props.animationTimeMs).toBe(0);
+  });
+
+  test('static water alone does not start a playback loop', () => {
+    const water = createEffect({type: 'surfaceFog', parameters: {pattern: true}});
+    const view = setup([water]);
+    act(() => view.playback().run());
+    expect(view.playback().hasAnimation).toBe(false);
+    expect(frames.size).toBe(0);
+    expect(water.deckEffect.props.animationTimeMs).toBe(0);
+  });
+});
+
 describe('annotation opacity playback', () => {
   test('plays annotation-only tracks and holds values between blocks without changing saved annotations', () => {
     const annotation = animatedAnnotation();
