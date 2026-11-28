@@ -777,10 +777,16 @@ describe('Point elevation settings', () => {
     expect(advanced).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByLabelText('Marker height (m)')).toHaveValue(7448.36);
     expect(screen.queryByLabelText('Measured from')).not.toBeInTheDocument();
+    await userEvent.keyboard(' ');
+    expect(advanced).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByLabelText('Marker height (m)')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', {name: 'Appearance'}));
     expect(
       within(screen.getByRole('group', {name: 'Decimals'})).getByRole('button', {name: '2'})
     ).toBeInTheDocument();
+    expect(advanced).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(advanced);
+    expect(screen.getByLabelText('Marker height (m)')).toHaveValue(7448.36);
     expect(store.getActions()).toEqual([]);
   });
   test('switching from map height to manual input does not copy the drawing height into a measurement', async () => {

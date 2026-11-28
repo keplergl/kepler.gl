@@ -41,7 +41,6 @@ import {
   AnnotationText,
   ArrowDown,
   ArrowDownSmall,
-  ArrowRight,
   Base,
   BaseProps,
   Circle,
@@ -49,7 +48,8 @@ import {
   DrawPoint,
   EyeSeen,
   EyeUnseen,
-  Trash
+  Trash,
+  VertThreeDots
 } from '../common/icons';
 import {StyledPanelHeader, Tooltip, Button, ButtonGroup, Input} from '../common/styled-components';
 import Switch from '../common/switch';
@@ -57,7 +57,15 @@ import ItemSelector from '../common/item-selector/item-selector';
 import Slider from '../common/slider/slider';
 import Portaled from '../common/portaled';
 import TippyTooltip from '../common/tippy-tooltip';
+import InfoHelperFactory from '../common/info-helper';
 import SingleColorPalette from '../side-panel/layer-panel/single-color-palette';
+import {
+  ConfigGroupCollapsibleContent,
+  LayerConfigGroupLabelFactory,
+  StyledConfigGroupHeader,
+  StyledLayerConfigGroup,
+  StyledLayerConfigGroupAction
+} from '../side-panel/layer-panel/layer-config-group';
 import {
   getCameraSnapshot,
   hexToRgb,
@@ -71,6 +79,8 @@ import {
 import {FormattedMessage} from '@kepler.gl/localization';
 import {angleForTextPlacement, getTextPlacement} from './annotation-utils';
 import {MapViewStateContext} from '../map-view-state-context';
+
+const LayerConfigGroupLabel = LayerConfigGroupLabelFactory(InfoHelperFactory());
 
 const AnnotationArrowIcon = (props: Partial<BaseProps>) => (
   <Base viewBox="0 0 24 24" {...props}>
@@ -746,23 +756,34 @@ function ElevationSettings({
     setOpen: (open: boolean) => void,
     children: React.ReactNode
   ) => (
-    <>
-      <StyledConfigRow>
-        <Button
-          secondary
-          width="100%"
-          aria-expanded={open}
-          aria-controls={`annotation-${annotation.id}-elevation-${id}-content`}
-          onClick={() => setOpen(!open)}
-        >
-          {label(id, title)}
-          {open ? <ArrowDownSmall /> : <ArrowRight height="12px" />}
-        </Button>
-      </StyledConfigRow>
-      {open ? (
-        <div id={`annotation-${annotation.id}-elevation-${id}-content`}>{children}</div>
-      ) : null}
-    </>
+    <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed: !open})}>
+      <StyledConfigGroupHeader
+        collapsible
+        role="button"
+        tabIndex={0}
+        aria-label={label(id, title)}
+        aria-expanded={open}
+        aria-controls={`annotation-${annotation.id}-elevation-${id}-content`}
+        onClick={() => setOpen(!open)}
+        onKeyDown={event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            if (!event.repeat) setOpen(!open);
+          }
+        }}
+      >
+        <LayerConfigGroupLabel label={label(id, title)} collapsed={!open} />
+        <StyledLayerConfigGroupAction className="layer-config-group__action">
+          <VertThreeDots height="18px" />
+        </StyledLayerConfigGroupAction>
+      </StyledConfigGroupHeader>
+      <div
+        className="layer-config-group__content"
+        id={`annotation-${annotation.id}-elevation-${id}-content`}
+      >
+        {open ? <ConfigGroupCollapsibleContent>{children}</ConfigGroupCollapsibleContent> : null}
+      </div>
+    </StyledLayerConfigGroup>
   );
   return (
     <>
