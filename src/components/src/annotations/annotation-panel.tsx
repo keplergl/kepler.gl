@@ -581,11 +581,13 @@ function RulerSettings({
 function AnnotationBackgroundSettings({
   annotation,
   intl,
-  onChange
+  onChange,
+  showToggle = true
 }: {
   annotation: Annotation;
   intl: IntlShape;
   onChange: (changes: Partial<Annotation>) => void;
+  showToggle?: boolean;
 }) {
   const background = annotation.labelBackground;
   const row = (id: string, fallback: string, control: (name: string) => React.ReactNode) => (
@@ -598,20 +600,22 @@ function AnnotationBackgroundSettings({
   );
   return (
     <>
-      {row('labelBackground', 'Label background', name => (
-        <StyledRulerSwitch
-          id={`annotation-${annotation.id}-labelBackground`}
-          aria-label={name}
-          checked={Boolean(background)}
-          onChange={event =>
-            onChange({
-              labelBackground: event.target.checked
-                ? {color: '#000000', opacity: 0.7, padding: 8}
-                : undefined
-            })
-          }
-        />
-      ))}
+      {showToggle
+        ? row('labelBackground', 'Label background', name => (
+            <StyledRulerSwitch
+              id={`annotation-${annotation.id}-labelBackground`}
+              aria-label={name}
+              checked={Boolean(background)}
+              onChange={event =>
+                onChange({
+                  labelBackground: event.target.checked
+                    ? {color: '#000000', opacity: 0.7, padding: 8}
+                    : undefined
+                })
+              }
+            />
+          ))
+        : null}
       {background ? (
         <>
           {row('backgroundColor', 'Background color', () => (
@@ -777,7 +781,8 @@ function ElevationSettings({
     title: string,
     open: boolean,
     setOpen: (open: boolean) => void,
-    children: React.ReactNode
+    children: React.ReactNode,
+    headerControl?: React.ReactNode
   ) => (
     <StyledLayerConfigGroup className={classnames('layer-config-group', {collapsed: !open})}>
       <StyledConfigGroupHeader
@@ -787,8 +792,12 @@ function ElevationSettings({
         aria-label={label(id, title)}
         aria-expanded={open}
         aria-controls={`annotation-${annotation.id}-elevation-${id}-content`}
-        onClick={() => setOpen(!open)}
+        onClick={event => {
+          if (event.target instanceof Element && event.target.closest('.kg-checkbox')) return;
+          setOpen(!open);
+        }}
         onKeyDown={event => {
+          if (event.target !== event.currentTarget) return;
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             if (!event.repeat) setOpen(!open);
@@ -797,6 +806,7 @@ function ElevationSettings({
       >
         <LayerConfigGroupLabel label={label(id, title)} collapsed={!open} />
         <StyledLayerConfigGroupAction className="layer-config-group__action">
+          {headerControl}
           <VertThreeDots height="18px" />
         </StyledLayerConfigGroupAction>
       </StyledConfigGroupHeader>
@@ -815,7 +825,36 @@ function ElevationSettings({
         'Background',
         backgroundOpen,
         setBackgroundOpen,
-        <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
+        <AnnotationBackgroundSettings
+          annotation={annotation}
+          intl={intl}
+          onChange={onChange}
+          showToggle={false}
+        />,
+        <Switch
+          id={`annotation-${annotation.id}-background-enabled`}
+          label={
+            <span
+              style={{
+                position: 'absolute',
+                width: 1,
+                height: 1,
+                overflow: 'hidden',
+                clipPath: 'inset(50%)'
+              }}
+            >
+              {label('background', 'Background')}
+            </span>
+          }
+          checked={Boolean(annotation.labelBackground)}
+          onChange={event =>
+            onChange({
+              labelBackground: event.target.checked
+                ? {color: '#000000', opacity: 0.7, padding: 8}
+                : undefined
+            })
+          }
+        />
       )}
       {row('show', 'Show elevation', name => (
         <StyledRulerSwitch

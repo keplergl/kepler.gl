@@ -927,15 +927,18 @@ describe('Point elevation settings', () => {
       ]);
     }
   );
-  test('groups all background controls and keeps them editable when elevation is disabled', async () => {
+  test('keeps the background switch in the header and collapses only its settings', async () => {
     const store = renderPoint(undefined, {
       labelBackground: {color: '#000000', opacity: 0.7, padding: 8}
     });
     expect(screen.getByLabelText('Show elevation')).not.toBeChecked();
     expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
     const background = screen.getByRole('button', {name: 'Background'});
+    const toggle = screen.getByRole('checkbox', {name: 'Background'});
+    expect(within(background).getByRole('checkbox', {name: 'Background'})).toBe(toggle);
     const expectHiddenControls = () => {
       expect(background).toHaveAttribute('aria-expanded', 'false');
+      expect(toggle).toBeChecked();
       expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
       expect(screen.queryByText('Background color')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Background opacity')).not.toBeInTheDocument();
@@ -948,16 +951,37 @@ describe('Point elevation settings', () => {
     expect(screen.getByText('Background color')).toBeInTheDocument();
     expect(screen.getByLabelText('Background opacity')).toHaveValue(0.7);
     expect(screen.getByLabelText('Padding (px)')).toHaveValue(8);
+    expect(screen.queryByText('Label background')).not.toBeInTheDocument();
     await userEvent.keyboard(' ');
     expectHiddenControls();
     fireEvent.click(background);
     expect(store.getActions()).toEqual([]);
-    expect(screen.getByLabelText('Label background')).toBeChecked();
-    fireEvent.click(screen.getByLabelText('Label background'));
+    fireEvent.click(toggle);
+    expect(background).toHaveAttribute('aria-expanded', 'true');
     expect(store.getActions()).toEqual([
       VisStateActions.updateAnnotation('ruler-1', {labelBackground: undefined})
     ]);
   });
+  test.each([false, true])(
+    'toggles the background from its collapsed header with the keyboard (enabled: %s)',
+    async enabled => {
+      const labelBackground = {color: '#000000', opacity: 0.7, padding: 8};
+      const store = renderPoint(undefined, {
+        labelBackground: enabled ? labelBackground : undefined
+      });
+      const background = screen.getByRole('button', {name: 'Background'});
+      const toggle = screen.getByRole('checkbox', {name: 'Background'});
+      expect(toggle).toHaveProperty('checked', enabled);
+      toggle.focus();
+      await userEvent.keyboard(' ');
+      expect(background).toHaveAttribute('aria-expanded', 'false');
+      expect(store.getActions()).toEqual([
+        VisStateActions.updateAnnotation('ruler-1', {
+          labelBackground: enabled ? undefined : labelBackground
+        })
+      ]);
+    }
+  );
   test('keeps signed measurements independent from anchor and reference drawing heights', () => {
     const elevation: AnnotationElevation = {
       ...DEFAULT_ANNOTATION_ELEVATION,
