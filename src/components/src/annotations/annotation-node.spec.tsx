@@ -543,3 +543,38 @@ test('map height uses a zero guide and follows picked Z without changing saved m
   expect(pickElevation).not.toHaveBeenCalled();
   expect(point.elevation.value).toBe(7448.36);
 });
+
+test('terrain guides use captured display height and hide unavailable terrain', () => {
+  const point = {
+    ...annotation,
+    kind: AnnotationKind.POINT as const,
+    anchorPoint: [1, 2, 9000] as [number, number, number],
+    elevation: {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      value: 7448.36,
+      datum: 'MSL',
+      reference: {
+        source: 'terrain' as const,
+        value: 990,
+        unit: 'm' as const,
+        datum: 'MSL',
+        displayZ: 2970,
+        coordinate: [1, 2] as [number, number]
+      }
+    }
+  };
+  const vp = {...viewport, project: ([lng, lat, z = 0]: readonly number[]) => [lng, lat - z]};
+  expect(getElevationGuide(point, vp)).toEqual({ex: 0, ey: 6030});
+  expect(
+    getElevationGuide(
+      {
+        ...point,
+        elevation: {
+          ...point.elevation,
+          reference: {...point.elevation.reference, value: null, displayZ: undefined}
+        }
+      },
+      vp
+    )
+  ).toBeNull();
+});

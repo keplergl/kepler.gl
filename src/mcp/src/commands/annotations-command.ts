@@ -141,18 +141,33 @@ const elevation = z
         'Source field provenance. Dragging the anchor captures a new field value; null selects manual input.'
       ),
     reference: z
-      .object({
-        value: z.number(),
-        unit: elevationUnit,
-        datum: elevationDatum,
-        displayZ: z
-          .number()
-          .optional()
+      .union([
+        z
+          .object({
+            source: z.literal('manual').optional(),
+            value: z.number(),
+            unit: elevationUnit,
+            datum: elevationDatum,
+            displayZ: z
+              .number()
+              .optional()
+              .describe(
+                'Reference rendering altitude in metres; defaults to the reference value converted to metres.'
+              )
+          })
+          .strict(),
+        z
+          .object({
+            source: z.literal('terrain'),
+            datum: elevationDatum.describe(
+              'Known datum of the loaded DEM; use unknown when not established.'
+            )
+          })
+          .strict()
           .describe(
-            'Reference rendering altitude in metres; defaults to the reference value converted to metres.'
+            'Capture loaded basemap terrain at the anchor. Reapply to refresh. The unexaggerated measurement and exaggerated drawing height are saved for export; unavailable terrain never becomes zero.'
           )
-      })
-      .strict()
+      ])
       .nullable(),
     display: z.enum(['altitude', 'relative', 'both']),
     outputUnit: elevationUnit,
@@ -164,7 +179,7 @@ const elevation = z
   .strict();
 const annotationFields = z.object({
   elevation: elevation.describe(
-    'Point elevation callout. Choose source map for live anchor height above map zero, or measurement for captured values and an explicit reference. No terrain lookup. Partial updates preserve other settings.'
+    'Point elevation callout. Choose source map for live anchor height above map zero, or measurement for captured values and a manual or terrain reference. Terrain resolves in the live map from a loaded DEM; unavailable terrain stays explicit. Partial updates preserve other settings.'
   ),
   rulerStyle: rulerStyle.describe(
     'Opt in to styled live distance. Defaults: auto metric units, one decimal, above, zero offset. Partial updates preserve other settings.'
@@ -400,6 +415,9 @@ function annotationConfig(
                     : DEFAULT_ANNOTATION_ELEVATION),
                   ...(previous?.kind === AnnotationKind.POINT ? previous.elevation : {}),
                   ...elevation,
+                  ...(elevation.reference?.source === 'terrain'
+                    ? {reference: {...elevation.reference, value: null, unit: 'm'}}
+                    : {}),
                   ...(elevation.field === null ? {field: undefined} : {}),
                   ...(elevation.field && elevation.value === undefined ? {value: null} : {})
                 })

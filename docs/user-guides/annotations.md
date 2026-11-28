@@ -107,6 +107,16 @@ For the lightning example, ask the AI to configure a measured elevation of `7448
 
 Missing measurements and unknown/mismatched height references remain explicit. Negative values keep their sign, and differences are calculated before rounding. Guides stay at the anchor's longitude and latitude as the camera moves; globe-occluded reference points are hidden.
 
-Saved maps retain their selected source mode, measurements, reference, and styling. Existing callouts without a source mode retain measured-value behavior. Map-height mode leaves saved measurement settings intact but ignores them until a measured source is selected through MCP/AI. Both modes use the shared renderer for HTML export, native previews, and recordings. MCP supports `elevation.source: "map"` for anchor height and `"measurement"` for captured values; omission preserves existing behavior, partial updates retain other settings, and `elevation: null` removes the callout. Automatic terrain lookup remains unsupported.
+Saved maps retain their selected source mode, measurements, reference, and styling. Existing callouts without a source mode retain measured-value behavior. Map-height mode leaves saved measurement settings intact but ignores them until a measured source is selected through MCP/AI. Both modes use the shared renderer for HTML export, native previews, and recordings. MCP supports `elevation.source: "map"` for anchor height and `"measurement"` for captured values; omission preserves existing behavior, partial updates retain other settings, and `elevation: null` removes the callout. Terrain sampling uses a loaded basemap DEM when requested through MCP/AI.
+
+### Terrain references
+
+Through MCP/AI, set `elevation.source` to `measurement` and `elevation.reference` to `{"source":"terrain","datum":"MSL"}` (substitute the actual DEM datum, or `unknown` when it is not established). Set `display` to `relative` or `both` for height above terrain. This samples the loaded basemap DEM at the anchor; it does not enable terrain or download a new elevation dataset.
+
+The sample stores the unexaggerated height in metres, the terrain's exaggerated drawing height, its geographic footprint, and DEM source ID. Camera changes and save/reopen retain that snapshot. Moving the anchor horizontally invalidates it and captures at the new position when tiles are available. Reapplying the terrain reference through MCP explicitly refreshes it. Changing only the anchor's drawing height or label styling preserves the sample.
+
+Missing tiles, unsupported terrain APIs, or a missing DEM leave **Ground reference unavailable**, with no relative measurement or guide. Unknown or incompatible datums also prevent relative measurements. An annotation assigned to a split-map pane samples that pane; an unassigned annotation samples the primary pane. Native exports use saved samples and do not query terrain again.
+
+MapLibre sampling checks for a real covering DEM tile before reading its raw elevation, avoiding the synthetic zero returned for missing tiles and the camera-relative query used by MapLibre 4. This guarded adapter depends on the installed terrain API; unsupported versions fail as unavailable. Mapbox hosts with terrain-query support are sampled with exaggeration disabled; older Mapbox versions without that API remain unavailable.
 
 [Back to table of contents](README.md)

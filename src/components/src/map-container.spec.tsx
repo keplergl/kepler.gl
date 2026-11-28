@@ -12,6 +12,7 @@ import {Timeline} from '@luma.gl/engine';
 import {EDITOR_MODES} from '@kepler.gl/constants';
 import {BitmapOverlayLayer, getEditorLayer, KeplerGlLayers} from '@kepler.gl/layers';
 import MapContainerFactory from './map-container';
+import {sampleAnnotationTerrain} from './annotations/annotation-terrain';
 import {isPointVisibleOnGlobe} from './annotations/annotation-utils';
 import {
   INITIAL_MAP_STATE,
@@ -1592,3 +1593,115 @@ test.each(['point', 'geojson', 'geoarrow'])(
     ).toBeNull();
   }
 );
+
+function terrainMapFixture(value: number, exaggeration = 3) {
+  return {
+    getTerrain: jest.fn(() => ({source: 'dem', exaggeration})),
+    isSourceLoaded: jest.fn(() => true),
+    transform: {tileZoom: 8},
+    terrain: {
+      exaggeration,
+      _getOverscaledTileIDFromLngLatZoom: jest.fn(() => ({
+        tileID: {},
+        mercatorX: 100,
+        mercatorY: 200
+      })),
+      sourceCache: {getSourceTile: jest.fn(() => ({dem: {}}))},
+      getDEMElevation: jest.fn(() => value)
+    },
+    queryTerrainElevation: jest.fn(() => value - 500)
+  };
+}
+
+test.each([
+  [990, 3],
+  [0, 3],
+  [-1000, 3],
+  [990, 0]
+])('captures raw terrain %s separately from exaggeration %s', (value, exaggeration) => {
+  const map = terrainMapFixture(value, exaggeration);
+  expect(sampleAnnotationTerrain(map, [1, 2], 'maplibre')).toEqual({
+    value,
+    displayZ: value * exaggeration,
+    sourceId: 'dem'
+  });
+  expect(map.queryTerrainElevation).not.toHaveBeenCalled();
+  map.terrain.sourceCache.getSourceTile.mockReturnValue(undefined as any);
+  map.terrain.getDEMElevation.mockClear();
+  expect(sampleAnnotationTerrain(map, [1, 2], 'maplibre')).toBeNull();
+  expect(map.terrain.getDEMElevation).not.toHaveBeenCalled();
+});
+
+test('terrain sampling fails closed for missing sources, unloaded tiles, unsupported APIs and invalid samples', () => {
+  expect(sampleAnnotationTerrain({}, [1, 2], 'maplibre')).toBeNull();
+  const map = terrainMapFixture(990);
+  map.isSourceLoaded.mockReturnValue(false);
+  expect(sampleAnnotationTerrain(map, [1, 2], 'maplibre')).toBeNull();
+  map.isSourceLoaded.mockReturnValue(true);
+  map.terrain.getDEMElevation.mockReturnValue(NaN);
+  expect(sampleAnnotationTerrain(map, [1, 2], 'maplibre')).toBeNull();
+  expect(sampleAnnotationTerrain(map, [1, 90], 'maplibre')).toBeNull();
+  map.terrain.getDEMElevation.mockImplementation(() => {
+    throw new Error('missing DEM');
+  });
+  expect(sampleAnnotationTerrain(map, [1, 2], 'maplibre')).toBeNull();
+});
+
+test('Mapbox terrain is sampled without exaggeration and never replaces a missing value with zero', () => {
+  const map = terrainMapFixture(990);
+  map.queryTerrainElevation.mockReturnValue(990);
+  expect(sampleAnnotationTerrain(map, [1, 2], 'mapbox')).toEqual({
+    value: 990,
+    displayZ: 2970,
+    sourceId: 'dem'
+  });
+  expect(map.queryTerrainElevation).toHaveBeenCalledWith([1, 2], {exaggerated: false});
+  map.queryTerrainElevation.mockReturnValue(null as any);
+  expect(sampleAnnotationTerrain(map, [1, 2], 'mapbox')).toBeNull();
+});
+
+test('live terrain resolution waits for tiles, saves a sample once, and respects split panes and export', () => {
+  const elevation = {
+    source: 'measurement',
+    value: 7448.36,
+    reference: {source: 'terrain', value: null, unit: 'm', datum: 'MSL'}
+  };
+  const point = {id: 'height', kind: 'POINT', anchorPoint: [1, 2, 9000], elevation};
+  const update = jest.fn();
+  const props = {
+    visState: {annotations: [point]},
+    mapStyle: {mapStyles: {}, styleType: 'maplibre'},
+    index: 0,
+    visStateActions: {updateAnnotation: update}
+  };
+  const container = new MapContainer(props);
+  container._map = terrainMapFixture(990);
+  container._map.isSourceLoaded.mockReturnValue(false);
+  container._resolveAnnotationTerrain();
+  expect(update).not.toHaveBeenCalled();
+  container._map.isSourceLoaded.mockReturnValue(true);
+  container._resolveAnnotationTerrain();
+  expect(update).toHaveBeenCalledWith('height', {
+    elevation: {
+      ...elevation,
+      reference: {
+        ...elevation.reference,
+        value: 990,
+        displayZ: 2970,
+        coordinate: [1, 2],
+        sourceId: 'dem'
+      }
+    }
+  });
+  const sampled = update.mock.calls[0][1];
+  update.mockClear();
+  container.props = {...props, visState: {annotations: [{...point, ...sampled}]}};
+  container._resolveAnnotationTerrain();
+  expect(update).not.toHaveBeenCalled();
+  container.props = {...props, index: 1};
+  container._resolveAnnotationTerrain();
+  expect(update).not.toHaveBeenCalled();
+  container.props = {...props, isExport: true};
+  container._resolveAnnotationTerrain();
+  expect(update).not.toHaveBeenCalled();
+});

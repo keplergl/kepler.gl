@@ -97,6 +97,20 @@ export type PointAnnotation = AnnotationWithArm & {
 
 export type ElevationUnit = 'm' | 'km' | 'ft';
 
+export type AnnotationElevationReference = {
+  /** Omitted means an explicitly supplied reference. */
+  source?: 'manual' | 'terrain';
+  /** Null is only valid for an unresolved/unavailable terrain sample. */
+  value: number | null;
+  unit: ElevationUnit;
+  datum: string;
+  /** Rendering height in metres, including terrain exaggeration when sampled. */
+  displayZ?: number;
+  /** Geographic footprint and DEM source of a saved terrain sample. */
+  coordinate?: [number, number];
+  sourceId?: string;
+};
+
 /** A map height or a captured measurement independent of rendering altitude. */
 export type AnnotationElevation = {
   /** Omitted preserves captured-measurement behavior in existing saved callouts. */
@@ -108,13 +122,7 @@ export type AnnotationElevation = {
   datum: string;
   /** Selecting a field captures its value when the anchor is next dragged onto a feature. */
   field?: {dataId: string; name: string};
-  reference: {
-    value: number;
-    unit: ElevationUnit;
-    datum: string;
-    /** Rendering height in metres. Omitted means the reference value converted to metres. */
-    displayZ?: number;
-  } | null;
+  reference: AnnotationElevationReference | null;
   display: 'altitude' | 'relative' | 'both';
   outputUnit: ElevationUnit;
   precision: number;
