@@ -80,7 +80,8 @@ import {FormattedMessage} from '@kepler.gl/localization';
 import {angleForTextPlacement, getTextPlacement} from './annotation-utils';
 import {MapViewStateContext} from '../map-view-state-context';
 
-const LayerConfigGroupLabel = LayerConfigGroupLabelFactory(InfoHelperFactory());
+const InfoHelper = InfoHelperFactory();
+const LayerConfigGroupLabel = LayerConfigGroupLabelFactory(InfoHelper);
 
 const AnnotationArrowIcon = (props: Partial<BaseProps>) => (
   <Base viewBox="0 0 24 24" {...props}>
@@ -366,6 +367,7 @@ function CaptionMarginInput({
   max,
   min = 0,
   step = 1,
+  precision,
   onChange
 }: {
   label: string;
@@ -373,10 +375,13 @@ function CaptionMarginInput({
   max?: number;
   min?: number;
   step?: number;
+  precision?: number;
   onChange: (value: number) => void;
 }) {
-  const [draft, setDraft] = React.useState(String(value ?? ''));
-  React.useEffect(() => setDraft(String(value ?? '')), [value]);
+  const inputValue =
+    value !== null && precision !== undefined ? Number(value.toFixed(precision)) : value;
+  const [draft, setDraft] = React.useState(String(inputValue ?? ''));
+  React.useEffect(() => setDraft(String(inputValue ?? '')), [inputValue]);
   const commit = () => {
     const next = Number(draft);
     if (
@@ -385,9 +390,11 @@ function CaptionMarginInput({
       next >= min &&
       (max === undefined || next <= max)
     ) {
-      if (next !== value) onChange(next);
+      const committedValue = precision === undefined ? next : Number(next.toFixed(precision));
+      if (precision !== undefined) setDraft(String(committedValue));
+      if (committedValue !== inputValue) onChange(committedValue);
     } else {
-      setDraft(String(value ?? ''));
+      setDraft(String(inputValue ?? ''));
     }
   };
   return (
@@ -680,15 +687,26 @@ function ElevationSettings({
   const elevation = annotation.elevation;
   const [advancedOpen, setAdvancedOpen] = React.useState(false);
   const [elevationAppearanceOpen, setElevationAppearanceOpen] = React.useState(false);
-  const [appearanceOpen, setAppearanceOpen] = React.useState(false);
   const patch = (changes: Partial<AnnotationElevation>) =>
     onChange({elevation: {...DEFAULT_ANNOTATION_ELEVATION, ...elevation, ...changes}});
   const label = (id: string, fallback: string) =>
     intl.formatMessage({id: `annotationManager.elevation.${id}`, defaultMessage: fallback});
-  const row = (id: string, fallback: string, control: (name: string) => React.ReactNode) => (
+  const row = (
+    id: string,
+    fallback: string,
+    control: (name: string) => React.ReactNode,
+    description?: string
+  ) => (
     <StyledConfigRow key={id}>
-      <StyledConfigLabel as="label" htmlFor={`annotation-${annotation.id}-elevation-${id}`}>
-        {label(id, fallback)}
+      <StyledConfigLabel>
+        <label htmlFor={`annotation-${annotation.id}-elevation-${id}`}>{label(id, fallback)}</label>
+        {description ? (
+          <InfoHelper
+            id={`annotation-${annotation.id}-elevation-${id}-help`}
+            description={description}
+            width={240}
+          />
+        ) : null}
       </StyledConfigLabel>
       {control(label(id, fallback))}
     </StyledConfigRow>
@@ -704,7 +722,7 @@ function ElevationSettings({
       <div role="group" aria-label={name}>
         <StyledSelect
           options={options}
-          selectedItems={options.find(option => option.id === value)}
+          selectedItems={options.find(option => option.id === value) ?? {id: value, label: value}}
           displayOption="label"
           getOptionValue="id"
           multiSelect={false}
@@ -737,7 +755,15 @@ function ElevationSettings({
     value: string,
     change: (value: string) => void
   ) =>
-    row(id, fallback, name => <ElevationDatumInput label={name} value={value} onChange={change} />);
+    row(
+      id,
+      fallback,
+      name => <ElevationDatumInput label={name} value={value} onChange={change} />,
+      label(
+        'datumHelp',
+        'Use the same height reference for both values, such as MSL for sea level. Leave unknown if you do not know it.'
+      )
+    );
   const reference = elevation?.reference;
   const mapHeight = elevation?.source === 'map';
   const datasetOptions = Object.values(datasets || {}).filter(table =>
@@ -745,11 +771,6 @@ function ElevationSettings({
   );
   const table = datasetOptions.find(table => table.id === elevation?.field?.dataId);
   const fields = table?.fields.filter(field => ['integer', 'real'].includes(field.type)) ?? [];
-  const help = (id: string, text: string) => (
-    <StyledConfigRow>
-      <StyledConfigLabel style={{textTransform: 'none'}}>{label(id, text)}</StyledConfigLabel>
-    </StyledConfigRow>
-  );
   const disclosure = (
     id: string,
     title: string,
@@ -859,13 +880,17 @@ function ElevationSettings({
                     fields.map(field => ({id: field.name, label: field.name})),
                     name => patch({field: {...elevation.field!, name}, value: null})
                   )}
-                  {help(
-                    'fieldCaptureHelp',
-                    'Drag the anchor onto a feature to capture its value. A missed pick clears the value.'
+                  {row(
+                    'captured',
+                    'Captured value',
+                    () => (
+                      <span>{elevation.value ?? '—'}</span>
+                    ),
+                    label(
+                      'fieldCaptureHelp',
+                      'Drag the anchor onto a feature to capture its value. A missed pick clears the value.'
+                    )
                   )}
-                  {row('captured', 'Captured value', () => (
-                    <span>{elevation.value ?? '—'}</span>
-                  ))}
                 </>
               ) : (
                 numericInput('value', 'Measured elevation', elevation.value, value =>
@@ -875,21 +900,29 @@ function ElevationSettings({
               {select('measurementUnits', 'Measurement units', elevation.unit, units, unit =>
                 patch({unit: unit as ElevationUnit})
               )}
-              {row('compareGround', 'Compare with ground', name => (
-                <StyledRulerSwitch
-                  id={`annotation-${annotation.id}-elevation-compareGround`}
-                  aria-label={name}
-                  checked={Boolean(reference)}
-                  onChange={event =>
-                    patch({
-                      reference: event.target.checked
-                        ? {value: 0, unit: elevation.unit, datum: elevation.datum}
-                        : null,
-                      display: event.target.checked ? 'both' : 'altitude'
-                    })
-                  }
-                />
-              ))}
+              {row(
+                'compareGround',
+                'Compare with ground',
+                name => (
+                  <StyledRulerSwitch
+                    id={`annotation-${annotation.id}-elevation-compareGround`}
+                    aria-label={name}
+                    checked={Boolean(reference)}
+                    onChange={event =>
+                      patch({
+                        reference: event.target.checked
+                          ? {value: 0, unit: elevation.unit, datum: elevation.datum}
+                          : null,
+                        display: event.target.checked ? 'both' : 'altitude'
+                      })
+                    }
+                  />
+                ),
+                label(
+                  'groundHelp',
+                  'Enter a known ground elevation. Set matching height references in Advanced; ground is not detected automatically.'
+                )
+              )}
               {reference ? (
                 <>
                   {numericInput('groundElevation', 'Ground elevation', reference.value, value =>
@@ -897,10 +930,6 @@ function ElevationSettings({
                   )}
                   {select('groundUnits', 'Ground units', reference.unit, units, unit =>
                     patch({reference: {...reference, unit: unit as ElevationUnit}})
-                  )}
-                  {help(
-                    'groundHelp',
-                    'Enter a known ground elevation. Set matching height references in Advanced; ground is not detected automatically.'
                   )}
                   {select(
                     'display',
@@ -940,19 +969,32 @@ function ElevationSettings({
             advancedOpen,
             setAdvancedOpen,
             <>
-              {numericInput(
+              {row(
                 'anchorHeight',
                 'Marker height (m)',
-                annotation.anchorPoint[2] ?? 0,
-                z =>
-                  onChange({anchorPoint: [annotation.anchorPoint[0], annotation.anchorPoint[1], z]})
+                name => (
+                  <CaptionMarginInput
+                    label={name}
+                    value={annotation.anchorPoint[2] ?? 0}
+                    min={-Infinity}
+                    step={0.001}
+                    precision={3}
+                    onChange={z =>
+                      onChange({
+                        anchorPoint: [annotation.anchorPoint[0], annotation.anchorPoint[1], z]
+                      })
+                    }
+                  />
+                ),
+                !mapHeight
+                  ? label(
+                      'measurementHelp',
+                      'Marker height controls drawing only. Measured elevation stays independent, even when the layer height is exaggerated.'
+                    )
+                  : undefined
               )}
               {!mapHeight ? (
                 <>
-                  {help(
-                    'measurementHelp',
-                    'Marker height controls drawing only. Measured elevation stays independent, even when the layer height is exaggerated.'
-                  )}
                   {datumInput('datum', 'Measured from', elevation.datum, datum => patch({datum}))}
                   {reference ? (
                     <>
@@ -971,10 +1013,6 @@ function ElevationSettings({
                       )}
                     </>
                   ) : null}
-                  {help(
-                    'datumHelp',
-                    'Use the same height reference for both values, such as MSL for sea level. Leave unknown if you do not know it.'
-                  )}
                 </>
               ) : null}
             </>
@@ -989,7 +1027,7 @@ function ElevationSettings({
                 'precision',
                 'Decimals',
                 String(elevation.precision),
-                Array.from({length: 7}, (_, i) => ({id: String(i), label: String(i)})),
+                Array.from({length: 4}, (_, i) => ({id: String(i), label: String(i)})),
                 value => patch({precision: Number(value)})
               )}
               {select(
@@ -1010,13 +1048,6 @@ function ElevationSettings({
           )}
         </>
       ) : null}
-      {disclosure(
-        'appearance',
-        'Appearance',
-        appearanceOpen,
-        setAppearanceOpen,
-        <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
-      )}
     </>
   );
 }
@@ -1745,14 +1776,23 @@ export default function AnnotationManagerFactory(): React.FC<any> {
                         />
                       ) : null}
                       {annotation.kind === AnnotationKind.POINT ? (
-                        <ElevationSettings
-                          annotation={annotation}
-                          datasets={visState.datasets}
-                          intl={intl}
-                          onChange={changes =>
-                            visStateActions.updateAnnotation(annotation.id, changes)
-                          }
-                        />
+                        <>
+                          <AnnotationBackgroundSettings
+                            annotation={annotation}
+                            intl={intl}
+                            onChange={changes =>
+                              visStateActions.updateAnnotation(annotation.id, changes)
+                            }
+                          />
+                          <ElevationSettings
+                            annotation={annotation}
+                            datasets={visState.datasets}
+                            intl={intl}
+                            onChange={changes =>
+                              visStateActions.updateAnnotation(annotation.id, changes)
+                            }
+                          />
+                        </>
                       ) : null}
                     </StyledConfigSection>
                   ) : null}

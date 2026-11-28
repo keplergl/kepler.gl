@@ -6,7 +6,7 @@ import {DEFAULT_ANNOTATION_ELEVATION, DEFAULT_MAP_HEIGHT_ELEVATION} from '@keple
 import React, {useContext} from 'react';
 import {Provider} from 'react-redux';
 import configureStore from 'redux-mock-store';
-import {fireEvent, screen, within} from '@testing-library/react';
+import {fireEvent, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {WebMercatorViewport} from '@math.gl/web-mercator';
 
@@ -761,11 +761,17 @@ describe('Point elevation settings', () => {
     );
     return store;
   }
-  test('starts with map height and a preview, and reveals advanced and appearance controls on demand', async () => {
+  test('shows general appearance before elevation and reveals advanced and elevation appearance on demand', async () => {
     const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION});
     expect(
       screen.getByText('Content').compareDocumentPosition(screen.getByLabelText('Show elevation'))
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(
+      screen
+        .getByLabelText('Label background')
+        .compareDocumentPosition(screen.getByLabelText('Show elevation'))
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(screen.queryByRole('button', {name: 'Appearance'})).not.toBeInTheDocument();
     expect(screen.getByText('Map height')).toBeInTheDocument();
     expect(screen.getByRole('status', {name: 'Label preview'})).toHaveTextContent(
       '7448.36 m above map zero'
@@ -790,9 +796,8 @@ describe('Point elevation settings', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('group', {name: 'Vertical guide'})).toBeInTheDocument();
     expect(screen.getByRole('group', {name: 'Marker style'})).toBeInTheDocument();
-    expect(screen.queryByLabelText('Label background')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Label background')).toBeInTheDocument();
     fireEvent.click(elevationAppearance);
-    fireEvent.click(screen.getByRole('button', {name: 'Appearance'}));
     expect(screen.getByLabelText('Label background')).toBeInTheDocument();
     expect(screen.queryByRole('group', {name: 'Decimals'})).not.toBeInTheDocument();
     expect(screen.queryByRole('group', {name: 'Vertical guide'})).not.toBeInTheDocument();
@@ -801,6 +806,79 @@ describe('Point elevation settings', () => {
     fireEvent.click(advanced);
     expect(screen.getByLabelText('Marker height (m)')).toHaveValue(7448.36);
     expect(store.getActions()).toEqual([]);
+  });
+  test.each<[string, number]>([
+    ['12.34567', 12.346],
+    ['-12.34567', -12.346],
+    ['0', 0]
+  ])('rounds an edited marker height of %s to %s metres', (draft, expected) => {
+    const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION}, {anchorPoint: [1, 2, 123.456789]});
+    fireEvent.click(screen.getByRole('button', {name: 'Advanced'}));
+    const height = screen.getByLabelText('Marker height (m)');
+    expect(height).toHaveValue(123.457);
+    fireEvent.blur(height);
+    expect(store.getActions()).toEqual([]);
+    fireEvent.change(height, {target: {value: ''}});
+    fireEvent.blur(height);
+    expect(height).toHaveValue(123.457);
+    expect(store.getActions()).toEqual([]);
+    fireEvent.change(height, {target: {value: draft}});
+    fireEvent.blur(height);
+    expect(height).toHaveValue(expected);
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {anchorPoint: [1, 2, expected]})
+    ]);
+  });
+  test('offers only zero through three decimals without changing an existing saved precision', async () => {
+    const elevation = {...DEFAULT_MAP_HEIGHT_ELEVATION, precision: 6};
+    const store = renderPoint(elevation);
+    fireEvent.click(screen.getByRole('button', {name: 'Elevation appearance'}));
+    within(screen.getByRole('group', {name: 'Decimals'}))
+      .getByRole('button', {name: '6'})
+      .focus();
+    await userEvent.keyboard('{Enter}');
+    const menu = screen.getByTitle('0').closest('.list-selector') as HTMLElement;
+    expect(
+      within(menu)
+        .getAllByText(/^\d$/)
+        .map(option => option.textContent)
+    ).toEqual(['0', '1', '2', '3']);
+    expect(store.getActions()).toEqual([]);
+    await userEvent.click(within(menu).getByText('3'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {elevation: {...elevation, precision: 3}})
+    ]);
+  });
+  test.each([
+    ['captured', 'Drag the anchor onto a feature'],
+    ['compareGround', 'Enter a known ground elevation'],
+    ['anchorHeight', 'Marker height controls drawing only'],
+    ['datum', 'Use the same height reference for both values'],
+    ['referenceDatum', 'Use the same height reference for both values']
+  ])('shows %s guidance only in its shared help tooltip', async (id, text) => {
+    // JSDOM matches :hover on every element in an unfocused document.
+    const hasFocus = jest.spyOn(document, 'hasFocus').mockReturnValue(true);
+    try {
+      const user = userEvent.setup();
+      const store = renderPoint({
+        ...DEFAULT_ANNOTATION_ELEVATION,
+        field: {dataId: 'detections', name: 'altitude'},
+        reference: {value: 0, unit: 'm', datum: 'MSL'}
+      });
+      fireEvent.click(screen.getByRole('button', {name: 'Advanced'}));
+      const tooltipId = `annotation-ruler-1-elevation-${id}-help`;
+      const tooltip = document.getElementById(tooltipId);
+      expect(tooltip).toHaveTextContent(text);
+      expect(tooltip).not.toBeVisible();
+      const help = document.querySelector(`[data-for="${tooltipId}"]`) as HTMLElement;
+      await user.hover(help);
+      await waitFor(() => expect(tooltip).toBeVisible());
+      await user.unhover(help);
+      await waitFor(() => expect(tooltip).not.toBeVisible());
+      expect(store.getActions()).toEqual([]);
+    } finally {
+      hasFocus.mockRestore();
+    }
   });
   test('switching from map height to manual input does not copy the drawing height into a measurement', async () => {
     const elevation = {...DEFAULT_MAP_HEIGHT_ELEVATION};
@@ -851,7 +929,6 @@ describe('Point elevation settings', () => {
     });
     expect(screen.getByLabelText('Show elevation')).not.toBeChecked();
     expect(screen.queryByRole('button', {name: 'Elevation appearance'})).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', {name: 'Appearance'}));
     expect(screen.getByLabelText('Label background')).toBeChecked();
     fireEvent.click(screen.getByLabelText('Label background'));
     expect(store.getActions()).toEqual([
