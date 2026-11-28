@@ -571,6 +571,18 @@ test('terrain guides use captured display height and hide unavailable terrain', 
         ...point,
         elevation: {
           ...point.elevation,
+          reference: {...point.elevation.reference, displayZ: undefined}
+        }
+      },
+      vp
+    )
+  ).toBeNull();
+  expect(
+    getElevationGuide(
+      {
+        ...point,
+        elevation: {
+          ...point.elevation,
           reference: {...point.elevation.reference, value: null, displayZ: undefined}
         }
       },

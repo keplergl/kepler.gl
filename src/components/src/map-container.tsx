@@ -364,6 +364,7 @@ export default function MapContainerFactory(
       if (this._map) {
         this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
         this._map.off(MAPBOXGL_RENDER, this._onMapRender);
+        this._map.off('idle', this._resolveAnnotationTerrain);
         this._removeBasemapAttributionListeners();
       }
       if (!this._ref.current) {
@@ -399,8 +400,14 @@ export default function MapContainerFactory(
     _basemapSourceDataListener: ((e: any) => void) | null = null;
     _basemapIdleListener: (() => void) | null = null;
 
+    _lastAnnotationTerrainAttempt = -Infinity;
+
     _onMapRender = () => {
-      this._resolveAnnotationTerrain();
+      // A missing DEM must not cause a covering-tile lookup on every frame.
+      // Annotation edits and map binding still resolve immediately.
+      if (performance.now() - this._lastAnnotationTerrainAttempt >= 1000) {
+        this._resolveAnnotationTerrain();
+      }
       if (typeof this.props.onMapRender === 'function') {
         this.props.onMapRender(this._map);
       }
@@ -408,6 +415,7 @@ export default function MapContainerFactory(
 
     _resolveAnnotationTerrain = () => {
       if (!this._map || this.props.isExport) return;
+      this._lastAnnotationTerrainAttempt = performance.now();
       const {visState, mapStyle, index = 0, visStateActions} = this.props;
       const currentStyle = mapStyle?.mapStyles?.[mapStyle.styleType];
       const library =
@@ -900,6 +908,7 @@ export default function MapContainerFactory(
         if (map && this._map !== map) {
           this._map.off(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
           this._map.off(MAPBOXGL_RENDER, this._onMapRender);
+          this._map.off('idle', this._resolveAnnotationTerrain);
           this._removeBasemapAttributionListeners();
           this._map = null;
         }
@@ -914,6 +923,7 @@ export default function MapContainerFactory(
         // bind mapboxgl event listener
         this._map.on(MAPBOXGL_STYLE_UPDATE, this._onMapboxStyleUpdate);
         this._map.on(MAPBOXGL_RENDER, this._onMapRender);
+        this._map.on('idle', this._resolveAnnotationTerrain);
         this._resolveAnnotationTerrain();
       }
 

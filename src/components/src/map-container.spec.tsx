@@ -1695,13 +1695,85 @@ test('live terrain resolution waits for tiles, saves a sample once, and respects
   });
   const sampled = update.mock.calls[0][1];
   update.mockClear();
+  // Snapshots remain explicit captures even after a source/exaggeration change.
+  container._map.getTerrain.mockReturnValue({source: 'new-dem', exaggeration: 5});
+  container._map.terrain.exaggeration = 5;
+  container._map.terrain.getDEMElevation.mockClear();
   container.props = {...props, visState: {annotations: [{...point, ...sampled}]}};
   container._resolveAnnotationTerrain();
   expect(update).not.toHaveBeenCalled();
+  expect(container._map.terrain.getDEMElevation).not.toHaveBeenCalled();
   container.props = {...props, index: 1};
   container._resolveAnnotationTerrain();
   expect(update).not.toHaveBeenCalled();
   container.props = {...props, isExport: true};
   container._resolveAnnotationTerrain();
   expect(update).not.toHaveBeenCalled();
+});
+
+test('unavailable terrain retries are bounded during render frames and resume when tiles load', () => {
+  const clock = jest.spyOn(performance, 'now').mockReturnValue(0);
+  const update = jest.fn();
+  const onMapRender = jest.fn();
+  const point = {
+    id: 'pending',
+    kind: 'POINT',
+    anchorPoint: [1, 2],
+    elevation: {
+      source: 'measurement',
+      value: 1000,
+      reference: {source: 'terrain', value: null, unit: 'm', datum: 'MSL'}
+    }
+  };
+  const container = new MapContainer({
+    visState: {annotations: [point]},
+    mapStyle: {mapStyles: {}, styleType: 'maplibre'},
+    visStateActions: {updateAnnotation: update},
+    onMapRender
+  });
+  const map = terrainMapFixture(990);
+  container._map = map;
+  map.terrain.sourceCache.getSourceTile.mockReturnValue(undefined as any);
+  container._onMapRender();
+  clock.mockReturnValue(999);
+  container._onMapRender();
+  container._onMapRender();
+  expect(map.terrain.sourceCache.getSourceTile).toHaveBeenCalledTimes(1);
+  expect(update).not.toHaveBeenCalled();
+  map.terrain.sourceCache.getSourceTile.mockReturnValue({dem: {}});
+  clock.mockReturnValue(1000);
+  container._onMapRender();
+  expect(update).toHaveBeenCalledTimes(1);
+  expect(onMapRender).toHaveBeenCalledTimes(4);
+});
+
+test('the final idle event resolves tiles inside the retry interval and unregisters on unmount', () => {
+  jest.spyOn(performance, 'now').mockReturnValue(0);
+  const update = jest.fn();
+  const point = {
+    id: 'pending',
+    kind: 'POINT',
+    anchorPoint: [1, 2],
+    elevation: {
+      source: 'measurement',
+      value: 1000,
+      reference: {source: 'terrain', value: null, unit: 'm', datum: 'MSL'}
+    }
+  };
+  const container = new MapContainer({
+    visState: {annotations: [point]},
+    mapStyle: {mapStyles: {}, styleType: 'maplibre'},
+    visStateActions: {updateAnnotation: update}
+  });
+  const map = {...terrainMapFixture(990), on: jest.fn(), off: jest.fn()};
+  map.isSourceLoaded.mockReturnValue(false);
+  container._setMapRef({getMap: () => map});
+  map.isSourceLoaded.mockReturnValue(true);
+  container._onMapRender();
+  expect(update).not.toHaveBeenCalled();
+  const idle = map.on.mock.calls.find(([event]) => event === 'idle')[1];
+  idle();
+  expect(update).toHaveBeenCalledTimes(1);
+  container.componentWillUnmount();
+  expect(map.off).toHaveBeenCalledWith('idle', idle);
 });
