@@ -1921,7 +1921,7 @@ export const POSTPROCESSING_EFFECTS: {[key: string]: EffectDescription} = {
       {
         name: 'rippleModifier',
         label: 'Ripple Modifier',
-        defaultValue: 1,
+        defaultValue: 0.3,
         min: 0,
         max: 1
       },

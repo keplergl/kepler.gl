@@ -151,7 +151,13 @@ describe('surface fog rendering', () => {
     (ClipSpace as jest.MockedClass<typeof ClipSpace>).mockImplementationOnce(
       () => ({device, shaderInputs: {setProps}, draw: jest.fn()} as unknown as ClipSpace)
     );
-    const effect = new DeckSurfaceFogEffect({pattern: true, density: 1, fogColor: [40, 120, 190]});
+    // Exercise full-strength detail in rendering regressions; test the default separately.
+    const effect = new DeckSurfaceFogEffect({
+      pattern: true,
+      density: 1,
+      fogColor: [40, 120, 190],
+      rippleModifier: 1
+    });
     effect.setProps(props);
     effect.setup({device});
     effect.postRender({
@@ -460,7 +466,9 @@ describe('surface fog rendering', () => {
     const flat = render({depth: 1, uniforms: uniformsAt(0), size});
     const half = render({depth: 1, uniforms: uniformsAt(0.5), size});
     const full = render({depth: 1, uniforms: uniformsAt(1), size});
-    expect(render({depth: 1, uniforms: uniformsAt(), size})).toEqual(full);
+    expect(render({depth: 1, uniforms: uniformsAt(), size})).toEqual(
+      render({depth: 1, uniforms: uniformsAt(0.3), size})
+    );
     expect(render({depth: 1, uniforms: uniformsAt(0, 8000), size})).toEqual(flat);
     const smooth = uniformsAt(1);
     expect(

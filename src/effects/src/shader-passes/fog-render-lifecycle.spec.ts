@@ -196,9 +196,9 @@ describe('fog reconstruction uniforms', () => {
   });
 
   test.each([
-    [undefined, 1],
-    [NaN, 1],
-    [Infinity, 1],
+    [undefined, 0.3],
+    [NaN, 0.3],
+    [Infinity, 0.3],
     [-1, 0],
     [0, 0],
     [0.5, 0.5],

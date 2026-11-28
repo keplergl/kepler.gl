@@ -562,7 +562,7 @@ describe('effect parameter editing', () => {
     expect(update).toHaveBeenLastCalledWith(null, effect.id, {parameters: {pattern: true}});
     applyUpdate();
     expect(speedControl()).toHaveValue(1);
-    expect(modifierControl()).toHaveValue(1);
+    expect(modifierControl()).toHaveValue(0.3);
     const sliders = screen.getAllByRole('spinbutton');
     expect(sliders.indexOf(modifierControl())).toBe(sliders.indexOf(speedControl()) - 1);
 

@@ -363,13 +363,13 @@ const surfaceFogModule = {
     waveTime: 0,
     cameraHeight: 0,
     pattern: 0,
-    rippleModifier: 1
+    rippleModifier: 0.3
   },
   propTypes: {
     density: {value: 0.6, min: 0, max: 1},
     fogColor: {value: [230, 235, 242]},
     pattern: {value: 0, min: 0, max: 1},
-    rippleModifier: {value: 1, min: 0, max: 1},
+    rippleModifier: {value: 0.3, min: 0, max: 1},
     fogHeight: {value: 0, private: true},
     fogThickness: {value: 0, private: true},
     invCol0: {value: [1, 0, 0, 0], private: true},
@@ -412,7 +412,7 @@ export class DeckSurfaceFogEffect {
       thickness: 50,
       fogColor: [230, 235, 242],
       pattern: false,
-      rippleModifier: 1,
+      rippleModifier: 0.3,
       rippleSpeed: 1,
       animationTimeMs: 0,
       ...props
@@ -567,7 +567,7 @@ export class DeckSurfaceFogEffect {
         pattern: this.props.pattern ? 1.0 : 0.0,
         rippleModifier: Number.isFinite(this.props.rippleModifier)
           ? Math.max(0, Math.min(1, this.props.rippleModifier!))
-          : 1
+          : 0.3
       }
     });
 

@@ -824,7 +824,7 @@ test('#visStateSchema -> v1 -> explicit shadow map resolution round trips', t =>
   t.end();
 });
 
-test('#visStateSchema -> v1 -> ripple modifier round trips and preserves legacy appearance', t => {
+test('#visStateSchema -> v1 -> ripple modifier round trips and defaults missing values', t => {
   const state = cloneDeep(StateWEffects);
   const effect = createEffect({
     id: 'water-modifier',
@@ -838,8 +838,8 @@ test('#visStateSchema -> v1 -> ripple modifier round trips and preserves legacy 
     [0, 0],
     [0.5, 0.5],
     [1, 1],
-    [undefined, 1],
-    [null, 1],
+    [undefined, 0.3],
+    [null, 0.3],
     [-1, 0],
     [2, 1]
   ]) {
