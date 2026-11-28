@@ -33,7 +33,10 @@ const isDatum = (value: unknown): value is string =>
   typeof value === 'string' && Boolean(value.trim()) && value.length <= 64;
 
 /** Invalid measurements never become zero or an inferred datum. */
-export function normalizeAnnotationElevation(value: unknown): AnnotationElevation | undefined {
+export function normalizeAnnotationElevation(
+  value: unknown,
+  anchorPoint?: readonly number[]
+): AnnotationElevation | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const input = value as AnnotationElevation;
   if (
@@ -51,16 +54,35 @@ export function normalizeAnnotationElevation(value: unknown): AnnotationElevatio
   )
     return undefined;
   const reference = input.reference;
+  const terrain = reference?.source === 'terrain';
   if (
     reference !== null &&
     (!reference ||
-      typeof reference.value !== 'number' ||
-      !Number.isFinite(reference.value) ||
+      !(
+        (typeof reference.value === 'number' && Number.isFinite(reference.value)) ||
+        (terrain && reference.value === null)
+      ) ||
+      (reference.source !== undefined && !['manual', 'terrain'].includes(reference.source)) ||
       !isUnit(reference.unit) ||
+      (terrain && reference.unit !== 'm') ||
       !isDatum(reference.datum) ||
-      (reference.displayZ !== undefined && !Number.isFinite(reference.displayZ)))
+      (reference.displayZ !== undefined && !Number.isFinite(reference.displayZ)) ||
+      (terrain &&
+        reference.coordinate !== undefined &&
+        (!Array.isArray(reference.coordinate) ||
+          reference.coordinate.length !== 2 ||
+          !reference.coordinate.every(Number.isFinite))) ||
+      (terrain &&
+        reference.sourceId !== undefined &&
+        (typeof reference.sourceId !== 'string' || !reference.sourceId.trim())))
   )
     return undefined;
+  const staleTerrain =
+    terrain &&
+    anchorPoint &&
+    (!reference?.coordinate ||
+      reference.coordinate[0] !== anchorPoint[0] ||
+      reference.coordinate[1] !== anchorPoint[1]);
   const field = input.field;
   if (
     field !== undefined &&
@@ -79,10 +101,21 @@ export function normalizeAnnotationElevation(value: unknown): AnnotationElevatio
     ...(field ? {field: {dataId: field.dataId, name: field.name}} : {}),
     reference: reference
       ? {
-          value: reference.value,
+          ...(reference.source !== undefined ? {source: reference.source} : {}),
+          value: staleTerrain ? null : reference.value,
           unit: reference.unit,
           datum: reference.datum.trim(),
-          ...(reference.displayZ !== undefined ? {displayZ: reference.displayZ} : {})
+          ...(!staleTerrain &&
+          reference.displayZ !== undefined &&
+          (!terrain || reference.value !== null)
+            ? {displayZ: reference.displayZ}
+            : {}),
+          ...(terrain && !staleTerrain && reference.coordinate
+            ? {coordinate: [...reference.coordinate] as [number, number]}
+            : {}),
+          ...(terrain && !staleTerrain && reference.sourceId !== undefined
+            ? {sourceId: reference.sourceId}
+            : {})
         }
       : null,
     display: input.display,
@@ -95,7 +128,8 @@ export function normalizeAnnotationElevation(value: unknown): AnnotationElevatio
 
 export function getElevationReferenceStatus(elevation: AnnotationElevation): string | null {
   if (elevation.source === 'map') return null;
-  if (!elevation.reference) return 'Ground reference unavailable';
+  if (!elevation.reference || elevation.reference.value === null)
+    return 'Ground reference unavailable';
   if (
     elevation.datum.toLowerCase() === 'unknown' ||
     elevation.reference.datum.toLowerCase() === 'unknown'
@@ -138,7 +172,7 @@ export function getAnnotationElevationLabels(
   if (display !== 'altitude') {
     const status = getElevationReferenceStatus(elevation);
     const difference =
-      meters === null || !reference
+      meters === null || !reference || reference.value === null
         ? null
         : meters - reference.value * ELEVATION_UNIT_METERS[reference.unit];
     labels.push(

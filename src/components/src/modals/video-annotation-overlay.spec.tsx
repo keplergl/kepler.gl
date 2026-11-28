@@ -543,10 +543,16 @@ test.each([
     outputUnit: 'km',
     labels: ['7.45 km above sea level', '6.46 km above reference']
   },
-  {source: 'map', outputUnit: 'm', labels: ['7448.36 m above map zero']}
+  {source: 'map', outputUnit: 'm', labels: ['7448.36 m above map zero']},
+  {
+    source: 'measurement',
+    outputUnit: 'km',
+    terrain: true,
+    labels: ['7.45 km above sea level', '6.46 km above reference']
+  }
 ])(
   'native preview and capture reproduce $source elevation after a camera rotation',
-  async ({source, outputUnit, labels}) => {
+  async ({source, outputUnit, labels, terrain}) => {
     const {canvas, frame} = setup({
       annotations: [
         {
@@ -563,7 +569,19 @@ test.each([
             value: 7448.36,
             datum: 'MSL',
             display: 'both',
-            reference: {value: 990, unit: 'm', datum: 'MSL'}
+            reference: {
+              value: 990,
+              unit: 'm',
+              datum: 'MSL',
+              ...(terrain
+                ? {
+                    source: 'terrain',
+                    coordinate: [-101.830429, 33.518337],
+                    displayZ: 2970,
+                    sourceId: 'dem'
+                  }
+                : {})
+            }
           }
         }
       ],

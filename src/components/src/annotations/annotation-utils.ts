@@ -58,11 +58,18 @@ export function getElevationGuide(
   const elevation = annotation.elevation;
   if (!elevation || elevation.guide === 'none' || getElevationReferenceStatus(elevation))
     return null;
-  const reference = elevation.reference!;
+  const reference = elevation.reference;
+  if (
+    elevation.source !== 'map' &&
+    reference?.source === 'terrain' &&
+    reference.displayZ === undefined
+  )
+    return null;
   const z =
     elevation.source === 'map'
       ? 0
-      : reference.displayZ ?? reference.value * ELEVATION_UNIT_METERS[reference.unit];
+      : reference?.displayZ ??
+        (reference?.value == null ? NaN : reference.value * ELEVATION_UNIT_METERS[reference.unit]);
   if (!Number.isFinite(z)) return null;
   const point: [number, number, number] = [annotation.anchorPoint[0], annotation.anchorPoint[1], z];
   if (globe && !isPointVisibleOnGlobe(point, viewport)) return null;

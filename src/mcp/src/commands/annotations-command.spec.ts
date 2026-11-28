@@ -988,3 +988,72 @@ test('map-height mode survives save/load and anchor updates without rewriting st
     data: {elevation: {source: 'measurement', value: 7448.36, datum: 'MSL'}}
   });
 });
+
+test('MCP requests and refreshes terrain without inventing a height, and saved samples survive reopen', async () => {
+  const {context, dispatch} = setup();
+  const id = 'terrain-height';
+  const request = {source: 'terrain', datum: 'MSL'};
+  const pending = {...request, value: null, unit: 'm'};
+  expect(
+    await execute(getAddAnnotationCommand(context), {
+      id,
+      kind: 'point',
+      anchorPoint: [1, 2, 9000],
+      elevation: {
+        source: 'measurement',
+        value: 7448.36,
+        datum: 'MSL',
+        display: 'both',
+        reference: request
+      }
+    })
+  ).toMatchObject({success: true, data: {elevation: {reference: pending}}});
+  const point = context.getVisState().annotations[0];
+  const sampled = {...pending, value: 990, displayZ: 2970, coordinate: [1, 2], sourceId: 'dem'};
+  dispatch(updateAnnotation(id, {elevation: {...point.elevation, reference: sampled}}));
+  const restored = roundTrip(context).context;
+  expect((await execute(getListAnnotationsCommand(restored))).data.annotations[0]).toMatchObject({
+    elevation: {reference: sampled}
+  });
+  expect(
+    await execute(getUpdateAnnotationCommand(restored), {id, elevation: {precision: 3}})
+  ).toMatchObject({success: true, data: {elevation: {reference: sampled}}});
+  expect(
+    await execute(getUpdateAnnotationCommand(restored), {id, elevation: {reference: request}})
+  ).toMatchObject({success: true, data: {elevation: {reference: pending}}});
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id, anchorPoint: [2, 3, 9000]})
+  ).toMatchObject({success: true, data: {elevation: {reference: pending}}});
+});
+
+test('a terrain request converts map-height mode and rejects an explicit conflicting map mode', async () => {
+  const {context} = setup();
+  const id = 'map-to-terrain';
+  await execute(getAddAnnotationCommand(context), {
+    id,
+    kind: 'point',
+    anchorPoint: [1, 2, 9000],
+    elevation: {source: 'map', value: 7448.36, datum: 'MSL'}
+  });
+  const before = context.getVisState();
+  const reference = {source: 'terrain', datum: 'MSL'};
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id, elevation: {source: 'map', reference}})
+  ).toMatchObject({success: false, error: expect.stringContaining('measurement mode')});
+  expect(context.getVisState()).toBe(before);
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {
+      id,
+      elevation: {reference, display: 'both'}
+    })
+  ).toMatchObject({
+    success: true,
+    data: {
+      elevation: {
+        source: 'measurement',
+        value: 7448.36,
+        reference: {...reference, value: null, unit: 'm'}
+      }
+    }
+  });
+});

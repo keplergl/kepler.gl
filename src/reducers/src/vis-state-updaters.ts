@@ -3169,7 +3169,7 @@ function makeNewAnnotation(config?: AnnotationPropsPartial): Annotation {
       : INITIAL_ANNOTATION_TEXT_VERTICAL_POSITION);
   const elevation =
     kind === AnnotationKind.POINT
-      ? normalizeAnnotationElevation((config as any)?.elevation)
+      ? normalizeAnnotationElevation((config as any)?.elevation, config?.anchorPoint ?? [0, 0])
       : undefined;
   const base = {
     ...(elevation ? {elevation} : {}),
@@ -3331,7 +3331,7 @@ export const updateAnnotationUpdater = (
   }
   const elevation =
     nextAnnotation.kind === AnnotationKind.POINT
-      ? normalizeAnnotationElevation(nextAnnotation.elevation)
+      ? normalizeAnnotationElevation(nextAnnotation.elevation, nextAnnotation.anchorPoint)
       : undefined;
   delete (nextAnnotation as any).elevation;
   if (elevation && nextAnnotation.kind === AnnotationKind.POINT)

@@ -148,3 +148,49 @@ test.each([
   expect(result.reference).not.toBe(value.reference);
   expect(result.field).not.toBe(value.field);
 });
+
+test('terrain references keep unavailable ground explicit and preserve signed measurements', () => {
+  const reference = {source: 'terrain' as const, value: null, unit: 'm' as const, datum: 'MSL'};
+  const pending = {...lightning, reference};
+  expect(normalizeAnnotationElevation(pending)).toEqual(pending);
+  expect(getAnnotationElevationLabels(pending)).toEqual([
+    '7.45 km above sea level',
+    'Ground reference unavailable'
+  ]);
+  const sampled = {
+    ...pending,
+    reference: {
+      ...reference,
+      value: 990,
+      displayZ: 2970,
+      coordinate: [1, 2] as [number, number],
+      sourceId: 'dem'
+    }
+  };
+  expect(getAnnotationElevationLabels(sampled)).toEqual([
+    '7.45 km above sea level',
+    '6.46 km above reference'
+  ]);
+  expect(normalizeAnnotationElevation(sampled, [1, 2, 9000])).toEqual(sampled);
+  expect(normalizeAnnotationElevation(sampled, [2, 3, 9000])?.reference).toEqual(reference);
+  expect(
+    getAnnotationElevationLabels({
+      ...sampled,
+      value: -1000,
+      reference: {...sampled.reference, value: -2000, displayZ: -6000}
+    })
+  ).toEqual(['-1.00 km above sea level', '1.00 km above reference']);
+  expect(getElevationReferenceStatus({...sampled, datum: 'unknown'})).toBe(
+    'Vertical datum unknown'
+  );
+});
+
+test.each([
+  {source: 'terrain', value: null, unit: 'km', datum: 'MSL'},
+  {source: 'manual', value: null, unit: 'm', datum: 'MSL'},
+  {source: 'other', value: 1, unit: 'm', datum: 'MSL'},
+  {source: 'terrain', value: 1, unit: 'm', datum: 'MSL', coordinate: [1, NaN]},
+  {source: 'terrain', value: 1, unit: 'm', datum: 'MSL', sourceId: ' '}
+])('rejects invalid terrain reference %j', reference => {
+  expect(normalizeAnnotationElevation({...lightning, reference})).toBeUndefined();
+});

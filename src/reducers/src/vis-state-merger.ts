@@ -957,7 +957,7 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
       if (background) annotation.labelBackground = background;
       delete annotation.elevation;
       const elevation =
-        a.kind === AnnotationKind.POINT && normalizeAnnotationElevation(a.elevation);
+        a.kind === AnnotationKind.POINT && normalizeAnnotationElevation(a.elevation, a.anchorPoint);
       if (elevation) annotation.elevation = elevation;
       delete annotation.rulerStyle;
       const style = a.kind === AnnotationKind.RULER && normalizeRulerStyle(a.rulerStyle);

@@ -709,3 +709,43 @@ test('#visStateReducer -> point elevation normalizes, duplicates and clears when
   t.notOk(state.annotations[0].elevation, 'invalid measurement is discarded');
   t.end();
 });
+
+test('#visStateReducer -> terrain snapshots survive vertical edits and invalidate on horizontal moves', t => {
+  const reference = {
+    source: 'terrain',
+    value: 990,
+    unit: 'm',
+    datum: 'MSL',
+    coordinate: [1, 2],
+    displayZ: 2970,
+    sourceId: 'dem'
+  };
+  let state = reducer(
+    initialState,
+    VisStateActions.addAnnotation({
+      id: 'terrain',
+      kind: AnnotationKind.POINT,
+      anchorPoint: [1, 2, 9000],
+      elevation: {...DEFAULT_ANNOTATION_ELEVATION, value: 7448.36, datum: 'MSL', reference}
+    })
+  );
+  state = reducer(state, VisStateActions.updateAnnotation('terrain', {anchorPoint: [1, 2, 5000]}));
+  t.deepEqual(
+    state.annotations[0].elevation.reference,
+    reference,
+    'vertical edits retain the footprint sample'
+  );
+  state = reducer(state, VisStateActions.duplicateAnnotation('terrain'));
+  t.notEqual(
+    state.annotations[0].elevation.reference.coordinate,
+    state.annotations[1].elevation.reference.coordinate,
+    'duplicates own footprint coordinates'
+  );
+  state = reducer(state, VisStateActions.updateAnnotation('terrain', {anchorPoint: [2, 3, 5000]}));
+  t.deepEqual(
+    state.annotations.find(a => a.id === 'terrain').elevation.reference,
+    {source: 'terrain', value: null, unit: 'm', datum: 'MSL'},
+    'moving horizontally clears stale terrain'
+  );
+  t.end();
+});
