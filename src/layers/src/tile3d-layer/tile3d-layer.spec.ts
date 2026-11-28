@@ -376,8 +376,10 @@ describe('3D tile loading error classification', () => {
 // Exercise the custom deck lifecycle without network requests or a GPU. The
 // superclass loader is the external boundary; Kepler's race/error guards run.
 describe('3D tile asynchronous lifecycle', () => {
+  const tilesetData = {tile3dUrl: 'https://example.com/tileset.json'};
+
   function deckLayer() {
-    const layer: any = render(new Tile3DLayer({dataId: 'tiles'}));
+    const layer: any = render(new Tile3DLayer({dataId: 'tiles'}), '', {data: tilesetData});
     layer.initializeState();
     layer.context = {timeline: {}};
     return layer;
@@ -403,7 +405,10 @@ describe('3D tile asynchronous lifecycle', () => {
   test('failed loads stop the spinner, report the error, and clear cached tiles', async () => {
     const owner = new Tile3DLayer({dataId: 'tiles'});
     const onTilesetLoadError = jest.fn();
-    const layer: any = render(owner, 'token-A', {layerCallbacks: {onTilesetLoadError}});
+    const layer: any = render(owner, '', {
+      data: tilesetData,
+      layerCallbacks: {onTilesetLoadError}
+    });
     layer.initializeState();
     layer.state.layerMap = {old: {layer: {}}};
     const error = new Error('Unauthorized');
@@ -411,7 +416,7 @@ describe('3D tile asynchronous lifecycle', () => {
       throw error;
     });
     const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    await layer._loadTileset(URL);
+    await layer._loadTileset(tilesetData.tile3dUrl);
     await Promise.resolve();
     expect(layer.isLoaded).toBe(true);
     expect(layer.state.tileset3d).toBeNull();
@@ -428,7 +433,7 @@ describe('3D tile asynchronous lifecycle', () => {
     layer.state.layerMap = {old: {layer: {}}};
     const pending = deferred();
     mockLoad(layer, () => pending.promise);
-    const request = layer._loadTileset(URL);
+    const request = layer._loadTileset(tilesetData.tile3dUrl);
     expect(old.destroy).toHaveBeenCalledTimes(1);
     expect(layer.state.tileset3d).toBeNull();
     expect(layer.state.layerMap).toEqual({});
