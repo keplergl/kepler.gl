@@ -4,7 +4,7 @@
 import {useEffect, useState} from 'react';
 
 import {TileJSON} from '@loaders.gl/tiles/mvt';
-import {PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 
 import {RemoteTileFormat} from '@kepler.gl/constants';
 import {getMVTMetadata, VectorTileMetadata, getFieldsFromTile} from '@kepler.gl/table';

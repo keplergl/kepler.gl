@@ -10,8 +10,8 @@ import {
 } from '../../../src/layers/src/vector-tile/pmtiles-bounds';
 import sinon from 'sinon';
 import {createDataSourceSync} from '@loaders.gl/core';
-import {MVTLoader} from '@loaders.gl/tiles/mvt';
-import {PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
+import {MVTLoader} from '@loaders.gl/tiles/mvt/bundled';
+import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 import {zxyToTileId} from 'pmtiles';
 import {LayerManager, MapView, WebMercatorViewport, _GlobeView} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';

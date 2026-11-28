@@ -14,7 +14,9 @@ import {DrawRectangleMode} from '@deck.gl-community/editable-layers';
  * - Mousedown → drag → mouseup  (drag-to-draw behavior)
  */
 export class DrawRectangleModeExtended extends DrawRectangleMode {
-  override getGuides(props: Parameters<DrawRectangleMode['getGuides']>[0]) {
+  override getGuides(
+    props: Parameters<DrawRectangleMode['getGuides']>[0]
+  ): ReturnType<DrawRectangleMode['getGuides']> {
     const start = this.getClickSequence()[0];
     const end = props.lastPointerMoveEvent?.mapCoords;
 

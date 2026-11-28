@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {cutPolygonByGrid, cutPolylineByGrid} from '@math.gl/geometry';
+import {cutPolygonByGrid, cutPolylineByGrid} from '@math.gl/geometry/polygon';
 import {ContourFeature, ScalarGrid} from './contour-utils';
 
 /** Drape the existing contours over one common, piecewise planar height field. */

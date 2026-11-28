@@ -3,7 +3,7 @@
 
 import {act, renderHook, waitFor} from '@testing-library/react';
 import {fetch} from 'global';
-import {PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoaderWithParser as PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
 import {RasterTileType} from '@kepler.gl/constants';
 import useFetchJson, {FetchJsonProps} from './use-fetch-raster-tile-metadata';
 

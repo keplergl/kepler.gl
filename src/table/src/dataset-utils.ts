@@ -26,7 +26,7 @@ import {
 
 import {load} from '@loaders.gl/core';
 import {/* MVTLoader,*/ TileJSON} from '@loaders.gl/tiles/mvt';
-import {PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 import {WMSCapabilities, WMSCapabilitiesLoader} from '@loaders.gl/ogc/wms';
 
 import {getMVTMetadata} from './tileset/tileset-utils';

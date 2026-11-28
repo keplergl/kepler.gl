@@ -7,7 +7,7 @@
 
 import {SimpleMeshLayer} from '@deck.gl/mesh-layers';
 import {SphereGeometry} from '@luma.gl/engine';
-import {Vector3} from '@math.gl/core';
+import {Vector3} from '@math.gl/core/matrix';
 import {getSunPosition} from '@math.gl/earth/sun';
 
 import {DEFAULT_GLOBE_CONFIG, type GlobeConfig} from '@kepler.gl/constants';

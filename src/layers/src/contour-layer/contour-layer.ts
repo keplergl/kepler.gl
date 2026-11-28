@@ -4,7 +4,7 @@
 import type {LayerAnimatableProp} from '@kepler.gl/types';
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {PickingInfo} from '@deck.gl/core';
-import {Matrix4} from '@math.gl/core';
+import {Matrix4} from '@math.gl/core/matrix';
 import {createSelector} from 'reselect';
 import {Datasets, KeplerTable} from '@kepler.gl/table';
 import {RGBColor, VisConfigNumber} from '@kepler.gl/types';

@@ -7,7 +7,7 @@ import uniq from 'es-toolkit/compat/uniq';
 import {interpolateArray} from 'd3-interpolate';
 import Layer, {LayerBaseConfig, defaultGetFieldValue, VisualChannelField} from '../base-layer';
 import {TripsLayer as DeckGLTripsLayer} from '@deck.gl/geo-layers';
-import {Matrix4, Quaternion} from '@math.gl/core';
+import {Matrix4, Quaternion} from '@math.gl/core/matrix';
 import {lngLatToWorld} from '@math.gl/web-mercator';
 
 import {

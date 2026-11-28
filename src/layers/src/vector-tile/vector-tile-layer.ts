@@ -11,8 +11,9 @@ import {_Tile2DHeader as Tile2DHeader} from '@deck.gl/geo-layers';
 import {GeoJsonLayer, PathLayer} from '@deck.gl/layers';
 import {ClipExtension, DataFilterExtension} from '@deck.gl/extensions';
 import {createDataSourceSync} from '@loaders.gl/core';
-import {MVTLoader, MVTTileSource} from '@loaders.gl/tiles/mvt';
-import {PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
+import {MVTLoader} from '@loaders.gl/tiles/mvt/bundled';
+import type {MVTTileSource} from '@loaders.gl/tiles/mvt';
+import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 
 import {notNullorUndefined} from '@kepler.gl/common-utils';
 import {

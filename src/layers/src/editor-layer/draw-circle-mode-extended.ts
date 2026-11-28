@@ -17,7 +17,9 @@ import {formatCircleRadiusLabel} from './editor-measure-labels';
  * While the circle is being sized, a radius label is shown at the rim.
  */
 export class DrawCircleModeExtended extends DrawCircleFromCenterMode {
-  override getGuides(props: Parameters<DrawCircleFromCenterMode['getGuides']>[0]) {
+  override getGuides(
+    props: Parameters<DrawCircleFromCenterMode['getGuides']>[0]
+  ): ReturnType<DrawCircleFromCenterMode['getGuides']> {
     const center = this.getClickSequence()[0];
     const rim = props.lastPointerMoveEvent?.mapCoords;
 

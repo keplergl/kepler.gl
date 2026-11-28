@@ -18,7 +18,7 @@ import {ClipExtension} from '@deck.gl/extensions';
 import {PathLayer, PolygonLayer} from '@deck.gl/layers';
 import {TripsLayer} from '@deck.gl/geo-layers';
 import {ScenegraphLayer} from '@deck.gl/mesh-layers';
-import {Matrix4, Quaternion} from '@math.gl/core';
+import {Matrix4, Quaternion} from '@math.gl/core/matrix';
 import {lngLatToWorld} from '@math.gl/web-mercator';
 import {bisectRight} from 'd3-array';
 import {

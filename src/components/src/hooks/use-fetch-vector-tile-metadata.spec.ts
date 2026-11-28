@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {act, renderHook, waitFor} from '@testing-library/react';
-import {PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoaderWithParser as PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
 import {RemoteTileFormat} from '@kepler.gl/constants';
 import {getMVTMetadata, getFieldsFromTile} from '@kepler.gl/table';
 import useFetchVectorTileMetadata from './use-fetch-vector-tile-metadata';

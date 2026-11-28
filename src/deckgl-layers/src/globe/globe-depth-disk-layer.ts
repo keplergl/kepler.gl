@@ -3,7 +3,7 @@
 
 import {SimpleMeshLayer} from '@deck.gl/mesh-layers';
 import {PlaneGeometry} from '@luma.gl/engine';
-import {Vector3} from '@math.gl/core';
+import {Vector3} from '@math.gl/core/matrix';
 
 import {editShader} from '../layer-utils/shader-utils';
 import type {RGBColor} from '@kepler.gl/types';

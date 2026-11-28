@@ -4,7 +4,7 @@
 import {Layer as DeckLayer} from '@deck.gl/core';
 import {TileLayer, GeoBoundingBox} from '@deck.gl/geo-layers';
 import {createDataSourceSync} from '@loaders.gl/core';
-import {PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesTileSource} from '@loaders.gl/tiles/pmtiles';
 import type {TypedArray} from '@loaders.gl/core/loader-utils';
 import type {TextureProps} from '@luma.gl/core';
 type Texture2DProps = Partial<TextureProps> & Record<string, any>;

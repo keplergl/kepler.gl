@@ -3,7 +3,7 @@
 
 import {WebMercatorViewport, _SunLight as SunLight, shadow} from '@deck.gl/core';
 import {device} from '@deck.gl/test-utils';
-import {Matrix4} from '@math.gl/core';
+import {Matrix4} from '@math.gl/core/matrix';
 import CustomDeckLightingEffect, {
   alignExportShadowPass,
   patchShadowPassDepth,

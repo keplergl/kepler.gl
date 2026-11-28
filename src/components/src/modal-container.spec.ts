@@ -3,7 +3,7 @@
 
 import React from 'react';
 import {fireEvent, screen} from '@testing-library/react';
-import {PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoaderWithParser as PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
 
 import {
   ADD_DATA_ID,

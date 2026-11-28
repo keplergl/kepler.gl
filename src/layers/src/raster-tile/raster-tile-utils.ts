@@ -6,7 +6,7 @@
  */
 
 import type {TypedArray} from '@loaders.gl/core/loader-utils';
-import {isArray} from '@math.gl/core';
+import {isArray} from '@math.gl/core/matrix';
 
 import {StacTypes} from '@kepler.gl/types';
 import {hexToRgb} from '@kepler.gl/utils';

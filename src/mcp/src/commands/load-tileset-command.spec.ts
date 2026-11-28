@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoaderWithParser as PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
 import {KeplerTable, getMVTMetadata, getWMSCapabilities, getFieldsFromTile} from '@kepler.gl/table';
 import {DatasetType} from '@kepler.gl/constants';
 import {getLoadTilesetCommand} from './load-tileset-command';

@@ -8,8 +8,9 @@ import uniq from 'es-toolkit/compat/uniq';
 import {DATA_TYPES} from 'type-analyzer';
 
 import {createDataSourceSync} from '@loaders.gl/core';
-import {MVTLoader, TileJSON} from '@loaders.gl/tiles/mvt';
-import {PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
+import {MVTLoader} from '@loaders.gl/tiles/mvt/bundled';
+import type {TileJSON} from '@loaders.gl/tiles/mvt';
+import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 
 import {
   analyzerTypeToFieldType,

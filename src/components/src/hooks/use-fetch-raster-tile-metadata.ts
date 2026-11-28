@@ -4,7 +4,7 @@
 import {fetch} from 'global';
 import {useEffect, useState} from 'react';
 
-import {PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoaderWithParser as PMTilesLoader, PMTilesMetadata} from '@loaders.gl/tiles/pmtiles';
 
 import {withPublicTitilerCorsCacheKey} from '@kepler.gl/common-utils';
 import {VectorTileMetadata} from '@kepler.gl/table';

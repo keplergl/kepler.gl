@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {MVTSource} from '@loaders.gl/tiles/mvt';
+import {MVTLoader} from '@loaders.gl/tiles/mvt/bundled';
 import {DATA_TYPES} from 'type-analyzer';
 
 import {ALL_FIELD_TYPES, FILTER_TYPES, RemoteTileFormat} from '@kepler.gl/constants';
@@ -517,7 +517,7 @@ test.each(['1970-01-01', '1970-01-01T00:00:00Z'])(
 
 test('getFieldsFromTile reads the fields from a tile when minZoom is 0', async () => {
   const getTileData = jest.fn().mockResolvedValue({features: [{properties: {height: 1.5}}]});
-  const source = jest.spyOn(MVTSource, 'createDataSource').mockReturnValue({getTileData} as any);
+  const source = jest.spyOn(MVTLoader, 'createDataSourceSync').mockReturnValue({getTileData} as any);
   const metadata = {
     metaJson: null,
     bounds: [-10, -10, 10, 10],

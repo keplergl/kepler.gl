@@ -2,7 +2,7 @@
 // Copyright contributors to the kepler.gl project
 
 import {z} from 'zod';
-import {PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
+import {PMTilesLoaderWithParser as PMTilesLoader} from '@loaders.gl/tiles/pmtiles';
 import {addDataToMap} from '@kepler.gl/actions';
 import {
   ALL_FIELD_TYPES,
