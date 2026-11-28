@@ -557,3 +557,32 @@ test('#mergeAnnotations -> replaces both dependencies of parked elevations in ei
   }
   t.end();
 });
+
+test('#mergeAnnotations -> preserves valid scales and discards malformed or unsupported settings', t => {
+  const verticalScale = {
+    min: -1,
+    max: 1,
+    tickSpacing: 1,
+    unit: 'km',
+    precision: 2,
+    displayMin: 0,
+    displayMax: 6000
+  };
+  const result = mergeAnnotations(makeState(), [
+    makeAnnotation({id: 'scale', verticalScale}),
+    makeAnnotation({id: 'invalid', verticalScale: {...verticalScale, tickSpacing: 0}}),
+    makeAnnotation({id: 'legacy'}),
+    makeAnnotation({id: 'text', kind: AnnotationKind.TEXT, verticalScale})
+  ]).annotations;
+  t.equal(result.length, 4, 'all annotations survive');
+  t.deepEqual(
+    result[0].verticalScale,
+    verticalScale,
+    'preserves the signed range and drawing bounds'
+  );
+  t.notEqual(result[0].verticalScale, verticalScale, 'owns copied settings');
+  t.notOk(result[1].verticalScale, 'invalid scale cannot allocate ticks');
+  t.notOk(result[2].verticalScale, 'legacy settings stay omitted');
+  t.notOk(result[3].verticalScale, 'non-point scales are discarded');
+  t.end();
+});

@@ -93,9 +93,22 @@ export type TextAnnotation = BaseAnnotation & {
 export type PointAnnotation = AnnotationWithArm & {
   kind: AnnotationKind.POINT;
   elevation?: AnnotationElevation;
+  verticalScale?: AnnotationVerticalScale;
 };
 
 export type ElevationUnit = 'm' | 'km' | 'ft';
+
+export type AnnotationVerticalScale = {
+  /** Signed range and tick spacing in the selected unit. */
+  min: number;
+  max: number;
+  tickSpacing: number;
+  unit: ElevationUnit;
+  precision: number;
+  /** Optional drawing range in metres; both ends must be supplied together. */
+  displayMin?: number;
+  displayMax?: number;
+};
 
 export type AnnotationElevationReference = {
   /** Omitted means an explicitly supplied reference. */

@@ -657,3 +657,53 @@ test.each([
   expect(screen.getByText(text as string)).toBeInTheDocument();
   expect(screen.queryByText('7.45 km above sea level')).not.toBeInTheDocument();
 });
+
+test('vertical scale labels inherit formatting and background and declutter collapsed projections', () => {
+  const point = makeRuler({
+    kind: AnnotationKind.POINT,
+    label: '',
+    anchorPoint: [0, 0],
+    armLength: 20,
+    angle: 0,
+    editorState: captionEditorState('', 'font-size: 24px; color: #ff0000;'),
+    labelBackground: {color: '#000000', opacity: 0.7, padding: 8},
+    verticalScale: {
+      min: -1,
+      max: 1,
+      tickSpacing: 1,
+      unit: 'km',
+      precision: 2,
+      displayMin: 0,
+      displayMax: 6000
+    }
+  });
+  const renderText = (project: MapViewport['project']) => (
+    <DndContext>
+      <AnnotationText
+        annotation={point}
+        viewport={{...viewport, project}}
+        isEditing={false}
+        isSelected={false}
+        isEditingText={false}
+        onSelect={jest.fn()}
+        onChangeText={jest.fn()}
+        onUpdateAnnotation={jest.fn()}
+      />
+    </DndContext>
+  );
+  const {container, rerender} = renderWithTheme(renderText(([, , z = 0]) => [300, 600 - z / 10]));
+  expect(container.querySelectorAll('[data-annotation-part="scale-label"]')).toHaveLength(3);
+  for (const label of ['-1.00 km', '0.00 km', '1.00 km']) {
+    expect(screen.getByText(label)).toHaveStyle({fontSize: '24px', color: '#ff0000'});
+    expect(screen.getByText(label)).toHaveClass('lexical-text-bold');
+  }
+  expect(container.querySelector('[data-annotation-part="scale-label"]')).toHaveStyle({
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: '8px'
+  });
+  rerender(renderText(() => [300, 600]));
+  expect(container.querySelectorAll('[data-annotation-part="scale-label"]')).toHaveLength(1);
+  expect(screen.getByText('1.00 km')).toBeInTheDocument();
+  expect(point.label).toBe('');
+  expect(container.querySelector('[data-annotation-part="text"]')).toBeNull();
+});

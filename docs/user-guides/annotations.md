@@ -119,4 +119,34 @@ Missing tiles, unsupported terrain APIs, or a missing DEM leave **Ground referen
 
 MapLibre sampling checks for a real covering DEM tile before reading its raw elevation, avoiding the synthetic zero returned for missing tiles and the camera-relative query used by MapLibre 4. This guarded adapter depends on the installed terrain API; unsupported versions fail as unavailable. Mapbox hosts with terrain-query support are sampled with exaggeration disabled; older Mapbox versions without that API remain unavailable.
 
+## Vertical scales (MCP/AI)
+
+Use a Point annotation's `verticalScale` to draw a geographic vertical axis with signed labels. Setup is available through MCP/AI; the settings panel keeps its existing controls. Scales use the annotation's line color/width, typography, label background, visibility, and zoom fades. A caption and elevation callout are optional.
+
+For example, `map.add-annotation` can create a scale for values from −1 to +1 km, drawn from 0 to 6000 metres to match a shifted, exaggerated layer:
+
+```json
+{
+  "id": "height-scale",
+  "kind": "point",
+  "anchorPoint": [-101.830429, 33.518337],
+  "verticalScale": {
+    "min": -1,
+    "max": 1,
+    "tickSpacing": 1,
+    "unit": "km",
+    "precision": 2,
+    "displayMin": 0,
+    "displayMax": 6000
+  },
+  "fontSize": 18
+}
+```
+
+The labels are **−1.00 km**, **0.00 km**, and **1.00 km**, drawn at 0, 3000, and 6000 metres. Without `displayMin` and `displayMax`, drawing heights are the labelled values converted to metres. Supply both drawing bounds together, with the upper bound greater than the lower. The anchor's longitude/latitude positions the scale; its Z does not offset the configured range. This axis does not change layer heights or infer a vertical datum.
+
+`unit` supports `m`, `km`, and `ft`; `precision` supports zero to six decimal places. The range must increase and spacing must be positive, with at most 101 ticks. Both endpoints are included even when spacing does not divide the range exactly. Labels stay screen-aligned and crowded labels are hidden at low pitch/zoom. Globe-occluded ticks and segments are hidden.
+
+Partial `map.update-annotation` patches preserve other scale settings. Set `verticalScale` to `null` to remove it; retain a caption, readout, or elevation callout if keeping the Point annotation. Changing annotation type removes the scale. Duplication, saved maps, HTML export, native previews, and recordings preserve its configuration and use the shared renderer. Use a kepler.gl version with vertical-scale support when reopening exports.
+
 [Back to table of contents](README.md)

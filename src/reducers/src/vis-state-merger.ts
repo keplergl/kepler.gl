@@ -13,6 +13,7 @@ import {
   normalizeAnnotationCaption,
   normalizeAnnotationLabelBackground,
   normalizeAnnotationElevation,
+  normalizeAnnotationVerticalScale,
   normalizeRulerStyle,
   normalizeCameraTour,
   combineSplitMapsByIndex,
@@ -959,6 +960,10 @@ export function mergeAnnotations<S extends VisState>(state: S, annotations: any[
       const elevation =
         a.kind === AnnotationKind.POINT && normalizeAnnotationElevation(a.elevation, a.anchorPoint);
       if (elevation) annotation.elevation = elevation;
+      delete annotation.verticalScale;
+      const verticalScale =
+        a.kind === AnnotationKind.POINT && normalizeAnnotationVerticalScale(a.verticalScale);
+      if (verticalScale) annotation.verticalScale = verticalScale;
       delete annotation.rulerStyle;
       const style = a.kind === AnnotationKind.RULER && normalizeRulerStyle(a.rulerStyle);
       if (style) annotation.rulerStyle = style;

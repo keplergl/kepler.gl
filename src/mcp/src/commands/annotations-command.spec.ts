@@ -1025,3 +1025,71 @@ test('MCP requests and refreshes terrain without inventing a height, and saved s
     await execute(getUpdateAnnotationCommand(context), {id, anchorPoint: [2, 3, 9000]})
   ).toMatchObject({success: true, data: {elevation: {reference: pending}}});
 });
+
+test('creates a standalone vertical scale, patches, duplicates, reopens and removes it', async () => {
+  const {context, dispatch} = setup();
+  const id = 'signed-scale';
+  const verticalScale = {
+    min: -1,
+    max: 1,
+    tickSpacing: 1,
+    unit: 'km',
+    precision: 1,
+    displayMin: 0,
+    displayMax: 6000
+  };
+  expect(
+    await execute(getAddAnnotationCommand(context), {
+      id,
+      kind: 'point',
+      anchorPoint: [1, 2],
+      verticalScale
+    })
+  ).toMatchObject({success: true, data: {verticalScale, label: ''}});
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id, verticalScale: {precision: 2}})
+  ).toMatchObject({success: true, data: {verticalScale: {...verticalScale, precision: 2}}});
+  const restored = roundTrip(context);
+  expect(
+    (await execute(getListAnnotationsCommand(restored.context))).data.annotations[0]
+  ).toMatchObject({verticalScale: {...verticalScale, precision: 2}});
+  dispatch(duplicateAnnotation(id));
+  expect(context.getVisState().annotations[0]).toMatchObject({
+    verticalScale: {...verticalScale, precision: 2}
+  });
+  expect((context.getVisState().annotations[0] as any).verticalScale).not.toBe(
+    (context.getVisState().annotations[1] as any).verticalScale
+  );
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id, verticalScale: null})
+  ).toMatchObject({success: false});
+  expect(
+    await execute(getUpdateAnnotationCommand(context), {id, label: 'Static', verticalScale: null})
+  ).toMatchObject({success: true});
+  expect(context.getVisState().annotations.find(a => a.id === id)).not.toHaveProperty(
+    'verticalScale'
+  );
+});
+
+test.each([
+  {max: 0},
+  {tickSpacing: 0},
+  {tickSpacing: 0.001},
+  {unit: 'yards'},
+  {displayMin: 0},
+  {displayMin: 100, displayMax: 0}
+])('rejects invalid scale without changing state %j', async verticalScale => {
+  const {context} = setup();
+  const before = context.getVisState();
+  expect(
+    await execute(getAddAnnotationCommand(context), {...text, kind: 'point', verticalScale})
+  ).toMatchObject({success: false});
+  expect(context.getVisState()).toBe(before);
+});
+
+test('rejects vertical scales on non-point annotations', async () => {
+  const {context} = setup();
+  expect(
+    await execute(getAddAnnotationCommand(context), {...text, verticalScale: {}})
+  ).toMatchObject({success: false});
+});

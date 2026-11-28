@@ -303,3 +303,9 @@ export {
   getAnnotationElevationLabels,
   getElevationReferenceStatus
 } from './annotation-elevation';
+
+export {
+  DEFAULT_ANNOTATION_VERTICAL_SCALE,
+  normalizeAnnotationVerticalScale,
+  getAnnotationVerticalScaleTicks
+} from './annotation-vertical-scale';

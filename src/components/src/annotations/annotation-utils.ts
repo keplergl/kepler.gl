@@ -9,7 +9,11 @@ import {
   AnnotationElevation,
   PointAnnotation
 } from '@kepler.gl/types';
-import {ELEVATION_UNIT_METERS, getElevationReferenceStatus} from '@kepler.gl/utils';
+import {
+  ELEVATION_UNIT_METERS,
+  getElevationReferenceStatus,
+  getAnnotationVerticalScaleTicks
+} from '@kepler.gl/utils';
 import {formatLineLengthLabel} from '@kepler.gl/layers';
 import {point} from '@turf/helpers';
 import distance from '@turf/distance';
@@ -48,6 +52,42 @@ export type PickElevation = (
   screen: [number, number],
   field: NonNullable<AnnotationElevation['field']>
 ) => {coordinate: ReadonlyArray<number>; value: number | null} | null;
+
+/** Project a signed scale at one geographic footprint; tick labels remain screen-aligned. */
+export function getVerticalScaleGeometry(
+  annotation: PointAnnotation,
+  viewport: MapViewport,
+  globe = false
+) {
+  if (!annotation.verticalScale) return null;
+  const [x, y] = viewport.project(onNearestWorldCopy(annotation.anchorPoint, viewport));
+  if (![x, y].every(Number.isFinite)) return null;
+  const ticks = getAnnotationVerticalScaleTicks(annotation.verticalScale).map(tick => {
+    const point: [number, number, number] = [
+      annotation.anchorPoint[0],
+      annotation.anchorPoint[1],
+      tick.height
+    ];
+    const [tx, ty] = viewport.project(onNearestWorldCopy(point, viewport));
+    return {
+      ...tick,
+      x: tx,
+      y: ty,
+      dx: tx - x,
+      dy: ty - y,
+      visible: [tx, ty].every(Number.isFinite) && (!globe || isPointVisibleOnGlobe(point, viewport))
+    };
+  });
+  const path = ticks
+    .slice(1)
+    .flatMap((tick, i) =>
+      tick.visible && ticks[i].visible
+        ? [`M${ticks[i].dx},${ticks[i].dy} L${tick.dx},${tick.dy}`]
+        : []
+    )
+    .join(' ');
+  return {path, ticks: ticks.filter(tick => tick.visible)};
+}
 
 /** A geographic vertical, not a screen-space line dropped straight down. */
 export function getElevationGuide(
@@ -512,11 +552,19 @@ export function isPointVisibleOnGlobe(
   return angularDistanceDeg(point, [roundTrip[0], roundTrip[1]]) < GLOBE_VISIBILITY_TOLERANCE_DEG;
 }
 
-/** Partially visible rulers are clipped by their renderer; other annotations use the anchor. */
+/** Rulers and vertical scales may extend beyond an occluded anchor; their renderers clip geometry. */
 export function isAnnotationVisibleOnGlobe(annotation: Annotation, viewport: MapViewport): boolean {
   if (annotation.kind === AnnotationKind.TEXT && annotation.viewport) return true;
   return (
     isPointVisibleOnGlobe(annotation.anchorPoint, viewport) ||
+    (annotation.kind === AnnotationKind.POINT &&
+      annotation.verticalScale &&
+      getAnnotationVerticalScaleTicks(annotation.verticalScale).some(({height}) =>
+        isPointVisibleOnGlobe(
+          [annotation.anchorPoint[0], annotation.anchorPoint[1], height],
+          viewport
+        )
+      )) ||
     (annotation.kind === AnnotationKind.RULER &&
       isPointVisibleOnGlobe(annotation.endPoint, viewport))
   );
