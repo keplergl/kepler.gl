@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright contributors to the kepler.gl project
 
-import {DEFAULT_ANNOTATION_ELEVATION} from '@kepler.gl/utils';
+import {DEFAULT_ANNOTATION_ELEVATION, DEFAULT_MAP_HEIGHT_ELEVATION} from '@kepler.gl/utils';
 
 import React, {useContext} from 'react';
 import {Provider} from 'react-redux';
@@ -761,17 +761,67 @@ describe('Point elevation settings', () => {
     );
     return store;
   }
+  test('starts with map height and a preview, and reveals advanced and appearance controls on demand', async () => {
+    const store = renderPoint({...DEFAULT_MAP_HEIGHT_ELEVATION});
+    expect(screen.getByText('Map height')).toBeInTheDocument();
+    expect(screen.getByRole('status', {name: 'Label preview'})).toHaveTextContent(
+      '7448.36 m above map zero'
+    );
+    expect(screen.queryByLabelText('Measured elevation')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Compare with ground')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Marker height (m)')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', {name: 'Decimals'})).not.toBeInTheDocument();
+    const advanced = screen.getByRole('button', {name: 'Advanced'});
+    advanced.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(advanced).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByLabelText('Marker height (m)')).toHaveValue(7448.36);
+    expect(screen.queryByLabelText('Measured from')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: 'Appearance'}));
+    expect(
+      within(screen.getByRole('group', {name: 'Decimals'})).getByRole('button', {name: '2'})
+    ).toBeInTheDocument();
+    expect(store.getActions()).toEqual([]);
+  });
+  test('switching from map height to manual input does not copy the drawing height into a measurement', async () => {
+    const elevation = {...DEFAULT_MAP_HEIGHT_ELEVATION};
+    const store = renderPoint(elevation);
+    await userEvent.click(screen.getByText('Map height'));
+    await userEvent.click(screen.getByText('Manual value'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {
+        elevation: {...elevation, source: 'measurement', field: undefined}
+      })
+    ]);
+  });
+  test('ground settings are optional and removing comparison resets the displayed value to altitude', () => {
+    const elevation: AnnotationElevation = {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      value: 10,
+      datum: 'MSL',
+      display: 'both',
+      reference: {value: 2, unit: 'm', datum: 'MSL'}
+    };
+    const store = renderPoint(elevation);
+    expect(screen.getByLabelText('Ground elevation')).toHaveValue(2);
+    fireEvent.click(screen.getByLabelText('Compare with ground'));
+    expect(store.getActions()).toEqual([
+      VisStateActions.updateAnnotation('ruler-1', {
+        elevation: {...elevation, reference: null, display: 'altitude'}
+      })
+    ]);
+  });
   test.each<{anchorPoint: Annotation['anchorPoint']}>([
     {anchorPoint: [1, 2]},
     {anchorPoint: [1, 2, 9000]}
   ])(
-    'enables elevation without inferring a measurement from anchor $anchorPoint',
+    'enables map height without inventing a measured value for anchor $anchorPoint',
     ({anchorPoint}) => {
       const store = renderPoint(undefined, {anchorPoint});
       fireEvent.click(screen.getByLabelText('Show elevation'));
       expect(store.getActions()).toEqual([
         VisStateActions.updateAnnotation('ruler-1', {
-          elevation: {...DEFAULT_ANNOTATION_ELEVATION}
+          elevation: {...DEFAULT_MAP_HEIGHT_ELEVATION}
         })
       ]);
     }
@@ -781,6 +831,7 @@ describe('Point elevation settings', () => {
       labelBackground: {color: '#000000', opacity: 0.7, padding: 8}
     });
     expect(screen.getByLabelText('Show elevation')).not.toBeChecked();
+    fireEvent.click(screen.getByRole('button', {name: 'Appearance'}));
     expect(screen.getByLabelText('Label background')).toBeChecked();
     fireEvent.click(screen.getByLabelText('Label background'));
     expect(store.getActions()).toEqual([
@@ -795,10 +846,11 @@ describe('Point elevation settings', () => {
       reference: {value: 990, unit: 'm', datum: 'MSL'}
     };
     const store = renderPoint(elevation);
+    fireEvent.click(screen.getByRole('button', {name: 'Advanced'}));
     for (const [name, value] of [
-      ['Source altitude', '-1000'],
-      ['Anchor height (m)', '4900'],
-      ['Reference draw height (m)', '5900']
+      ['Measured elevation', '-1000'],
+      ['Marker height (m)', '4900'],
+      ['Ground draw height (m)', '5900']
     ]) {
       fireEvent.change(screen.getByLabelText(name), {target: {value}});
       fireEvent.blur(screen.getByLabelText(name));
@@ -811,8 +863,8 @@ describe('Point elevation settings', () => {
       })
     ]);
     store.clearActions();
-    fireEvent.change(screen.getByLabelText('Source altitude'), {target: {value: ''}});
-    fireEvent.blur(screen.getByLabelText('Source altitude'));
+    fireEvent.change(screen.getByLabelText('Measured elevation'), {target: {value: ''}});
+    fireEvent.blur(screen.getByLabelText('Measured elevation'));
     expect(store.getActions()).toEqual([]);
     fireEvent.click(screen.getByLabelText('Show elevation'));
     expect(store.getActions()).toEqual([
@@ -822,23 +874,29 @@ describe('Point elevation settings', () => {
   test('selecting a numeric source requires a fresh capture instead of retaining a stale value', async () => {
     const elevation: AnnotationElevation = {...DEFAULT_ANNOTATION_ELEVATION, value: 7448.36};
     const store = renderPoint(elevation);
-    await userEvent.click(screen.getByText('Manual'));
-    await userEvent.click(screen.getByText('Numeric field'));
+    await userEvent.click(screen.getByText('Manual value'));
+    await userEvent.click(screen.getByText('Data field'));
     expect(store.getActions()).toEqual([
       VisStateActions.updateAnnotation('ruler-1', {
-        elevation: {...elevation, value: null, field: {dataId: 'detections', name: 'altitude'}}
+        elevation: {
+          ...elevation,
+          source: 'measurement',
+          value: null,
+          field: {dataId: 'detections', name: 'altitude'}
+        }
       })
     ]);
   });
   test('manual missing values stay empty until entered and datum names preserve internal spaces', () => {
     const elevation = {...DEFAULT_ANNOTATION_ELEVATION};
     const store = renderPoint(elevation);
-    expect(screen.getByLabelText('Source altitude')).toHaveValue(null);
-    fireEvent.change(screen.getByLabelText('Source altitude'), {target: {value: '0'}});
-    fireEvent.blur(screen.getByLabelText('Source altitude'));
-    fireEvent.change(screen.getByLabelText('Source datum'), {target: {value: 'Local benchmark'}});
+    expect(screen.getByLabelText('Measured elevation')).toHaveValue(null);
+    fireEvent.change(screen.getByLabelText('Measured elevation'), {target: {value: '0'}});
+    fireEvent.blur(screen.getByLabelText('Measured elevation'));
+    fireEvent.click(screen.getByRole('button', {name: 'Advanced'}));
+    fireEvent.change(screen.getByLabelText('Measured from'), {target: {value: 'Local benchmark'}});
     expect(store.getActions()).toHaveLength(1);
-    fireEvent.blur(screen.getByLabelText('Source datum'));
+    fireEvent.blur(screen.getByLabelText('Measured from'));
     expect(store.getActions()).toEqual([
       VisStateActions.updateAnnotation('ruler-1', {elevation: {...elevation, value: 0}}),
       VisStateActions.updateAnnotation('ruler-1', {

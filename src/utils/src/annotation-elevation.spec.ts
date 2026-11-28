@@ -3,6 +3,7 @@
 
 import {
   DEFAULT_ANNOTATION_ELEVATION,
+  DEFAULT_MAP_HEIGHT_ELEVATION,
   getAnnotationElevationLabels,
   getElevationReferenceStatus,
   normalizeAnnotationElevation
@@ -15,6 +16,31 @@ const lightning = {
   reference: {value: 990, unit: 'm' as const, datum: 'MSL'},
   display: 'both' as const
 };
+
+test('map height follows the anchor, converts units, and never uses captured measurements or datums', () => {
+  const elevation = {...lightning, source: 'map' as const};
+  expect(getAnnotationElevationLabels(elevation, 9000)).toEqual(['9.00 km above map zero']);
+  expect(getAnnotationElevationLabels(elevation, -1000)).toEqual(['-1.00 km above map zero']);
+  expect(getAnnotationElevationLabels(DEFAULT_MAP_HEIGHT_ELEVATION, 0)).toEqual([
+    '0.00 m above map zero'
+  ]);
+  expect(getAnnotationElevationLabels(elevation)).toEqual(['Map height unavailable']);
+  expect(getAnnotationElevationLabels(elevation, NaN)).toEqual(['Map height unavailable']);
+  expect(
+    getElevationReferenceStatus({...DEFAULT_MAP_HEIGHT_ELEVATION, reference: null})
+  ).toBeNull();
+  expect(getAnnotationElevationLabels(lightning, 9000)).toEqual([
+    '7.45 km above sea level',
+    '6.46 km above reference'
+  ]);
+});
+
+test('normalization preserves explicit map-height mode and leaves existing measurements unchanged', () => {
+  expect(normalizeAnnotationElevation(DEFAULT_MAP_HEIGHT_ELEVATION)).toEqual(
+    DEFAULT_MAP_HEIGHT_ELEVATION
+  );
+  expect(normalizeAnnotationElevation(lightning)).not.toHaveProperty('source');
+});
 
 test('formats the signed source altitude and difference before rounding', () => {
   expect(getAnnotationElevationLabels(lightning)).toEqual([
@@ -47,6 +73,14 @@ test('converts source and reference units independently and ignores reference re
       reference: {value: 0.1, unit: 'km', datum: 'MSL', displayZ: 6000}
     })
   ).toEqual(['304.80 m above sea level', '204.80 m above reference']);
+});
+
+test('an altitude-only callout needs no ground reference until a comparison is requested', () => {
+  const elevation = {...lightning, reference: null, display: 'altitude' as const};
+  expect(getAnnotationElevationLabels(elevation)).toEqual(['7.45 km above sea level']);
+  expect(getAnnotationElevationLabels({...elevation, display: 'relative'})).toEqual([
+    'Ground reference unavailable'
+  ]);
 });
 
 test('missing measurements or references never become zero; mismatched datums cannot be subtracted', () => {
@@ -97,6 +131,7 @@ test.each([
   {...lightning, reference: undefined},
   {...lightning, reference: {...lightning.reference, displayZ: Infinity}},
   {...lightning, unit: 'bad'},
+  {...lightning, source: 'terrain'},
   {...lightning, precision: 7},
   {...lightning, field: {dataId: '', name: 'altitude'}}
 ])('rejects invalid elevation settings %j', value => {

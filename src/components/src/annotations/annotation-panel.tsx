@@ -41,6 +41,7 @@ import {
   AnnotationText,
   ArrowDown,
   ArrowDownSmall,
+  ArrowRight,
   Base,
   BaseProps,
   Circle,
@@ -63,6 +64,8 @@ import {
   rgbToHex,
   DEFAULT_RULER_STYLE,
   DEFAULT_ANNOTATION_ELEVATION,
+  DEFAULT_MAP_HEIGHT_ELEVATION,
+  getAnnotationElevationLabels,
   ELEVATION_UNIT_METERS
 } from '@kepler.gl/utils';
 import {FormattedMessage} from '@kepler.gl/localization';
@@ -665,6 +668,8 @@ function ElevationSettings({
   onChange: (changes: Partial<Annotation>) => void;
 }) {
   const elevation = annotation.elevation;
+  const [advancedOpen, setAdvancedOpen] = React.useState(false);
+  const [appearanceOpen, setAppearanceOpen] = React.useState(false);
   const patch = (changes: Partial<AnnotationElevation>) =>
     onChange({elevation: {...DEFAULT_ANNOTATION_ELEVATION, ...elevation, ...changes}});
   const label = (id: string, fallback: string) =>
@@ -685,18 +690,19 @@ function ElevationSettings({
     change: (value: string) => void
   ) =>
     row(id, fallback, name => (
-      <StyledSelect
-        aria-label={name}
-        options={options}
-        selectedItems={options.find(option => option.id === value)}
-        displayOption="label"
-        getOptionValue="id"
-        multiSelect={false}
-        searchable={false}
-        onChange={value => {
-          if (typeof value === 'string') change(value);
-        }}
-      />
+      <div role="group" aria-label={name}>
+        <StyledSelect
+          options={options}
+          selectedItems={options.find(option => option.id === value)}
+          displayOption="label"
+          getOptionValue="id"
+          multiSelect={false}
+          searchable={false}
+          onChange={value => {
+            if (typeof value === 'string') change(value);
+          }}
+        />
+      </div>
     ));
   const units = ['m', 'km', 'ft'].map(unit => ({id: unit, label: unit}));
   const numericInput = (
@@ -722,11 +728,42 @@ function ElevationSettings({
   ) =>
     row(id, fallback, name => <ElevationDatumInput label={name} value={value} onChange={change} />);
   const reference = elevation?.reference;
+  const mapHeight = elevation?.source === 'map';
   const datasetOptions = Object.values(datasets || {}).filter(table =>
     table.fields?.some(field => ['integer', 'real'].includes(field.type))
   );
   const table = datasetOptions.find(table => table.id === elevation?.field?.dataId);
   const fields = table?.fields.filter(field => ['integer', 'real'].includes(field.type)) ?? [];
+  const help = (id: string, text: string) => (
+    <StyledConfigRow>
+      <StyledConfigLabel style={{textTransform: 'none'}}>{label(id, text)}</StyledConfigLabel>
+    </StyledConfigRow>
+  );
+  const disclosure = (
+    id: string,
+    title: string,
+    open: boolean,
+    setOpen: (open: boolean) => void,
+    children: React.ReactNode
+  ) => (
+    <>
+      <StyledConfigRow>
+        <Button
+          secondary
+          width="100%"
+          aria-expanded={open}
+          aria-controls={`annotation-${annotation.id}-elevation-${id}-content`}
+          onClick={() => setOpen(!open)}
+        >
+          {label(id, title)}
+          {open ? <ArrowDownSmall /> : <ArrowRight height="12px" />}
+        </Button>
+      </StyledConfigRow>
+      {open ? (
+        <div id={`annotation-${annotation.id}-elevation-${id}-content`}>{children}</div>
+      ) : null}
+    </>
+  );
   return (
     <>
       {row('show', 'Show elevation', name => (
@@ -736,7 +773,7 @@ function ElevationSettings({
           checked={Boolean(elevation)}
           onChange={event =>
             onChange({
-              elevation: event.target.checked ? {...DEFAULT_ANNOTATION_ELEVATION} : undefined
+              elevation: event.target.checked ? {...DEFAULT_MAP_HEIGHT_ELEVATION} : undefined
             })
           }
         />
@@ -744,142 +781,223 @@ function ElevationSettings({
       {elevation ? (
         <>
           {select(
-            'source',
-            'Elevation source',
-            elevation.field ? 'field' : 'manual',
+            'valueSource',
+            'Value to display',
+            mapHeight ? 'map' : elevation.field ? 'field' : 'manual',
             [
-              {id: 'manual', label: label('manual', 'Manual')},
+              {id: 'map', label: label('mapHeight', 'Map height')},
+              {id: 'manual', label: label('manualValue', 'Manual value')},
               ...(datasetOptions.length || elevation.field
-                ? [{id: 'field', label: label('field', 'Numeric field')}]
+                ? [{id: 'field', label: label('dataField', 'Data field')}]
                 : [])
             ],
             source => {
-              if (source === 'manual') patch({field: undefined});
+              if (source === 'map') patch({source: 'map'});
+              else if (source === 'manual') patch({source: 'measurement', field: undefined});
+              else if (elevation.field) patch({source: 'measurement'});
               else if (datasetOptions.length) {
                 const dataset = datasetOptions[0];
                 const field = dataset.fields.find(field =>
                   ['integer', 'real'].includes(field.type)
                 )!;
-                patch({field: {dataId: dataset.id, name: field.name}, value: null});
+                patch({
+                  source: 'measurement',
+                  field: {dataId: dataset.id, name: field.name},
+                  value: null
+                });
               }
             }
           )}
-          {elevation.field ? (
-            <>
-              {select(
-                'dataset',
-                'Source dataset',
-                elevation.field.dataId,
-                datasetOptions.map(table => ({id: table.id, label: table.label})),
-                dataId => {
-                  const table = datasetOptions.find(table => table.id === dataId)!;
-                  patch({
-                    field: {
-                      dataId,
-                      name: table.fields.find(field => ['integer', 'real'].includes(field.type))!
-                        .name
-                    },
-                    value: null
-                  });
-                }
-              )}
-              {select(
-                'fieldName',
-                'Source field',
-                elevation.field.name,
-                fields.map(field => ({id: field.name, label: field.name})),
-                name => patch({field: {...elevation.field!, name}, value: null})
-              )}
-              <StyledConfigLabel>
-                {label(
-                  'captureHelp',
-                  'Drag the anchor onto a feature to capture its value. Values stay fixed until picked again.'
-                )}
-              </StyledConfigLabel>
-              {row('captured', 'Captured value', () => (
-                <span>{elevation.value ?? '—'}</span>
-              ))}
-            </>
+          {mapHeight ? (
+            help(
+              'mapHeightHelp',
+              'Shows the picked marker height above map zero. Drag the anchor to update it; this is not a terrain measurement.'
+            )
           ) : (
-            numericInput('value', 'Source altitude', elevation.value, value => patch({value}))
-          )}
-          {select('sourceUnits', 'Source units', elevation.unit, units, unit =>
-            patch({unit: unit as ElevationUnit})
-          )}
-          {datumInput('datum', 'Source datum', elevation.datum, datum => patch({datum}))}
-          {numericInput('anchorHeight', 'Anchor height (m)', annotation.anchorPoint[2] ?? 0, z =>
-            onChange({anchorPoint: [annotation.anchorPoint[0], annotation.anchorPoint[1], z]})
-          )}
-          {select(
-            'reference',
-            'Ground reference',
-            reference ? 'known' : 'unavailable',
-            [
-              {id: 'unavailable', label: label('unavailable', 'Unavailable')},
-              {id: 'known', label: label('known', 'Known elevation')}
-            ],
-            value =>
-              patch({
-                reference: value === 'known' ? {value: 0, unit: 'm', datum: elevation.datum} : null
-              })
-          )}
-          {reference ? (
             <>
-              {numericInput('referenceValue', 'Reference altitude', reference.value, value =>
-                patch({reference: {...reference, value}})
+              {elevation.field ? (
+                <>
+                  {select(
+                    'dataset',
+                    'Dataset',
+                    elevation.field.dataId,
+                    datasetOptions.map(table => ({id: table.id, label: table.label})),
+                    dataId => {
+                      const table = datasetOptions.find(table => table.id === dataId)!;
+                      patch({
+                        field: {
+                          dataId,
+                          name: table.fields.find(field =>
+                            ['integer', 'real'].includes(field.type)
+                          )!.name
+                        },
+                        value: null
+                      });
+                    }
+                  )}
+                  {select(
+                    'fieldName',
+                    'Field',
+                    elevation.field.name,
+                    fields.map(field => ({id: field.name, label: field.name})),
+                    name => patch({field: {...elevation.field!, name}, value: null})
+                  )}
+                  {help(
+                    'fieldCaptureHelp',
+                    'Drag the anchor onto a feature to capture its value. A missed pick clears the value.'
+                  )}
+                  {row('captured', 'Captured value', () => (
+                    <span>{elevation.value ?? '—'}</span>
+                  ))}
+                </>
+              ) : (
+                numericInput('value', 'Measured elevation', elevation.value, value =>
+                  patch({value})
+                )
               )}
-              {select('referenceUnit', 'Reference units', reference.unit, units, unit =>
-                patch({reference: {...reference, unit: unit as ElevationUnit}})
+              {select('measurementUnits', 'Measurement units', elevation.unit, units, unit =>
+                patch({unit: unit as ElevationUnit})
               )}
-              {datumInput('referenceDatum', 'Reference datum', reference.datum, datum =>
-                patch({reference: {...reference, datum}})
-              )}
-              {numericInput(
-                'referenceHeight',
-                'Reference draw height (m)',
-                reference.displayZ ?? reference.value * ELEVATION_UNIT_METERS[reference.unit],
-                displayZ => patch({reference: {...reference, displayZ}})
-              )}
+              {row('compareGround', 'Compare with ground', name => (
+                <StyledRulerSwitch
+                  id={`annotation-${annotation.id}-elevation-compareGround`}
+                  aria-label={name}
+                  checked={Boolean(reference)}
+                  onChange={event =>
+                    patch({
+                      reference: event.target.checked
+                        ? {value: 0, unit: elevation.unit, datum: elevation.datum}
+                        : null,
+                      display: event.target.checked ? 'both' : 'altitude'
+                    })
+                  }
+                />
+              ))}
+              {reference ? (
+                <>
+                  {numericInput('groundElevation', 'Ground elevation', reference.value, value =>
+                    patch({reference: {...reference, value}})
+                  )}
+                  {select('groundUnits', 'Ground units', reference.unit, units, unit =>
+                    patch({reference: {...reference, unit: unit as ElevationUnit}})
+                  )}
+                  {help(
+                    'groundHelp',
+                    'Enter a known ground elevation. Set matching height references in Advanced; ground is not detected automatically.'
+                  )}
+                  {select(
+                    'display',
+                    'Show',
+                    elevation.display,
+                    [
+                      {id: 'altitude', label: label('altitude', 'Elevation')},
+                      {id: 'relative', label: label('relative', 'Above ground')},
+                      {id: 'both', label: label('both', 'Both')}
+                    ],
+                    display => patch({display: display as AnnotationElevation['display']})
+                  )}
+                </>
+              ) : null}
             </>
-          ) : null}
-          {select(
-            'display',
-            'Display elevation',
-            elevation.display,
-            [
-              {id: 'altitude', label: label('altitude', 'Source altitude')},
-              {id: 'relative', label: label('relative', 'Above reference')},
-              {id: 'both', label: label('both', 'Both')}
-            ],
-            display => patch({display: display as AnnotationElevation['display']})
           )}
           {select('outputUnits', 'Label units', elevation.outputUnit, units, outputUnit =>
             patch({outputUnit: outputUnit as ElevationUnit})
           )}
-          {select(
-            'precision',
-            'Elevation decimals',
-            String(elevation.precision),
-            Array.from({length: 7}, (_, i) => ({id: String(i), label: String(i)})),
-            value => patch({precision: Number(value)})
-          )}
-          {select(
-            'guide',
-            'Vertical guide',
-            elevation.guide,
-            ['none', 'solid', 'dashed'].map(id => ({id, label: label(id, id)})),
-            guide => patch({guide: guide as AnnotationElevation['guide']})
-          )}
-          {select(
-            'marker',
-            'Endpoint marker',
-            elevation.marker,
-            ['none', 'dot', 'ring'].map(id => ({id, label: label(id, id)})),
-            marker => patch({marker: marker as AnnotationElevation['marker']})
+          <StyledConfigRow>
+            <StyledConfigLabel
+              role="status"
+              aria-label={label('preview', 'Label preview')}
+              style={{textTransform: 'none'}}
+            >
+              <div>{label('preview', 'Label preview')}</div>
+              {getAnnotationElevationLabels(elevation, annotation.anchorPoint[2] ?? 0).map(
+                (text, i) => (
+                  <div key={i}>{text}</div>
+                )
+              )}
+            </StyledConfigLabel>
+          </StyledConfigRow>
+          {disclosure(
+            'advanced',
+            'Advanced',
+            advancedOpen,
+            setAdvancedOpen,
+            <>
+              {numericInput(
+                'anchorHeight',
+                'Marker height (m)',
+                annotation.anchorPoint[2] ?? 0,
+                z =>
+                  onChange({anchorPoint: [annotation.anchorPoint[0], annotation.anchorPoint[1], z]})
+              )}
+              {!mapHeight ? (
+                <>
+                  {help(
+                    'measurementHelp',
+                    'Marker height controls drawing only. Measured elevation stays independent, even when the layer height is exaggerated.'
+                  )}
+                  {datumInput('datum', 'Measured from', elevation.datum, datum => patch({datum}))}
+                  {reference ? (
+                    <>
+                      {datumInput(
+                        'referenceDatum',
+                        'Ground measured from',
+                        reference.datum,
+                        datum => patch({reference: {...reference, datum}})
+                      )}
+                      {numericInput(
+                        'referenceHeight',
+                        'Ground draw height (m)',
+                        reference.displayZ ??
+                          reference.value * ELEVATION_UNIT_METERS[reference.unit],
+                        displayZ => patch({reference: {...reference, displayZ}})
+                      )}
+                    </>
+                  ) : null}
+                  {help(
+                    'datumHelp',
+                    'Use the same height reference for both values, such as MSL for sea level. Leave unknown if you do not know it.'
+                  )}
+                </>
+              ) : null}
+            </>
           )}
         </>
       ) : null}
-      <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
+      {disclosure(
+        'appearance',
+        'Appearance',
+        appearanceOpen,
+        setAppearanceOpen,
+        <>
+          {elevation ? (
+            <>
+              {select(
+                'precision',
+                'Decimals',
+                String(elevation.precision),
+                Array.from({length: 7}, (_, i) => ({id: String(i), label: String(i)})),
+                value => patch({precision: Number(value)})
+              )}
+              {select(
+                'guide',
+                'Vertical guide',
+                elevation.guide,
+                ['none', 'solid', 'dashed'].map(id => ({id, label: label(id, id)})),
+                guide => patch({guide: guide as AnnotationElevation['guide']})
+              )}
+              {select(
+                'marker',
+                'Marker style',
+                elevation.marker,
+                ['none', 'dot', 'ring'].map(id => ({id, label: label(id, id)})),
+                marker => patch({marker: marker as AnnotationElevation['marker']})
+              )}
+            </>
+          ) : null}
+          <AnnotationBackgroundSettings annotation={annotation} intl={intl} onChange={onChange} />
+        </>
+      )}
     </>
   );
 }

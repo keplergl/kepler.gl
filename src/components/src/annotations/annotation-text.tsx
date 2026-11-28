@@ -244,7 +244,7 @@ const AnnotationText: FC<AnnotationTextProps> = ({
   const showCustomText = !isRuler || annotation.showCustomText;
   const elevationLabels =
     annotation.kind === AnnotationKind.POINT && annotation.elevation
-      ? getAnnotationElevationLabels(annotation.elevation)
+      ? getAnnotationElevationLabels(annotation.elevation, annotation.anchorPoint[2] ?? 0)
       : [];
   const hasElevation = elevationLabels.length > 0;
   const hasReadout = showCustomText && Boolean(annotation.readout);

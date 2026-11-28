@@ -392,3 +392,13 @@ test('#AnnotationsSchema -> point elevation round-trips independently from drawi
   );
   t.end();
 });
+
+test('#AnnotationsSchema -> map height mode and anchor survive JSON save/load', t => {
+  const elevation = {...DEFAULT_ANNOTATION_ELEVATION, source: 'map', outputUnit: 'm'};
+  const annotation = makePointAnnotation({anchorPoint: [10, 20, -1000], elevation});
+  const saved = JSON.parse(JSON.stringify(schema.save([annotation])));
+  const loaded = schema.load(saved.annotations).annotations[0];
+  t.deepEqual(loaded.elevation, elevation, 'explicit map-height mode round-trips');
+  t.deepEqual(loaded.anchorPoint, annotation.anchorPoint, 'negative drawing height round-trips');
+  t.end();
+});

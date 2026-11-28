@@ -929,6 +929,7 @@ test('creates, patches, duplicates and reopens a point elevation callout with a 
 
 test.each([
   {unit: 'yards'},
+  {source: 'terrain'},
   {field: {dataId: ' ', name: 'altitude'}},
   {value: Infinity},
   {precision: -1},
@@ -957,4 +958,33 @@ test('rejects elevation on other annotation types and clears the captured value 
       elevation: {field: {dataId: 'data', name: 'height'}}
     })
   ).toMatchObject({success: true, data: {elevation: {value: null}}});
+});
+
+test('map-height mode survives save/load and anchor updates without rewriting stored measurements', async () => {
+  const {context} = setup();
+  const id = 'map-height';
+  expect(
+    await execute(getAddAnnotationCommand(context), {
+      id,
+      kind: 'point',
+      anchorPoint: [1, 2, 9000],
+      elevation: {source: 'map', value: 7448.36, datum: 'MSL'}
+    })
+  ).toMatchObject({
+    success: true,
+    data: {elevation: {source: 'map', value: 7448.36, outputUnit: 'm'}}
+  });
+  const restored = roundTrip(context).context;
+  expect(
+    await execute(getUpdateAnnotationCommand(restored), {id, anchorPoint: [1, 2, -1000]})
+  ).toMatchObject({
+    success: true,
+    data: {anchorPoint: [1, 2, -1000], elevation: {source: 'map', value: 7448.36}}
+  });
+  expect(
+    await execute(getUpdateAnnotationCommand(restored), {id, elevation: {source: 'measurement'}})
+  ).toMatchObject({
+    success: true,
+    data: {elevation: {source: 'measurement', value: 7448.36, datum: 'MSL'}}
+  });
 });

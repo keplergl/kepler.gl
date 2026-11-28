@@ -642,3 +642,18 @@ test('elevation labels inherit ruler typography and backgrounds without altering
   expect(point.label).toBe('');
   expect(point.anchorPoint[2]).toBe(9000);
 });
+
+test.each([
+  [[1, 2, 9000], '9.00 km above map zero'],
+  [[1, 2], '0.00 km above map zero']
+])('renders map height from anchor %j independently of the measured value', (anchorPoint, text) => {
+  const point = makeRuler({
+    kind: AnnotationKind.POINT,
+    label: '',
+    anchorPoint: anchorPoint as Annotation['anchorPoint'],
+    elevation: {...DEFAULT_ANNOTATION_ELEVATION, source: 'map', value: 7448.36, datum: 'MSL'}
+  });
+  renderRulerText(point);
+  expect(screen.getByText(text as string)).toBeInTheDocument();
+  expect(screen.queryByText('7.45 km above sea level')).not.toBeInTheDocument();
+});

@@ -537,49 +537,60 @@ test('preview and recording compose the same styled live ruler after a saved-pro
   expect(domtoimage.toPng).toHaveBeenCalled();
 });
 
-test('native preview and capture reproduce the lightning elevation callout after a camera rotation', async () => {
-  const {canvas, frame} = setup({
-    annotations: [
-      {
-        ...annotation,
-        kind: 'POINT',
-        label: '',
-        armLength: 50,
-        angle: -45,
-        anchorPoint: [-101.830429, 33.518337, 7448.36],
-        elevation: {
-          ...DEFAULT_ANNOTATION_ELEVATION,
-          value: 7448.36,
-          datum: 'MSL',
-          display: 'both',
-          reference: {value: 990, unit: 'm', datum: 'MSL'}
+test.each([
+  {
+    source: undefined,
+    outputUnit: 'km',
+    labels: ['7.45 km above sea level', '6.46 km above reference']
+  },
+  {source: 'map', outputUnit: 'm', labels: ['7448.36 m above map zero']}
+])(
+  'native preview and capture reproduce $source elevation after a camera rotation',
+  async ({source, outputUnit, labels}) => {
+    const {canvas, frame} = setup({
+      annotations: [
+        {
+          ...annotation,
+          kind: 'POINT',
+          label: '',
+          armLength: 50,
+          angle: -45,
+          anchorPoint: [-101.830429, 33.518337, 7448.36],
+          elevation: {
+            ...DEFAULT_ANNOTATION_ELEVATION,
+            source,
+            outputUnit,
+            value: 7448.36,
+            datum: 'MSL',
+            display: 'both',
+            reference: {value: 990, unit: 'm', datum: 'MSL'}
+          }
         }
-      }
-    ],
-    mapState: {longitude: -101.830429, latitude: 33.518337, zoom: 8, pitch: 62, bearing: 90}
-  });
-  const view = render(<VideoAnnotationOverlay frame={frame} />);
-  const check = (node: HTMLElement) => {
-    expect(node).toHaveTextContent('7.45 km above sea level');
-    expect(node).toHaveTextContent('6.46 km above reference');
-    expect(node.querySelector('[data-annotation-part="elevation-guide"]')).toHaveAttribute(
-      'stroke-dasharray',
-      '6 3'
-    );
-    expect(node.querySelector('[contenteditable="true"]')).toBeNull();
-  };
-  check(view.container);
-  const path = view.container
-    .querySelector('[data-annotation-part="elevation-guide"]')!
-    .getAttribute('d');
-  jest.mocked(domtoimage.toPng).mockImplementation(async node => {
-    check(node);
-    expect(node.querySelector('[data-annotation-part="elevation-guide"]')).toHaveAttribute(
-      'd',
-      path!
-    );
-    return 'data:image/png;base64,annotation';
-  });
-  await act(async () => compositeVideoAnnotations(canvas, frame));
-  expect(domtoimage.toPng).toHaveBeenCalledTimes(1);
-});
+      ],
+      mapState: {longitude: -101.830429, latitude: 33.518337, zoom: 8, pitch: 62, bearing: 90}
+    });
+    const view = render(<VideoAnnotationOverlay frame={frame} />);
+    const check = (node: HTMLElement) => {
+      for (const label of labels) expect(node).toHaveTextContent(label);
+      expect(node.querySelector('[data-annotation-part="elevation-guide"]')).toHaveAttribute(
+        'stroke-dasharray',
+        '6 3'
+      );
+      expect(node.querySelector('[contenteditable="true"]')).toBeNull();
+    };
+    check(view.container);
+    const path = view.container
+      .querySelector('[data-annotation-part="elevation-guide"]')!
+      .getAttribute('d');
+    jest.mocked(domtoimage.toPng).mockImplementation(async node => {
+      check(node);
+      expect(node.querySelector('[data-annotation-part="elevation-guide"]')).toHaveAttribute(
+        'd',
+        path!
+      );
+      return 'data:image/png;base64,annotation';
+    });
+    await act(async () => compositeVideoAnnotations(canvas, frame));
+    expect(domtoimage.toPng).toHaveBeenCalledTimes(1);
+  }
+);

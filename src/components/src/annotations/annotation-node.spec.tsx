@@ -517,3 +517,29 @@ test('captures source altitude separately from picked Z and clears a missing fie
     elevation: {value: null}
   });
 });
+
+test('map height uses a zero guide and follows picked Z without changing saved measurements', () => {
+  const point = {
+    ...annotation,
+    kind: AnnotationKind.POINT as const,
+    anchorPoint: [1, 2, 9000] as [number, number, number],
+    elevation: {
+      ...DEFAULT_ANNOTATION_ELEVATION,
+      source: 'map' as const,
+      value: 7448.36,
+      field: {dataId: 'detections', name: 'altitude'},
+      reference: {value: 990, unit: 'm' as const, datum: 'MSL', displayZ: 5000}
+    }
+  };
+  const vp = {...viewport, project: ([lng, lat, z = 0]: readonly number[]) => [lng, lat - z]};
+  expect(getElevationGuide(point, vp)).toEqual({ex: 0, ey: 9000});
+  expect(
+    getElevationGuide({...point, elevation: {...point.elevation, reference: null}}, vp)
+  ).toEqual({ex: 0, ey: 9000});
+  const pickElevation = jest.fn();
+  expect(movePoint(point, {x: 2, y: 3}, vp, () => [2, 3, 500], pickElevation)).toEqual({
+    anchorPoint: [2, 3, 500]
+  });
+  expect(pickElevation).not.toHaveBeenCalled();
+  expect(point.elevation.value).toBe(7448.36);
+});

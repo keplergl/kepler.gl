@@ -59,7 +59,10 @@ export function getElevationGuide(
   if (!elevation || elevation.guide === 'none' || getElevationReferenceStatus(elevation))
     return null;
   const reference = elevation.reference!;
-  const z = reference.displayZ ?? reference.value * ELEVATION_UNIT_METERS[reference.unit];
+  const z =
+    elevation.source === 'map'
+      ? 0
+      : reference.displayZ ?? reference.value * ELEVATION_UNIT_METERS[reference.unit];
   if (!Number.isFinite(z)) return null;
   const point: [number, number, number] = [annotation.anchorPoint[0], annotation.anchorPoint[1], z];
   if (globe && !isPointVisibleOnGlobe(point, viewport)) return null;
@@ -547,7 +550,11 @@ export function movePoint(
   pickWorldPosition?: PickWorldPosition,
   pickElevation?: PickElevation
 ): Partial<Annotation> {
-  if (annotation.kind === AnnotationKind.POINT && annotation.elevation?.field) {
+  if (
+    annotation.kind === AnnotationKind.POINT &&
+    annotation.elevation?.source !== 'map' &&
+    annotation.elevation?.field
+  ) {
     const [x, y] = viewport.project(onNearestWorldCopy(annotation.anchorPoint, viewport));
     const picked = pickElevation?.([x + delta.x, y + delta.y], annotation.elevation.field);
     const anchorPoint =

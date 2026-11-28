@@ -21,6 +21,12 @@ export const DEFAULT_ANNOTATION_ELEVATION: Readonly<AnnotationElevation> = {
   marker: 'ring'
 };
 
+export const DEFAULT_MAP_HEIGHT_ELEVATION: Readonly<AnnotationElevation> = {
+  ...DEFAULT_ANNOTATION_ELEVATION,
+  source: 'map',
+  outputUnit: 'm'
+};
+
 const isUnit = (value: unknown): value is ElevationUnit =>
   value === 'm' || value === 'km' || value === 'ft';
 const isDatum = (value: unknown): value is string =>
@@ -31,6 +37,7 @@ export function normalizeAnnotationElevation(value: unknown): AnnotationElevatio
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const input = value as AnnotationElevation;
   if (
+    (input.source !== undefined && !['map', 'measurement'].includes(input.source)) ||
     !(input.value === null || (typeof input.value === 'number' && Number.isFinite(input.value))) ||
     !isUnit(input.unit) ||
     !isDatum(input.datum) ||
@@ -65,6 +72,7 @@ export function normalizeAnnotationElevation(value: unknown): AnnotationElevatio
   )
     return undefined;
   return {
+    ...(input.source !== undefined ? {source: input.source} : {}),
     value: input.value,
     unit: input.unit,
     datum: input.datum.trim(),
@@ -86,6 +94,7 @@ export function normalizeAnnotationElevation(value: unknown): AnnotationElevatio
 }
 
 export function getElevationReferenceStatus(elevation: AnnotationElevation): string | null {
+  if (elevation.source === 'map') return null;
   if (!elevation.reference) return 'Ground reference unavailable';
   if (
     elevation.datum.toLowerCase() === 'unknown' ||
@@ -99,11 +108,21 @@ export function getElevationReferenceStatus(elevation: AnnotationElevation): str
   return null;
 }
 
-export function getAnnotationElevationLabels(elevation: AnnotationElevation): string[] {
+export function getAnnotationElevationLabels(
+  elevation: AnnotationElevation,
+  anchorHeight?: number
+): string[] {
   const {value, unit, datum, reference, outputUnit, precision, display} = elevation;
   const meters = value === null ? null : value * ELEVATION_UNIT_METERS[unit];
   const format = (height: number) =>
     `${(height / ELEVATION_UNIT_METERS[outputUnit]).toFixed(precision)} ${outputUnit}`;
+  if (elevation.source === 'map') {
+    return [
+      anchorHeight === undefined || !Number.isFinite(anchorHeight)
+        ? 'Map height unavailable'
+        : `${format(anchorHeight)} above map zero`
+    ];
+  }
   const labels: string[] = [];
   if (display !== 'relative') {
     labels.push(
@@ -129,7 +148,7 @@ export function getAnnotationElevationLabels(elevation: AnnotationElevation): st
           : `${format(difference)} above reference`)
     );
   }
-  if (display === 'altitude' && elevation.guide !== 'none') {
+  if (display === 'altitude' && elevation.guide !== 'none' && reference) {
     const status = getElevationReferenceStatus(elevation);
     if (status) labels.push(status);
   }

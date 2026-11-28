@@ -97,8 +97,10 @@ export type PointAnnotation = AnnotationWithArm & {
 
 export type ElevationUnit = 'm' | 'km' | 'ft';
 
-/** A captured measurement, independent of the anchor's rendering altitude. */
+/** A map height or a captured measurement independent of rendering altitude. */
 export type AnnotationElevation = {
+  /** Omitted preserves captured-measurement behavior in existing saved callouts. */
+  source?: 'map' | 'measurement';
   /** Null means no valid measurement has been captured. */
   value: number | null;
   unit: ElevationUnit;
